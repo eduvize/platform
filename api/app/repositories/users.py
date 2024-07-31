@@ -11,7 +11,7 @@ INCLUDE_FIELDS = List[
 SELECT_BY = Literal["name", "id", "email"]
 
 class UserRepository:
-    def create_user(self, email_address: str, username: str, password_hash: str) -> User:
+    async def create_user(self, email_address: str, username: str, password_hash: str) -> User:
         user = User(email=email_address, username=username, password_hash=password_hash)
         
         with get_session() as session:
@@ -21,7 +21,7 @@ class UserRepository:
         
         return user
     
-    def get_user(self, by: SELECT_BY, value: Union[str, UUID], include: Optional[INCLUDE_FIELDS]) -> Optional[User]:
+    async def get_user(self, by: SELECT_BY, value: Union[str, UUID], include: Optional[INCLUDE_FIELDS] = []) -> Optional[User]:
         with get_session() as session:
             if by == "id":
                 query = session.query(User).filter(User.id == value)
