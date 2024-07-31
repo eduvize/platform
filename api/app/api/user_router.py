@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends
 
+from app.models.dto.user import UserDto
+
 from ..services import get_user_service
 from ..services.users import UserService
-from . import api_router
 
 router = APIRouter(prefix="/users")
 
@@ -12,4 +13,5 @@ async def get_me():
 
 @router.api_route("/{username}")
 async def get_user(username: str, user_service: UserService = Depends(get_user_service)):
-    return user_service.get_user(username)
+    details = user_service.get_user_by_name(username)
+    return UserDto.model_validate(details)
