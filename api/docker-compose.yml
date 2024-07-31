@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:80"
+    environment:
+      - PORT=80
+      - POSTGRES_HOST=database
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=devpassword
+      - POSTGRES_DB=eduvize
+    depends_on:
+      - database
+      - redis
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  database:
+    image: postgres:13
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=devpassword
+      - POSTGRES_DB=eduvize
+    volumes:
+      - ./scripts/database/seed_dev_environment.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
