@@ -3,7 +3,7 @@ from typing import Union
 
 from fastapi import Depends
 
-from app.models.schema.user import User
+from app.models.schema.user import User, UserProfile
 from ..repositories.users import UserRepository
 
 class UserCreationError(Exception):
@@ -26,7 +26,11 @@ class UserService:
         if existing_username:
             raise UserCreationError("Username already in use")
         
+        # Create the user record
         user = await self.user_repo.create_user(email_address, username, password_hash)
+        
+        # Create a blank profile
+        await self.user_repo.upsert_profile(user.id, UserProfile())
         
         return user
 

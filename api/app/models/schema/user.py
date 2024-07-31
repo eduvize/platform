@@ -31,9 +31,9 @@ class UserProfile(Context):
     
     id                          = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id                     = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    first_name                  = Column(Text, nullable=False)
-    last_name                   = Column(Text, nullable=False)
-    bio                         = Column(Text, nullable=False)
+    first_name                  = Column(Text)
+    last_name                   = Column(Text)
+    bio                         = Column(Text)
     github_username             = Column(Text)
     avatar_url                  = Column(Text)
     last_updated_at_utc         = Column(TIMESTAMP, nullable=False, default='now()')

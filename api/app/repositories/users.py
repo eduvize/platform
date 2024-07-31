@@ -2,7 +2,7 @@ from typing import List, Literal, Optional, Union
 from sqlalchemy import UUID
 from sqlalchemy.orm import joinedload
 from ..common.database import get_session
-from ..models.schema.user import User
+from ..models.schema.user import User, UserProfile
 
 INCLUDE_FIELDS = List[
     Literal["profile", "skills", "curriculums", "reviews", "enrollments", "chat_sessions"]
@@ -20,6 +20,24 @@ class UserRepository:
             session.refresh(user)
         
         return user
+    
+    async def upsert_profile(self, user_id: UUID, profile: UserProfile):
+        with get_session() as session:
+            user = session.query(User).filter(User.id == user_id).first()
+
+            if user is None:
+                return None
+            
+            existing_profile = session.query(UserProfile).filter(UserProfile.user_id == user_id).first()
+            
+            if existing_profile:
+                profile.id = existing_profile.id
+                session.merge(profile)
+            else:
+                profile.user_id = user_id
+                session.add(profile)
+                
+            session.commit()        
     
     async def get_user(self, by: SELECT_BY, value: Union[str, UUID], include: Optional[INCLUDE_FIELDS] = []) -> Optional[User]:
         with get_session() as session:

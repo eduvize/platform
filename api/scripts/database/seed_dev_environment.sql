@@ -15,9 +15,9 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS user_profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id),
-    first_name TEXT NOT NULL,
-    last_name TEXT NOT NULL,
-    bio TEXT NOT NULL,
+    first_name TEXT,
+    last_name TEXT,
+    bio TEXT,
     github_username TEXT,
     avatar_url TEXT,
     last_updated_at_utc TIMESTAMP NOT NULL DEFAULT now()

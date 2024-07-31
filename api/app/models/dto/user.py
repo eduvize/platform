@@ -1,10 +1,10 @@
 from typing import Optional
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, computed_field
 
 class UserProfileDto(BaseModel):
-    first_name: str
-    last_name: str
-    bio: str
+    first_name: Optional[str]
+    last_name: Optional[str]
+    bio: Optional[str]
     github_username: Optional[str]
     avatar_url: Optional[str]
     
@@ -17,6 +17,15 @@ class UserDto(BaseModel):
     username: str
     profile: UserProfileDto
     created_at_utc: str
+    
+    @computed_field
+    @property
+    def display_name(self) -> str:
+        return (
+            f"{self.profile.first_name} {self.profile.last_name}" 
+            if self.profile.first_name and self.profile.last_name 
+            else self.username
+        )
     
     class Config:
         from_attributes = True
