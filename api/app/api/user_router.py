@@ -1,5 +1,8 @@
+from fastapi import APIRouter
 from . import api_router
 
-@api_router.api_route("/users/me")
+router = APIRouter(prefix="/users")
+
+@router.api_route("/me")
 async def get_me():
     return {"username": "fakecurrentuser"}
