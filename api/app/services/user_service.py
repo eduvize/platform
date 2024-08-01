@@ -5,7 +5,7 @@ import uuid
 
 from fastapi import Depends, UploadFile
 from mimetypes import guess_extension, guess_type
-from ..api.contracts.user_contracts import UpdateProfilePayload
+from ..routing.contracts.user_contracts import UpdateProfilePayload
 from ..common.storage import StoragePurpose, get_bucket, get_public_object_url, object_exists
 from ..models.schema.user import User, UserIdentifiers, UserIncludes, UserProfile
 from ..repositories.user_repository import UserRepository
