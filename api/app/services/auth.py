@@ -1,9 +1,4 @@
-import asyncio
-from datetime import datetime, timedelta
-
 from fastapi import Depends
-import jwt
-from app.models.schema.user import User
 from passlib.context import CryptContext
 from app.services.users import UserService
 from app.utilities.jwt import create_token

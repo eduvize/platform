@@ -33,6 +33,14 @@ class UserService:
         await self.user_repo.upsert_profile(user.id, UserProfile())
         
         return user
+    
+    async def get_user_by_id(self, user_id: Union[str, int]) -> User:
+        user = await self.user_repo.get_user("id", user_id, include=["profile"])
+        
+        if user is None:
+            raise ValueError("User not found")
+        
+        return user
 
     async def get_user_by_email(self, email: str) -> User:
         user = await self.user_repo.get_user("email", email, include=["profile"])
