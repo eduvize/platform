@@ -1,36 +1,9 @@
-import importlib
 from fastapi import FastAPI
-from socketio import ASGIApp, AsyncServer
+from socketio import ASGIApp
 from .routing import api_router
+from .websocket import socket
 
-def socketio_mount(
-    app: FastAPI,
-    async_mode: str = "asgi",
-    mount_path: str = "/socket.io/",
-    socketio_path: str = "socket.io",
-    logger: bool = False,
-    engineio_logger: bool = False,
-    cors_allowed_origins="*",
-    **kwargs
-) -> AsyncServer:
-    """Mounts an async SocketIO app over an FastAPI app."""
+fastapi_app = FastAPI()
+fastapi_app.include_router(api_router, prefix="/api")
 
-    sio = AsyncServer(async_mode=async_mode,
-                      cors_allowed_origins=cors_allowed_origins,
-                      logger=logger,
-                      engineio_logger=engineio_logger, **kwargs)
-
-    sio_app = ASGIApp(sio, socketio_path=socketio_path)
-
-    # mount
-    app.add_route(mount_path, route=sio_app, methods=["GET", "POST"])
-    app.add_websocket_route(mount_path, sio_app)
-
-    return sio
-
-app = FastAPI()
-sio = socketio_mount(app, mount_path="/socket.io/", socketio_path="socket.io")
-
-app.include_router(api_router, prefix="/api")
-
-importlib.import_module("app.websocket")
+app = ASGIApp(socket, fastapi_app, socketio_path="socket.io")
