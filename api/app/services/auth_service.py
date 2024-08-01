@@ -1,8 +1,8 @@
 from fastapi import Depends
 from passlib.context import CryptContext
-from app.services.user_service import UserService
-from app.utilities.jwt import create_token
 from config import get_token_expiration, get_token_secret
+from ..services.user_service import UserService
+from ..utilities.jwt import create_token
 
 class AuthService:
     user_service: UserService

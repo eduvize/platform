@@ -24,3 +24,18 @@ def get_token_expiration() -> int:
 
 def get_token_secret() -> str:
     return os.getenv("TOKEN_SECRET", "secret")
+
+def get_s3_endpoint() -> str:
+    return os.getenv("S3_ENDPOINT")
+
+def get_s3_public_endpoint() -> str:
+    return os.getenv("S3_PUBLIC_ENDPOINT")
+
+def get_s3_avatar_bucket() -> str:
+    return os.getenv("S3_BUCKET")
+
+def get_s3_access_key() -> str:
+    return os.getenv("S3_ACCESS_KEY")
+
+def get_s3_secret_key() -> str:
+    return os.getenv("S3_SECRET_KEY")

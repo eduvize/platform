@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile
 
-from app.api.contracts.user_contracts import UpdateProfilePayload
-from app.api.middleware.token_middleware import token_extractor, user_id_extractor
-from app.models.dto.user import UserDto
+from .contracts.file_contracts import FileUploadResponse
+from .contracts.user_contracts import UpdateProfilePayload
+from .middleware.token_middleware import token_extractor, user_id_extractor
+from ..models.dto.user import UserDto
 
-from ..services import get_user_service
-from ..services.users import UserService
+from ..services.user_service import UserService
 
 router = APIRouter(
     prefix="/users",
@@ -18,10 +18,16 @@ async def get_me(user_id: str = Depends(user_id_extractor), user_service: UserSe
     return UserDto.model_validate(current_user)
 
 @router.get("/{username}")
-async def get_user(username: str, user_service: UserService = Depends(get_user_service)):
+async def get_user(username: str, user_service: UserService = Depends(UserService)):
     details = await user_service.get_user("username", username)
     return UserDto.model_validate(details)
 
 @router.put("/me/profile")
-async def update_profile(payload: UpdateProfilePayload, user_id: str = Depends(user_id_extractor), user_service: UserService = Depends(get_user_service)):
+async def update_profile(payload: UpdateProfilePayload, user_id: str = Depends(user_id_extractor), user_service: UserService = Depends(UserService)):
     await user_service.update_profile(user_id, payload)
+    
+@router.post("/me/profile/avatar")
+async def upload_avatar(file: UploadFile = File(...), user_id: str = Depends(user_id_extractor), user_service: UserService = Depends(UserService)):
+    object_id = await user_service.upload_avatar(user_id, file)
+    
+    return FileUploadResponse.model_construct(file_id=object_id)
