@@ -12,15 +12,16 @@ router = APIRouter(
     dependencies=[Depends(token_extractor), Depends(user_id_extractor)]
 )
 
-@router.get("/me")
-async def get_me(user_id: str = Depends(user_id_extractor), user_service: UserService = Depends(UserService)):
-    current_user = await user_service.get_user("id", user_id)
-    return UserDto.model_validate(current_user)
 
 @router.get("/{username}")
 async def get_user(username: str, user_service: UserService = Depends(UserService)):
     details = await user_service.get_user("username", username)
     return UserDto.model_validate(details)
+
+@router.get("/me")
+async def get_me(user_id: str = Depends(user_id_extractor), user_service: UserService = Depends(UserService)):
+    current_user = await user_service.get_user("id", user_id)
+    return UserDto.model_validate(current_user)
 
 @router.put("/me/profile")
 async def update_profile(payload: UpdateProfilePayload, user_id: str = Depends(user_id_extractor), user_service: UserService = Depends(UserService)):
