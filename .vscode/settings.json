@@ -1,0 +1,10 @@
+{
+  "python.autoComplete.extraPaths": [
+    "api",
+    "api/venv/Libs"
+  ],
+  "python.analysis.extraPaths": [
+    "api",
+    "api/venv/Libs"
+  ]
+}
