@@ -3,7 +3,8 @@ from typing import Union
 
 from fastapi import Depends
 
-from app.models.schema.user import User, UserProfile
+from app.models.dto.user import UserProfileDto
+from app.models.schema.user import User, UserIdentifiers, UserProfile
 from ..repositories.users import UserRepository
 
 class UserCreationError(Exception):
@@ -34,26 +35,26 @@ class UserService:
         
         return user
     
-    async def get_user_by_id(self, user_id: Union[str, int]) -> User:
-        user = await self.user_repo.get_user("id", user_id, include=["profile"])
+    async def get_user(self, by: UserIdentifiers, value: str) -> User:
+        user = await self.user_repo.get_user(by, value, include=["profile"])
         
-        if user is None:
-            raise ValueError("User not found")
-        
-        return user
-
-    async def get_user_by_email(self, email: str) -> User:
-        user = await self.user_repo.get_user("email", email, include=["profile"])
-            
         if user is None:
             raise ValueError("User not found")
         
         return user
     
-    async def get_user_by_name(self, name: str) -> User:
-        user = await self.user_repo.get_user("name", name, include=["profile"])
+    async def update_profile(self, user_id: str, profile: UserProfileDto):
+        user = await self.get_user("id", user_id)
         
         if user is None:
             raise ValueError("User not found")
         
-        return user
+        await self.user_repo.upsert_profile(
+            user.id, 
+            UserProfile(
+                first_name=profile.first_name,
+                last_name=profile.last_name,
+                bio=profile.bio,
+                github_username=profile.github_username
+            )
+        )

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 
+from app.api.contracts.user_contracts import UpdateProfilePayload
 from app.api.middleware.token_middleware import token_extractor, user_id_extractor
 from app.models.dto.user import UserDto
 
@@ -13,10 +14,14 @@ router = APIRouter(
 
 @router.get("/me")
 async def get_me(user_id: str = Depends(user_id_extractor), user_service: UserService = Depends(UserService)):
-    current_user = await user_service.get_user_by_id(user_id)
+    current_user = await user_service.get_user("id", user_id)
     return UserDto.model_validate(current_user)
 
 @router.get("/{username}")
 async def get_user(username: str, user_service: UserService = Depends(get_user_service)):
-    details = await user_service.get_user_by_name(username)
+    details = await user_service.get_user("username", username)
     return UserDto.model_validate(details)
+
+@router.put("/me/profile")
+async def update_profile(payload: UpdateProfilePayload, user_id: str = Depends(user_id_extractor), user_service: UserService = Depends(get_user_service)):
+    await user_service.update_profile(user_id, payload)

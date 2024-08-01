@@ -13,7 +13,7 @@ class AuthService:
         self.crypto_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     
     async def authenticate(self, email: str, password: str) -> str:
-        user = await self.user_service.get_user_by_email(email)
+        user = await self.user_service.get_user("email", email)
         
         if not self._verify_password(password, user.password_hash):
             raise ValueError("Invalid password")

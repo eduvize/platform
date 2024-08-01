@@ -2,13 +2,7 @@ from typing import List, Literal, Optional, Union
 from sqlalchemy import UUID
 from sqlalchemy.orm import joinedload
 from ..common.database import get_session
-from ..models.schema.user import User, UserProfile
-
-INCLUDE_FIELDS = List[
-    Literal["profile", "skills", "curriculums", "reviews", "enrollments", "chat_sessions"]
-]
-
-SELECT_BY = Literal["name", "id", "email"]
+from ..models.schema.user import User, UserIdentifiers, UserIncludes, UserProfile
 
 class UserRepository:
     async def create_user(self, email_address: str, username: str, password_hash: str) -> User:
@@ -39,11 +33,11 @@ class UserRepository:
                 
             session.commit()        
     
-    async def get_user(self, by: SELECT_BY, value: Union[str, UUID], include: Optional[INCLUDE_FIELDS] = []) -> Optional[User]:
+    async def get_user(self, by: UserIdentifiers, value: Union[str, UUID], include: Optional[List[UserIncludes]] = []) -> Optional[User]:
         with get_session() as session:
             if by == "id":
                 query = session.query(User).filter(User.id == value)
-            elif by == "name":
+            elif by == "username":
                 query = session.query(User).filter(User.username == value)
             elif by == "email":
                 query = session.query(User).filter(User.email == value)
