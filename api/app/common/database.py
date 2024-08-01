@@ -14,6 +14,12 @@ Context = declarative_base()
 
 @contextmanager
 def get_session() -> Generator[Session, None, None]:
+    """
+    Retrieves an ephemeral session for database operations
+
+    Yields:
+        Generator[Session, None, None]: The session object
+    """
     session = SessionLocal()
     try:
         yield session
