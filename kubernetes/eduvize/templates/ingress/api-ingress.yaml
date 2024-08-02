@@ -1,0 +1,31 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "{{ include "eduvize.fullname" . }}-api-ingress"
+  labels: 
+    {{- include "eduvize.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.ingress.tls.enabled }}
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.tls.clusterIssuer }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.ingressClassName }}
+  rules:
+    - host: "api.{{ .Values.ingress.hostname }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: "{{ include "eduvize.fullname" . }}-api-service"
+                port:
+                  number: {{ .Values.ports.api }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - "api.{{ .Values.ingress.hostname }}"
+      secretName: "{{ .Values.ingress.tls.secretName }}-api"
+  {{- end }}
+{{- end }}

@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "eduvize.fullname" . }}
+  labels:
+    {{ include "eduvize.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas.app }}
+  selector:
+    matchLabels: 
+      app: {{ include "eduvize.fullname" . }}
+      {{ include "eduvize.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "eduvize.fullname" . }}  
+        {{ include "eduvize.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if .Values.privateRegistry.enabled }}
+      imagePullSecrets:
+        - name: {{ .Values.privateRegistry.secretName }}
+      {{- end }}
+      containers:
+        - name: {{ include "eduvize.fullname" . }}
+          image: {{ .Values.image.app }}
+          ports:
+            - containerPort: {{ .Values.ports.app }}
+          env:
+            - name: PORT
+              value: {{ .Values.ports.app | quote }}

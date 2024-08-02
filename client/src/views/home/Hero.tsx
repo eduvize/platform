@@ -2,6 +2,7 @@ import { Container, Text, Button, Group, Space } from "@mantine/core";
 import { GithubIcon } from "@mantinex/dev-icons";
 import classes from "./Hero.module.css";
 import logo from "./logo.png";
+import { Link } from "react-router-dom";
 
 export function Hero() {
     return (
@@ -48,14 +49,16 @@ export function Hero() {
                 </Text>
 
                 <Group className={classes.controls}>
-                    <Button
-                        size="xl"
-                        className={classes.control}
-                        variant="gradient"
-                        gradient={{ from: "blue", to: "cyan" }}
-                    >
-                        Get started for free
-                    </Button>
+                    <Link to="/auth">
+                        <Button
+                            size="xl"
+                            className={classes.control}
+                            variant="gradient"
+                            gradient={{ from: "blue", to: "cyan" }}
+                        >
+                            Get started for free
+                        </Button>
+                    </Link>
 
                     <Button
                         component="a"

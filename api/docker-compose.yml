@@ -16,6 +16,7 @@ services:
       - S3_ACCESS_KEY=minio
       - S3_SECRET_KEY=minio123
       - S3_BUCKET=eduvize
+      - REDIS_HOST=redis:6379
     depends_on:
       - database
       - redis
@@ -24,7 +25,7 @@ services:
       - app-tier
 
   redis:
-    image: redis:alpine
+    image: redis:6
     ports:
       - "6379:6379"
     networks:

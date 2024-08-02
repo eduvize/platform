@@ -17,6 +17,7 @@ import {
     Space,
 } from "@mantine/core";
 import { FacebookButton, GoogleButton } from "../../components/atoms";
+import { Link } from "react-router-dom";
 
 export const Authentication = (props: PaperProps) => {
     const [type, toggle] = useToggle(["login", "register"]);
@@ -45,7 +46,7 @@ export const Authentication = (props: PaperProps) => {
                 justifyContent: "center",
             }}
         >
-            <Center>
+            <Center style={{ flexDirection: "column" }}>
                 <Paper radius="md" p="xl" withBorder {...props}>
                     <Text size="xl" fw={500} style={{ textAlign: "center" }}>
                         Welcome to Eduvize
@@ -79,7 +80,7 @@ export const Authentication = (props: PaperProps) => {
                             <TextInput
                                 required
                                 label="Email"
-                                placeholder="hello@mantine.dev"
+                                placeholder="you@example.dev"
                                 value={form.values.email}
                                 onChange={(event) =>
                                     form.setFieldValue(
@@ -143,6 +144,16 @@ export const Authentication = (props: PaperProps) => {
                         </Group>
                     </form>
                 </Paper>
+
+                <Link to="/">
+                    <Button
+                        variant="subtle"
+                        style={{ marginTop: "1rem" }}
+                        size="xs"
+                    >
+                        Back to home
+                    </Button>
+                </Link>
             </Center>
         </Container>
     );

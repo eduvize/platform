@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ include "eduvize.fullname" . }}-postgres"
+  labels: 
+    {{ include "eduvize.labels" . | nindent 4 }}
+spec:
+  replicas:  {{ .Values.replicas.postgres }}
+  selector:
+    matchLabels:
+      app: "{{ include "eduvize.fullname" . }}-postgres"
+      {{- include "eduvize.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: "{{ include "eduvize.fullname" . }}-postgres"
+        {{- include "eduvize.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: "{{ include "eduvize.fullname" . }}-postgres"
+          image: {{ .Values.image.postgres }}
+          ports:
+            - containerPort: {{ .Values.ports.postgres }}
+          env:
+            - name: POSTGRES_DB
+              value: {{ .Values.database.name }}
+            {{- range .Values.secretEnvironmentBlock.postgres }}
+            - name: {{ .name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .secret }}
+                  key: {{ .key }}
+            {{- end}}
+          volumeMounts:
+            - name: "{{ include "eduvize.fullname" . }}-postgres-volume"
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: "{{ include "eduvize.fullname" . }}-postgres-volume"
+          persistentVolumeClaim:
+            claimName: "{{ include "eduvize.fullname" . }}-postgres-pvc"

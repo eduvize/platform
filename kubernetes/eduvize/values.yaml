@@ -1,0 +1,76 @@
+image:
+  app: registry.crosswinds.cloud/eduvize/app:latest
+  api: registry.crosswinds.cloud/eduvize/api:latest
+  redis: redis:6
+  postgres: postgres:13
+  s3: docker.io/bitnami/minio:2024
+
+ports:
+  app: 8000
+  api: 8000
+  redis: 6379
+  postgres: 5432
+  s3:
+    http: 9000
+    console: 9001
+
+replicas:
+  app: 1
+  api: 1
+  redis: 1
+  postgres: 1
+  s3: 1
+
+ingress:
+  enabled: true
+  hostname: eduvize.dev
+  ingressClassName: public
+  tls:
+    enabled: true
+    secretName: eduvize-tls-secret
+    clusterIssuer: letsencrypt-prod
+
+database:
+  name: eduvize
+  size: 10Gi
+
+storage:
+  bucketName: eduvize
+  region: us-east-1
+  size: 10Gi
+
+secretEnvironmentBlock:
+  api:
+    - name: POSTGRES_USER
+      secret: postgres
+      key: username
+    - name: POSTGRES_PASSWORD
+      secret: postgres
+      key: password
+    - name: S3_ACCESS_KEY
+      secret: s3
+      key: root-user
+    - name: S3_SECRET_KEY
+      secret: s3
+      key: root-password
+  postgres:
+    - name: POSTGRES_USER
+      secret: postgres
+      key: username
+    - name: POSTGRES_PASSWORD
+      secret: postgres
+      key: password
+  s3:
+    - name: MINIO_ROOT_USER
+      secret: s3
+      key: root-user
+    - name: MINIO_ROOT_PASSWORD
+      secret: s3
+      key: root-password
+
+persistence:
+  storageClass: microk8s-hostpath
+
+privateRegistry:
+  enabled: true
+  secretName: regcred

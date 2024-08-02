@@ -11,6 +11,7 @@ import {
 } from "@mantine/core";
 import { IconPlus } from "@tabler/icons-react";
 import classes from "./Faq.module.css";
+import { Link } from "react-router-dom";
 
 const items = [
     {
@@ -112,7 +113,9 @@ export function Faq() {
                 <Space h="xl" />
 
                 <Center>
-                    <Button size="xl">Start your journey</Button>
+                    <Link to="/auth">
+                        <Button size="xl">Start your journey</Button>
+                    </Link>
                 </Center>
             </Container>
         </div>

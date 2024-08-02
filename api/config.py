@@ -39,3 +39,6 @@ def get_s3_access_key() -> str:
 
 def get_s3_secret_key() -> str:
     return os.getenv("S3_SECRET_KEY")
+
+def get_redis_host() -> str:
+    return os.getenv("REDIS_HOST")

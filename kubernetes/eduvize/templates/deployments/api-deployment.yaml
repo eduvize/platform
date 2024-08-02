@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "eduvize.fullname" . }}-api
+  labels: 
+    {{ include "eduvize.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas.api }}
+  selector:
+    matchLabels:
+      app: "{{ include "eduvize.fullname" . }}-api"
+      {{- include "eduvize.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: 
+        app: "{{ include "eduvize.fullname" . }}-api"
+        {{- include "eduvize.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if .Values.privateRegistry.enabled }}
+      imagePullSecrets:
+        - name: {{ .Values.privateRegistry.secretName }}
+      {{- end }}
+      containers:
+        - name: "{{ include "eduvize.fullname" . }}-api"
+          image: {{ .Values.image.api }}
+          ports:
+            - containerPort: {{ .Values.ports.api }}
+          env:
+            - name: S3_ENDPOINT
+              value: "http://{{ include "eduvize.fullname" . }}-s3-service"
+            - name: S3_PUBLIC_ENDPOINT
+              value: "http://s3.{{ .Values.ingress.hostname }}"
+            - name: S3_BUCKET
+              value: {{ .Values.storage.bucketName }}
+            - name: POSTGRES_HOST
+              value: "{{ include "eduvize.fullname" . }}-postgres-service:{{ .Values.ports.postgres }}"
+            - name: POSTGRES_DB
+              value: {{ .Values.database.name }}
+            - name: REDIS_HOST
+              value: "{{ include "eduvize.fullname" . }}-redis-service:{{ .Values.ports.redis }}"
+            - name: PORT
+              value: {{ .Values.ports.api | quote }}
+            {{- range .Values.secretEnvironmentBlock.api }}
+            - name: {{ .name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .secret }}
+                  key: {{ .key }}
+            {{- end}}
