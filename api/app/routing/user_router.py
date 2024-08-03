@@ -17,6 +17,10 @@ async def get_me(user_id: str = Depends(user_id_extractor), user_service: UserSe
     current_user = await user_service.get_user("id", user_id)
     return UserDto.model_validate(current_user)
 
+@router.get("/me/onboarding")
+async def get_onboarding_status(user_id: str = Depends(user_id_extractor), user_service: UserService = Depends(UserService)):
+    return await user_service.get_onboarding_status(user_id)
+
 @router.put("/me/profile")
 async def update_profile(payload: UpdateProfilePayload, user_id: str = Depends(user_id_extractor), user_service: UserService = Depends(UserService)):
     await user_service.update_profile(user_id, payload)

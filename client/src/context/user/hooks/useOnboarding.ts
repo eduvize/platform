@@ -1,6 +1,13 @@
+import { useContext } from "react";
+import { UserContext } from "../UserContext";
+
 export const useOnboarding = () => {
-    return {
-        isOnboarded: false,
-        isVerified: false,
-    };
+    const { onboardingStatus } = useContext(UserContext);
+
+    return (
+        onboardingStatus || {
+            is_verified: false,
+            is_profile_complete: false,
+        }
+    );
 };
