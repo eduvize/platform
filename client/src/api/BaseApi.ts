@@ -1,13 +1,15 @@
+const apiEndpoint = import.meta.env.VITE_API_ENDPOINT;
+
 abstract class BaseApi {
     protected get<T>(url: string): Promise<T> {
-        return fetch(url, {
+        return fetch(`${apiEndpoint}${url}`, {
             method: "GET",
             headers: this.get_headers(),
         }).then((response) => response.json());
     }
 
     protected post<T>(url: string, data: any): Promise<T> {
-        return fetch(url, {
+        return fetch(`${apiEndpoint}${url}`, {
             method: "POST",
             headers: this.get_headers(),
             body: JSON.stringify(data),
@@ -15,7 +17,7 @@ abstract class BaseApi {
     }
 
     protected postWithoutResponse(url: string, data: any): Promise<void> {
-        return fetch(url, {
+        return fetch(`${apiEndpoint}${url}`, {
             method: "POST",
             headers: this.get_headers(),
             body: JSON.stringify(data),
@@ -23,7 +25,7 @@ abstract class BaseApi {
     }
 
     protected put<T>(url: string, data: any): Promise<T> {
-        return fetch(url, {
+        return fetch(`${apiEndpoint}${url}`, {
             method: "PUT",
             headers: this.get_headers(),
             body: JSON.stringify(data),
@@ -31,7 +33,7 @@ abstract class BaseApi {
     }
 
     protected putWithoutResponse(url: string, data: any): Promise<void> {
-        return fetch(url, {
+        return fetch(`${apiEndpoint}${url}`, {
             method: "PUT",
             headers: this.get_headers(),
             body: JSON.stringify(data),
@@ -39,14 +41,14 @@ abstract class BaseApi {
     }
 
     protected delete<T>(url: string): Promise<T> {
-        return fetch(url, {
+        return fetch(`${apiEndpoint}${url}`, {
             method: "DELETE",
             headers: this.get_headers(),
         }).then((response) => response.json());
     }
 
     protected deleteWithoutResponse(url: string): Promise<void> {
-        return fetch(url, {
+        return fetch(`${apiEndpoint}${url}`, {
             method: "DELETE",
             headers: this.get_headers(),
         }).then(() => {});

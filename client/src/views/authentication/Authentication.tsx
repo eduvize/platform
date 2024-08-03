@@ -9,7 +9,6 @@ import {
     PaperProps,
     Button,
     Divider,
-    Checkbox,
     Anchor,
     Stack,
     Container,
@@ -17,14 +16,21 @@ import {
     Space,
 } from "@mantine/core";
 import { FacebookButton, GoogleButton } from "../../components/atoms";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuthenticated, useLogin, useRegistration } from "../../context";
+import { useEffect, useLayoutEffect } from "react";
+import { AuthenticationPayload } from "../../api/contracts";
 
 export const Authentication = (props: PaperProps) => {
+    const isAuthenticated = useAuthenticated();
+    const navigate = useNavigate();
+    const [login, loginFailed, resetLogin] = useLogin();
+    const [register, registerFailed, resetRegister] = useRegistration();
     const [type, toggle] = useToggle(["login", "register"]);
-    const form = useForm({
+    const form = useForm<AuthenticationPayload>({
         initialValues: {
             email: "",
-            name: "",
+            username: "",
             password: "",
         },
 
@@ -36,6 +42,25 @@ export const Authentication = (props: PaperProps) => {
                     : null,
         },
     });
+
+    useLayoutEffect(() => {
+        if (isAuthenticated) {
+            navigate("/app");
+        }
+    });
+
+    useEffect(() => {
+        resetLogin();
+        resetRegister();
+    }, [type]);
+
+    const handleSubmission = (data: AuthenticationPayload) => {
+        if (type === "register") {
+            register(data.email, data.username as string, data.password);
+        } else {
+            login(data.email, data.password);
+        }
+    };
 
     return (
         <Container
@@ -75,7 +100,11 @@ export const Authentication = (props: PaperProps) => {
                         my="lg"
                     />
 
-                    <form onSubmit={form.onSubmit(() => {})}>
+                    <form
+                        onSubmit={form.onSubmit((values) =>
+                            handleSubmission(values)
+                        )}
+                    >
                         <Stack>
                             <TextInput
                                 required
@@ -96,10 +125,10 @@ export const Authentication = (props: PaperProps) => {
                                 <TextInput
                                     label="Username"
                                     placeholder="johndoe"
-                                    value={form.values.name}
+                                    value={form.values.username}
                                     onChange={(event) =>
                                         form.setFieldValue(
-                                            "johndoe",
+                                            "username",
                                             event.currentTarget.value
                                         )
                                     }
@@ -124,6 +153,14 @@ export const Authentication = (props: PaperProps) => {
                                 }
                                 radius="md"
                             />
+
+                            <Center>
+                                <Text inline c="red" size="xs">
+                                    {loginFailed && "Invalid email or password"}
+                                    {registerFailed &&
+                                        "Failed to create an account"}
+                                </Text>
+                            </Center>
                         </Stack>
 
                         <Group justify="space-between" mt="xl">

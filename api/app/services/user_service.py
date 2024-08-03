@@ -41,7 +41,7 @@ class UserService:
         """
         existing_email, existing_username = await asyncio.gather(
             self.user_repo.get_user("email", email_address),
-            self.user_repo.get_user("name", username)
+            self.user_repo.get_user("username", username)
         )
         
         if existing_email:

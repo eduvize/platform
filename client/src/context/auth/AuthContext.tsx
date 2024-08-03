@@ -3,16 +3,20 @@ import { jwtDecode } from "jwt-decode";
 import { createContext, useEffect, useState } from "react";
 
 type Context = {
-    login: (email: string, password: string) => void;
-    register: (email: string, username: string, password: string) => void;
+    login: (email: string, password: string) => Promise<void>;
+    register: (
+        email: string,
+        username: string,
+        password: string
+    ) => Promise<void>;
     isAuthenticated: boolean;
     userId: string | null;
     token: string | null;
 };
 
 const defaultValue: Context = {
-    login: (email, password) => {},
-    register: (email, username, password) => {},
+    login: (email, password) => Promise.resolve(),
+    register: (email, username, password) => Promise.resolve(),
     isAuthenticated: false,
     userId: null,
     token: null,
@@ -36,10 +40,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             setToken(token);
             setIsAuthenticated(true);
 
-            const decoded: any = jwtDecode(token);
+            try {
+                const decoded: any = jwtDecode(token);
 
-            if (decoded) {
-                setUserId(decoded.id);
+                if (decoded) {
+                    setUserId(decoded.id);
+                }
+            } catch (e) {
+                console.error(e);
             }
         }
     }, []);
@@ -50,21 +58,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
 
     const handleLogin = async (email: string, password: string) => {
-        AuthApi.login(email, password)
-            .then(({ token }: any) => {
-                handleSetToken(token);
-                setIsAuthenticated(true);
-            })
-            .catch((error) => {
-                console.error(error);
-            });
+        return AuthApi.login(email, password).then(({ token }) => {
+            handleSetToken(token);
+            setIsAuthenticated(true);
+        });
     };
 
     const handleRegister = async (
         email: string,
         username: string,
         password: string
-    ) => {};
+    ) => {
+        return AuthApi.register(email, username, password).then(({ token }) => {
+            handleSetToken(token);
+            setIsAuthenticated(true);
+        });
+    };
 
     return (
         <AuthContext.Provider

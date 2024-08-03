@@ -1,29 +1,6 @@
 version: "3.8"
 
 services:
-  api:
-    build: .
-    ports:
-      - "8000:80"
-    environment:
-      - PORT=80
-      - POSTGRES_HOST=database
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=devpassword
-      - POSTGRES_DB=eduvize
-      - S3_ENDPOINT=http://s3:9000
-      - S3_PUBLIC_ENDPOINT=http://localhost:9000
-      - S3_ACCESS_KEY=minio
-      - S3_SECRET_KEY=minio123
-      - S3_BUCKET=eduvize
-      - REDIS_HOST=redis:6379
-    depends_on:
-      - database
-      - redis
-      - s3
-    networks:
-      - app-tier
-
   redis:
     image: redis:6
     ports:

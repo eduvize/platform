@@ -1,8 +1,5 @@
-import { Space, Grid, Button } from "@mantine/core";
-import { Hero } from "./Hero";
-import { Features } from "./Features";
-import { Faq } from "./Faq";
 import { Footer } from "./Footer";
+import { Faq, Features, Hero } from "./sections";
 
 export function Home() {
     return (

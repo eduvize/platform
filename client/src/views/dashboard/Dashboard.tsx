@@ -1,9 +1,11 @@
+import { Container } from "@mantine/core";
 import { SocketProvider } from "../../context";
+import { Sidebar } from "./sections";
 
 export const Dashboard = () => {
     return (
         <SocketProvider>
-            <h1>Dashboard</h1>
+            <Sidebar />
         </SocketProvider>
     );
 };
