@@ -39,8 +39,29 @@ storage:
   region: us-east-1
   size: 10Gi
 
+environment:
+  api:
+    - name: PUBLIC_UI_URL
+      value: https://eduvize.dev
+    - name: PUBLIC_URL
+      value: https://api.eduvize.dev/api
+    - name: DASHBOARD_ENDPOINT
+      value: dashboard
+    - name: SES_CONFIGURATION_SET
+      value: main-config
+    - name: SES_REGION
+      value: us-east-2
+    - name: NOREPLY_ADDRESS
+      value: no-reply@mail.eduvize.dev
+
 secretEnvironmentBlock:
   api:
+    - name: AWS_ACCESS_KEY
+      secret: aws
+      key: access-key
+    - name: AWS_SECRET_KEY
+      secret: aws
+      key: secret-key
     - name: POSTGRES_USER
       secret: postgres
       key: username

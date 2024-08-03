@@ -5,6 +5,8 @@ import uuid
 
 from fastapi import Depends, UploadFile
 from mimetypes import guess_extension, guess_type
+
+from ..services.user_onboarding_service import UserOnboardingService
 from ..routing.contracts.user_contracts import UpdateProfilePayload
 from ..common.storage import StoragePurpose, get_bucket, get_public_object_url, object_exists
 from ..models.schema.user import User, UserIdentifiers, UserIncludes, UserProfile
@@ -21,7 +23,12 @@ class UserService:
     Attributes:
         user_repo (UserRepository): The repository for user data
     """
-    def __init__(self, user_repo: UserRepository = Depends(UserRepository)):
+    
+    onboarding_service: UserOnboardingService
+    user_repo: UserRepository
+    
+    def __init__(self, user_onboarding_service: UserOnboardingService = Depends(UserOnboardingService), user_repo: UserRepository = Depends(UserRepository)):
+        self.onboarding_service = user_onboarding_service
         self.user_repo = user_repo
 
     async def create_user(self, email_address: str, username: str, password_hash: str) -> User:
@@ -55,6 +62,9 @@ class UserService:
         
         # Create a blank profile
         await self.user_repo.upsert_profile(user.id, UserProfile())
+        
+        # Begin onboarding with verification
+        await self.onboarding_service.send_verification_email(user.id)
         
         return user
     

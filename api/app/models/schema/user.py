@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 from ...common.database import Context
 import uuid
 
-UserIdentifiers = Literal["id", "username", "email"]
+UserIdentifiers = Literal["id", "username", "email", "verification_code"]
 UserIncludes = Literal["profile", "skills", "curriculums", "reviews", "enrollments", "chat_sessions"]
 
 class User(Context):

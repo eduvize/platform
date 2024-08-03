@@ -4,6 +4,8 @@
 
 .env*
 
+assets/email/*.html
+
 # react dependencies
 client/node_modules
 client/.pnp

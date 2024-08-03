@@ -40,6 +40,10 @@ spec:
               value: "{{ include "eduvize.fullname" . }}-redis-service:{{ .Values.ports.redis }}"
             - name: PORT
               value: {{ .Values.ports.api | quote }}
+            {{- range .Values.environment.api }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
             {{- range .Values.secretEnvironmentBlock.api }}
             - name: {{ .name }}
               valueFrom:

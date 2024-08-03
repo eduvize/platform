@@ -1,4 +1,4 @@
-import { Container, Stack } from "@mantine/core";
+import { Container, Notification, Stack } from "@mantine/core";
 import { SocketProvider, UserProvider } from "../../context";
 import { Header } from "./sections";
 import { SetupCta, VerificationCta } from "./cta";

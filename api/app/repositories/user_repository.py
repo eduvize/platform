@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Literal, Optional, Union
 from sqlalchemy import UUID
 from sqlalchemy.orm import joinedload
@@ -73,9 +74,39 @@ class UserRepository:
                 query = session.query(User).filter(User.username == value)
             elif by == "email":
                 query = session.query(User).filter(User.email == value)
+            elif by == "verification_code":
+                query = session.query(User).filter(User.verification_code == value and User.pending_verification == True and User.verification_code is not None)
             
             if include:
                 for field in include:
                     query = query.options(joinedload(getattr(User, field)))
         
             return query.first()
+        
+    async def set_verification_code(self, user_id: UUID, code: str) -> None:
+        """
+        Sets the verification code for a user
+
+        Args:
+            user_id (UUID): The ID of the user to set the code for
+            code (str): The verification code to set
+        """
+        with get_session() as session:
+            user = session.query(User).filter(User.id == user_id).first()
+            user.pending_verification = True
+            user.verification_sent_at_utc = datetime.utcnow()
+            user.verification_code = code
+            session.commit()
+            
+    async def mark_verified(self, user_id: UUID) -> None:
+        """
+        Marks a user as verified
+
+        Args:
+            user_id (UUID): The ID of the user to mark
+        """
+        with get_session() as session:
+            user = session.query(User).filter(User.id == user_id).first()
+            user.pending_verification = False
+            user.verification_code = None
+            session.commit()

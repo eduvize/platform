@@ -1,0 +1,1 @@
+from .welcome_email_template import get_welcome_email

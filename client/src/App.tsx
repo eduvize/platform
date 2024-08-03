@@ -1,10 +1,12 @@
+import React from "react";
 import { createTheme, MantineProvider } from "@mantine/core";
-import "./App.css";
 import { Authentication, Dashboard, Home } from "./views";
-import "@mantine/core/styles.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { AuthProvider, useAuthenticated } from "./context";
-import React from "react";
+import { Notifications } from "@mantine/notifications";
+import "./App.css";
+import "@mantine/core/styles.css";
+import "@mantine/notifications/styles.css";
 
 const AuthorizedRoute = ({ children }: { children: React.ReactNode }) => {
     const isAuthenticated = useAuthenticated();
@@ -51,6 +53,7 @@ function EduvizeApp() {
 
     return (
         <MantineProvider theme={theme} defaultColorScheme="dark">
+            <Notifications />
             <AuthProvider>
                 <RouterProvider router={router} />
             </AuthProvider>

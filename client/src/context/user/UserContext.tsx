@@ -1,7 +1,9 @@
 import { createContext, useEffect, useState } from "react";
 import { useCurrentUserId } from "../auth";
 import { UserDto, UserOnboardingStatusDto } from "../../models/dto";
+import { notifications } from "@mantine/notifications";
 import UserApi from "../../api/UserApi";
+import { IconCheck } from "@tabler/icons-react";
 
 type Context = {
     userDetails: UserDto | null;
@@ -41,6 +43,19 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         UserApi.getOnboardingStatus()
             .then((status) => {
                 setOnboardingStatus(status);
+
+                if (status.recently_verified) {
+                    notifications.show({
+                        id: "recently-verified",
+                        withCloseButton: true,
+                        autoClose: 5000,
+                        title: "Account verified",
+                        message: "Your account has been verified successfully",
+                        color: "green",
+                        icon: <IconCheck />,
+                        loading: false,
+                    });
+                }
             })
             .catch(() => {
                 setOnboardingStatus(null);

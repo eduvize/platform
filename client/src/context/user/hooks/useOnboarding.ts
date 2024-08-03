@@ -8,6 +8,7 @@ export const useOnboarding = () => {
         onboardingStatus || {
             is_verified: false,
             is_profile_complete: false,
+            recently_verified: true,
         }
     );
 };

@@ -1,0 +1,37 @@
+<mjml>
+  <mj-body background-color="#fff">
+
+    <mj-spacer height="50px"></mj-spacer>
+
+    <mj-wrapper background-color="#242424" border="2px solid #9a9a9a" padding="50px 20px">
+      <mj-section>
+        <mj-column>
+
+          <mj-text font-size="54px" color="#fafafa" font-weight="bold" font-family="Ubuntu">EDUVIZE</mj-text>
+
+          <mj-divider border-color="#1971c2"></mj-divider>
+
+          <mj-text font-size="32px" color="#fafafa" font-weight="bold" font-family="helvetica">Welcome, {{username}}!</mj-text>
+          <mj-text font-size="16px" color="#e0e0e0" font-family="helvetica">
+            We were told you just made an account on our platform - we're just making sure that this was not only intentional, but also you.
+          </mj-text>
+
+          <mj-text font-size="16px" color="#e0e0e0" font-family="helvetica">
+            If this is unsolicited, we apologize for the inconvenience. Please ignore this email.
+          </mj-text>
+
+          <mj-text font-size="24px" color="#fafafa" font-weight="bold" font-family="helvetica">Verify your account</mj-text>
+
+          <mj-text font-size="16px" color="#e0e0e0" font-family="helvetica">
+            In order to begin using our platform, you'll need to verify your email address. Click the link below to do this:
+          </mj-text>
+
+          <mj-text font-size="16px" color="#e0e0e0" font-family="helvetica">
+            {{verification_link}}
+          </mj-text>
+        </mj-column>
+      </mj-section>
+
+    </mj-wrapper>
+  </mj-body>
+</mjml>

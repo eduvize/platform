@@ -39,9 +39,10 @@ class UserDto(BaseModel):
     def validate_created_at_utc(cls, v):
         return str(v)
     
-    class UserOnboardingStatusDto(BaseModel):
-        is_verified: bool
-        is_profile_complete: bool
-        
-        class Config:
-            from_attributes = True
+class UserOnboardingStatusDto(BaseModel):
+    is_verified: bool
+    is_profile_complete: bool
+    recently_verified: bool
+    
+    class Config:
+        from_attributes = True

@@ -1,10 +1,14 @@
 from fastapi import APIRouter, Depends, File, UploadFile
+from config import get_dashboard_endpoint
 
-from .contracts.file_contracts import FileUploadResponse
-from .contracts.user_contracts import UpdateProfilePayload
+
 from .middleware.token_middleware import token_extractor, user_id_extractor
+from .contracts.user_contracts import UpdateProfilePayload
+from .contracts.file_contracts import FileUploadResponse
+from .responses import raise_bad_request, redirect, raise_unauthorized
+from ..utilities.endpoints import get_public_endpoint, get_public_ui_endpoint
+from ..services.user_onboarding_service import UserOnboardingService, VerificationExpiredError
 from ..models.dto.user import UserDto
-
 from ..services.user_service import UserService
 
 router = APIRouter(
@@ -18,8 +22,8 @@ async def get_me(user_id: str = Depends(user_id_extractor), user_service: UserSe
     return UserDto.model_validate(current_user)
 
 @router.get("/me/onboarding")
-async def get_onboarding_status(user_id: str = Depends(user_id_extractor), user_service: UserService = Depends(UserService)):
-    return await user_service.get_onboarding_status(user_id)
+async def get_onboarding_status(user_id: str = Depends(user_id_extractor), user_onboarding_service: UserOnboardingService = Depends(UserOnboardingService)):
+    return await user_onboarding_service.get_onboarding_status(user_id)
 
 @router.put("/me/profile")
 async def update_profile(payload: UpdateProfilePayload, user_id: str = Depends(user_id_extractor), user_service: UserService = Depends(UserService)):
@@ -28,12 +32,9 @@ async def update_profile(payload: UpdateProfilePayload, user_id: str = Depends(u
 @router.post("/me/profile/avatar")
 async def upload_avatar(file: UploadFile = File(...), user_id: str = Depends(user_id_extractor), user_service: UserService = Depends(UserService)):
     object_id = await user_service.upload_avatar(user_id, file)
-    
+    return FileUploadResponse.model_construct(file_id=object_id)
+
 @router.get("/{username}")
 async def get_user(username: str, user_service: UserService = Depends(UserService)):
     details = await user_service.get_user("username", username)
     return UserDto.model_validate(details)
-
-
-    
-    return FileUploadResponse.model_construct(file_id=object_id)
