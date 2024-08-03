@@ -1,8 +1,14 @@
 const apiEndpoint = import.meta.env.VITE_API_ENDPOINT;
 
 abstract class BaseApi {
+    private prefix: string;
+
+    constructor(prefix: string) {
+        this.prefix = prefix;
+    }
+
     protected get<T>(url: string): Promise<T> {
-        return fetch(`${apiEndpoint}${url}`, {
+        return fetch(`${apiEndpoint}/${this.prefix}/${url}`, {
             method: "GET",
             headers: this.get_headers(),
         })
@@ -11,7 +17,7 @@ abstract class BaseApi {
     }
 
     protected post<T>(url: string, data: any): Promise<T> {
-        return fetch(`${apiEndpoint}${url}`, {
+        return fetch(`${apiEndpoint}/${this.prefix}/${url}`, {
             method: "POST",
             headers: this.get_headers(),
             body: JSON.stringify(data),
@@ -21,7 +27,7 @@ abstract class BaseApi {
     }
 
     protected postWithoutResponse(url: string, data: any): Promise<void> {
-        return fetch(`${apiEndpoint}${url}`, {
+        return fetch(`${apiEndpoint}/${this.prefix}/${url}`, {
             method: "POST",
             headers: this.get_headers(),
             body: JSON.stringify(data),
@@ -31,7 +37,7 @@ abstract class BaseApi {
     }
 
     protected put<T>(url: string, data: any): Promise<T> {
-        return fetch(`${apiEndpoint}${url}`, {
+        return fetch(`${apiEndpoint}/${this.prefix}/${url}`, {
             method: "PUT",
             headers: this.get_headers(),
             body: JSON.stringify(data),
@@ -41,7 +47,7 @@ abstract class BaseApi {
     }
 
     protected putWithoutResponse(url: string, data: any): Promise<void> {
-        return fetch(`${apiEndpoint}${url}`, {
+        return fetch(`${apiEndpoint}/${this.prefix}/${url}`, {
             method: "PUT",
             headers: this.get_headers(),
             body: JSON.stringify(data),
@@ -51,7 +57,7 @@ abstract class BaseApi {
     }
 
     protected delete<T>(url: string): Promise<T> {
-        return fetch(`${apiEndpoint}${url}`, {
+        return fetch(`${apiEndpoint}/${this.prefix}/${url}`, {
             method: "DELETE",
             headers: this.get_headers(),
         })
@@ -60,7 +66,7 @@ abstract class BaseApi {
     }
 
     protected deleteWithoutResponse(url: string): Promise<void> {
-        return fetch(`${apiEndpoint}${url}`, {
+        return fetch(`${apiEndpoint}/${this.prefix}/${url}`, {
             method: "DELETE",
             headers: this.get_headers(),
         })
