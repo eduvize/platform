@@ -5,7 +5,9 @@ abstract class BaseApi {
         return fetch(`${apiEndpoint}${url}`, {
             method: "GET",
             headers: this.get_headers(),
-        }).then((response) => response.json());
+        })
+            .then(this.checkUnauthorized)
+            .then((response) => response.json());
     }
 
     protected post<T>(url: string, data: any): Promise<T> {
@@ -13,7 +15,9 @@ abstract class BaseApi {
             method: "POST",
             headers: this.get_headers(),
             body: JSON.stringify(data),
-        }).then((response) => response.json());
+        })
+            .then(this.checkUnauthorized)
+            .then((response) => response.json());
     }
 
     protected postWithoutResponse(url: string, data: any): Promise<void> {
@@ -21,7 +25,9 @@ abstract class BaseApi {
             method: "POST",
             headers: this.get_headers(),
             body: JSON.stringify(data),
-        }).then(() => {});
+        })
+            .then(this.checkUnauthorized)
+            .then(() => {});
     }
 
     protected put<T>(url: string, data: any): Promise<T> {
@@ -29,7 +35,9 @@ abstract class BaseApi {
             method: "PUT",
             headers: this.get_headers(),
             body: JSON.stringify(data),
-        }).then((response) => response.json());
+        })
+            .then(this.checkUnauthorized)
+            .then((response) => response.json());
     }
 
     protected putWithoutResponse(url: string, data: any): Promise<void> {
@@ -37,22 +45,37 @@ abstract class BaseApi {
             method: "PUT",
             headers: this.get_headers(),
             body: JSON.stringify(data),
-        }).then(() => {});
+        })
+            .then(this.checkUnauthorized)
+            .then(() => {});
     }
 
     protected delete<T>(url: string): Promise<T> {
         return fetch(`${apiEndpoint}${url}`, {
             method: "DELETE",
             headers: this.get_headers(),
-        }).then((response) => response.json());
+        })
+            .then(this.checkUnauthorized)
+            .then((response) => response.json());
     }
 
     protected deleteWithoutResponse(url: string): Promise<void> {
         return fetch(`${apiEndpoint}${url}`, {
             method: "DELETE",
             headers: this.get_headers(),
-        }).then(() => {});
+        })
+            .then(this.checkUnauthorized)
+            .then(() => {});
     }
+
+    private checkUnauthorized = (response: Response) => {
+        if (response.status === 401) {
+            localStorage.removeItem("token");
+            window.location.reload();
+        }
+
+        return response;
+    };
 
     private get_headers = () => {
         const token = localStorage.getItem("token");

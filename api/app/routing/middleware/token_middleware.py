@@ -3,7 +3,7 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from config import get_token_secret
-from ...utilities.jwt import decode_token
+from ...utilities.jwt import InvalidJWTToken, decode_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -22,7 +22,7 @@ def token_extractor(token: str = Depends(oauth2_scheme)) -> dict:
     """
     try:
         return decode_token(token, get_token_secret())
-    except jwt.PyJWTError:
+    except InvalidJWTToken:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token received"

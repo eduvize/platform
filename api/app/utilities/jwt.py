@@ -4,6 +4,13 @@ from typing import Optional
 
 import jwt
 
+class InvalidJWTToken(Exception):
+    """Exception raised for invalid JWT tokens"""
+
+    def __init__(self, message: str = "Invalid JWT token"):
+        self.message = message
+        super().__init__(self.message)
+
 def create_token(data: dict, secret: str, expiration_minutes: int) -> str:
     """
     Creates a new JWT token using the provided data, signing key, and expiration time
@@ -42,4 +49,4 @@ def decode_token(token: str, secret: Optional[str]) -> dict:
         data = jwt.decode(token, secret, algorithms=["HS256"])
         return data
     except jwt.PyJWTError:
-        raise ValueError("Invalid token received")
+        raise InvalidJWTToken("Invalid token received")
