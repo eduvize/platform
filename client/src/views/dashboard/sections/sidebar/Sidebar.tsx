@@ -2,23 +2,13 @@ import { useState } from "react";
 import { Center, Tooltip, UnstyledButton, Stack, rem } from "@mantine/core";
 import {
     IconHome2,
-    IconGauge,
-    IconDeviceDesktopAnalytics,
-    IconFingerprint,
-    IconCalendarStats,
-    IconUser,
     IconSettings,
     IconLogout,
-    IconSwitchHorizontal,
     IconVocabulary,
-    IconUserHexagon,
-    IconUserCircle,
     IconGraph,
-    IconAppsFilled,
-    IconIdBadge,
     IconIdBadge2,
+    IconBooks,
 } from "@tabler/icons-react";
-import logo from "../../logo.png";
 import classes from "./Sidebar.module.css";
 
 interface NavbarLinkProps {
@@ -41,7 +31,7 @@ function NavbarLink({ icon: Icon, label, active, onClick }: NavbarLinkProps) {
                 data-active={active || undefined}
             >
                 <Icon
-                    style={{ width: rem(26), height: rem(26) }}
+                    style={{ width: rem(24), height: rem(24) }}
                     stroke={1.5}
                 />
             </UnstyledButton>
@@ -52,8 +42,7 @@ function NavbarLink({ icon: Icon, label, active, onClick }: NavbarLinkProps) {
 const mockdata = [
     { icon: IconHome2, label: "Home" },
     { icon: IconIdBadge2, label: "Your profile" },
-    { icon: IconVocabulary, label: "Your courses" },
-    { icon: IconGraph, label: "Analytics" },
+    { icon: IconBooks, label: "Your courses" },
 ];
 
 export function Sidebar() {
@@ -71,7 +60,7 @@ export function Sidebar() {
     return (
         <nav className={classes.navbar}>
             <div className={classes.navbarMain}>
-                <Stack justify="center" gap={0}>
+                <Stack justify="center" gap={24}>
                     {links}
                 </Stack>
             </div>

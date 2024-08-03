@@ -45,7 +45,7 @@ export const Authentication = (props: PaperProps) => {
 
     useLayoutEffect(() => {
         if (isAuthenticated) {
-            navigate("/app");
+            navigate("/dashboard");
         }
     });
 

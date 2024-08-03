@@ -31,8 +31,18 @@ const router = createBrowserRouter([
         element: <Authentication />,
     },
     {
-        path: "/app",
+        path: "/dashboard/*",
         element: <DashboardOrAuth />,
+        children: [
+            { path: "courses", element: <DashboardOrAuth /> },
+            { path: "profile", element: <DashboardOrAuth /> },
+            { path: "jobs", element: <DashboardOrAuth /> },
+            {
+                path: "account/*",
+                element: <DashboardOrAuth />,
+                children: [{ path: "billing", element: <DashboardOrAuth /> }],
+            },
+        ],
     },
 ]);
 
