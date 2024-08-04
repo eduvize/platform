@@ -1,6 +1,21 @@
 version: "3.8"
 
 services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      - S3_ENDPOINT=http://s3:9000
+      - POSTGRES_HOST=database
+      - REDIS_HOST=redis
+    ports:
+      - "8000:8000"
+    networks:
+      - app-tier
+
   redis:
     image: redis:6
     ports:

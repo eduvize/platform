@@ -14,7 +14,7 @@ storage_resource = boto3.resource(
     aws_access_key_id=get_s3_access_key(),
     aws_secret_access_key=get_s3_secret_key(),
     config=Config(signature_version='s3v4'),
-    region_name='us-east-1'
+    region_name='us-east-1',
 )
 
 def get_bucket(purpose: StoragePurpose) -> Bucket:
