@@ -6,6 +6,7 @@ import { AuthProvider, useAuthenticated } from "./context";
 import { Notifications } from "@mantine/notifications";
 import "./App.css";
 import "@mantine/core/styles.css";
+import "@mantine/dates/styles.css";
 import "@mantine/notifications/styles.css";
 
 const AuthorizedRoute = ({ children }: { children: React.ReactNode }) => {
