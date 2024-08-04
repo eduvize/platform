@@ -24,38 +24,36 @@ export const Dashboard = () => {
     return (
         <SocketProvider>
             <UserProvider>
-                <Stack h="100vh">
-                    <Header />
+                <Header />
 
-                    <Container size={containerWidth}>
-                        <Routes>
-                            <Route
-                                path="/"
-                                element={
-                                    <CallToActionOrView>
-                                        <Courses />
-                                    </CallToActionOrView>
-                                }
-                            />
-                            <Route
-                                path="courses"
-                                element={
-                                    <CallToActionOrView>
-                                        <Courses />
-                                    </CallToActionOrView>
-                                }
-                            />
-                            <Route
-                                path="profile"
-                                element={
-                                    <CallToActionOrView>
-                                        <Profile />
-                                    </CallToActionOrView>
-                                }
-                            />
-                        </Routes>
-                    </Container>
-                </Stack>
+                <Container size={containerWidth}>
+                    <Routes>
+                        <Route
+                            path="/"
+                            element={
+                                <CallToActionOrView>
+                                    <Courses />
+                                </CallToActionOrView>
+                            }
+                        />
+                        <Route
+                            path="courses"
+                            element={
+                                <CallToActionOrView>
+                                    <Courses />
+                                </CallToActionOrView>
+                            }
+                        />
+                        <Route
+                            path="profile"
+                            element={
+                                <CallToActionOrView>
+                                    <Profile />
+                                </CallToActionOrView>
+                            }
+                        />
+                    </Routes>
+                </Container>
             </UserProvider>
         </SocketProvider>
     );
