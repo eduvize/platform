@@ -26,6 +26,18 @@ abstract class BaseApi {
             .then((response) => response.json());
     }
 
+    protected postForm<T>(url: string, data: FormData): Promise<T> {
+        return fetch(`${apiEndpoint}/${this.prefix}/${url}`, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: data,
+        })
+            .then(this.checkUnauthorized)
+            .then((response) => response.json());
+    }
+
     protected postWithoutResponse(url: string, data: any): Promise<void> {
         return fetch(`${apiEndpoint}/${this.prefix}/${url}`, {
             method: "POST",
