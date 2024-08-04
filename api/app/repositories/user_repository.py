@@ -3,7 +3,7 @@ from typing import List, Literal, Optional, Union
 from sqlalchemy import UUID
 from sqlalchemy.orm import joinedload
 from ..common.database import get_session
-from ..models.schema.user import User, UserIdentifiers, UserIncludes, UserProfile
+from ..domain.schema.user import User, UserIdentifiers, UserIncludes, UserProfile
 
 class UserRepository:
     """

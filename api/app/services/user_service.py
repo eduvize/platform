@@ -9,7 +9,7 @@ from mimetypes import guess_extension, guess_type
 from ..services.user_onboarding_service import UserOnboardingService
 from ..routing.contracts.user_contracts import UpdateProfilePayload
 from ..common.storage import StoragePurpose, get_bucket, get_public_object_url, object_exists
-from ..models.schema.user import User, UserIdentifiers, UserIncludes, UserProfile
+from ..domain.schema.user import User, UserIdentifiers, UserIncludes, UserProfile
 from ..repositories.user_repository import UserRepository
 
 class UserCreationError(Exception):

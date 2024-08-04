@@ -8,7 +8,7 @@ from .contracts.file_contracts import FileUploadResponse
 from .responses import raise_bad_request, redirect, raise_unauthorized
 from ..utilities.endpoints import get_public_endpoint, get_public_ui_endpoint
 from ..services.user_onboarding_service import UserOnboardingService, VerificationExpiredError
-from ..models.dto.user import UserDto
+from ..domain.dto.user import UserDto
 from ..services.user_service import UserService
 
 router = APIRouter(
