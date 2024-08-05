@@ -1,2 +1,0 @@
-class ModelService:
-    pass

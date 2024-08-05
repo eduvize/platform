@@ -73,3 +73,7 @@ def get_email_region() -> str:
 
 def get_email_noreply_address() -> str:
     return os.getenv("NOREPLY_ADDRESS")
+
+# OpenAI
+def get_openai_key() -> str:
+    return os.getenv("OPENAI_KEY")

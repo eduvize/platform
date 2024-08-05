@@ -1,6 +1,7 @@
 import AuthApi from "../../api/AuthApi";
 import { jwtDecode } from "jwt-decode";
-import { createContext, useEffect, useState } from "react";
+import { createContext } from "use-context-selector";
+import { useEffect, useState } from "react";
 
 type Context = {
     login: (email: string, password: string) => Promise<void>;

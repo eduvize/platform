@@ -1,5 +1,4 @@
 import {
-    Divider,
     Space,
     Stack,
     Center,
@@ -10,316 +9,291 @@ import {
     InputLabel,
     Input,
     Textarea,
-    Text,
     Chip,
-    PillsInput,
-    Pill,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { UserDto } from "../../../../../models/dto";
 import { ProfileUpdatePayload } from "../../../../../api/contracts/ProfileUpdatePayload";
-import { useRef, useState } from "react";
+import { memo, useRef, useState } from "react";
 import UserApi from "../../../../../api/UserApi";
 import {
     AdvancedPillInput,
     SpacedDivider,
 } from "../../../../../components/molecules";
-import { IconX } from "@tabler/icons-react";
+import AutocompleteApi from "../../../../../api/AutocompleteApi";
+import { EngineeringDiscipline } from "../../../../../models/enums";
+import { UseFormReturnType } from "@mantine/form";
 
 interface BasicInfoStepProps {
     toggleStep: (step: string) => void;
     userDetails: UserDto | null;
-    values: ProfileUpdatePayload;
-    onChange: (value: Partial<ProfileUpdatePayload>) => void;
+    form: UseFormReturnType<ProfileUpdatePayload>;
     onAvatarChange: () => void;
 }
 
-export const BasicInfoStep = ({
-    toggleStep,
-    userDetails,
-    values,
-    onChange,
-    onAvatarChange,
-}: BasicInfoStepProps) => {
-    const avatarInputRef = useRef<HTMLInputElement>(null);
+export const BasicInfoStep = memo(
+    ({ toggleStep, userDetails, form, onAvatarChange }: BasicInfoStepProps) => {
+        const avatarInputRef = useRef<HTMLInputElement>(null);
+        const [disciplines, setDisciplines] = useState<EngineeringDiscipline[]>(
+            []
+        );
 
-    const handleAvatarUpload = () => {
-        const file = avatarInputRef.current?.files?.[0];
+        const handleAvatarUpload = () => {
+            const file = avatarInputRef.current?.files?.[0];
 
-        if (!file) return;
+            if (!file) return;
 
-        UserApi.uploadAvatar(file).then(() => {
-            onAvatarChange();
-        });
-    };
+            UserApi.uploadAvatar(file).then(() => {
+                onAvatarChange();
+            });
+        };
 
-    const handleMergeProgrammingLanguages = (languages: string[]) => {
-        const updatedLanguages = [...values.programming_languages];
-
-        languages.forEach((language) => {
-            if (!updatedLanguages.find((x) => x.name === language)) {
-                updatedLanguages.push({ name: language, proficiency: null });
+        const handleToggleDiscipline = (discipline: EngineeringDiscipline) => {
+            if (disciplines.includes(discipline)) {
+                setDisciplines(disciplines.filter((x) => x !== discipline));
+            } else {
+                setDisciplines([...disciplines, discipline]);
             }
-        });
+        };
 
-        updatedLanguages.forEach((language) => {
-            if (!languages.includes(language.name)) {
-                updatedLanguages.splice(
-                    updatedLanguages.findIndex((x) => x.name === language.name),
-                    1
-                );
-            }
-        });
+        console.log(form.getInputProps("programming_languages"));
 
-        onChange({ programming_languages: updatedLanguages });
-    };
+        return (
+            <>
+                <input
+                    type="file"
+                    ref={avatarInputRef}
+                    onChange={handleAvatarUpload}
+                    accept="image/jpg, image/jpeg, image/png"
+                    style={{ display: "none" }}
+                />
 
-    const handleMergeLibraries = (libraries: string[]) => {
-        const updatedLibraries = [...values.libraries];
+                <SpacedDivider
+                    label="Basic Information"
+                    labelPosition="left"
+                    labelColor="blue"
+                    labelSize="lg"
+                    spacePlacement="bottom"
+                    spacing="sm"
+                />
 
-        libraries.forEach((library) => {
-            if (!updatedLibraries.find((x) => x.name === library)) {
-                updatedLibraries.push({ name: library, proficiency: null });
-            }
-        });
-
-        updatedLibraries.forEach((library) => {
-            if (!libraries.includes(library.name)) {
-                updatedLibraries.splice(
-                    updatedLibraries.findIndex((x) => x.name === library.name),
-                    1
-                );
-            }
-        });
-
-        onChange({ libraries: updatedLibraries });
-    };
-
-    return (
-        <>
-            <input
-                type="file"
-                ref={avatarInputRef}
-                onChange={handleAvatarUpload}
-                accept="image/jpg, image/jpeg, image/png"
-                style={{ display: "none" }}
-            />
-
-            <SpacedDivider
-                label="Basic Information"
-                labelPosition="left"
-                labelColor="blue"
-                labelSize="lg"
-                spacePlacement="bottom"
-                spacing="sm"
-            />
-
-            <Stack gap="1em">
-                <Center>
-                    <Tooltip label="Upload a profile picture" position="bottom">
-                        <UnstyledButton
-                            onClick={() => avatarInputRef.current?.click()}
+                <Stack gap="1em">
+                    <Center>
+                        <Tooltip
+                            label="Upload a profile picture"
+                            position="bottom"
                         >
-                            <Avatar
-                                src={
-                                    userDetails?.profile?.avatar_url ||
-                                    undefined
-                                }
-                                size="10rem"
-                                radius="xl"
-                            />
-                        </UnstyledButton>
-                    </Tooltip>
-                </Center>
+                            <UnstyledButton
+                                onClick={() => avatarInputRef.current?.click()}
+                            >
+                                <Avatar
+                                    src={
+                                        userDetails?.profile?.avatar_url ||
+                                        undefined
+                                    }
+                                    size="10rem"
+                                    radius="xl"
+                                />
+                            </UnstyledButton>
+                        </Tooltip>
+                    </Center>
 
-                <Space h="sm" />
+                    <Space h="sm" />
 
-                <Stack>
-                    <Group justify="space-between">
-                        <Stack w="48%" gap={0}>
-                            <InputLabel>First name</InputLabel>
-                            <Input
-                                placeholder="John"
-                                value={values.first_name || ""}
-                                onChange={(event) =>
-                                    onChange({
-                                        first_name: event.currentTarget.value,
-                                    })
-                                }
-                            />
-                        </Stack>
+                    <Stack>
+                        <Group justify="space-between">
+                            <Stack w="48%" gap={0}>
+                                <InputLabel>First name</InputLabel>
+                                <Input
+                                    {...form.getInputProps("first_name")}
+                                    placeholder="John"
+                                />
+                            </Stack>
 
-                        <Stack w="48%" gap={0}>
-                            <InputLabel>Last name</InputLabel>
-                            <Input
-                                placeholder="Doe"
-                                value={values.last_name || ""}
-                                onChange={(event) =>
-                                    onChange({
-                                        last_name: event.currentTarget.value,
-                                    })
-                                }
-                            />
-                        </Stack>
-                    </Group>
+                            <Stack w="48%" gap={0}>
+                                <InputLabel>Last name</InputLabel>
+                                <Input
+                                    {...form.getInputProps("last_name")}
+                                    placeholder="Doe"
+                                />
+                            </Stack>
+                        </Group>
 
-                    <Group justify="space-between">
-                        <Stack w="48%" gap={0}>
-                            <InputLabel>Favorite Animal</InputLabel>
-                            <Input
-                                placeholder=""
-                                value={values.first_name || ""}
-                                onChange={(event) =>
-                                    onChange({
-                                        first_name: event.currentTarget.value,
-                                    })
-                                }
-                            />
-                        </Stack>
+                        <Group justify="space-between">
+                            <Stack w="48%" gap={0}>
+                                <InputLabel>Favorite Animal</InputLabel>
+                                <Input
+                                    {...form.getInputProps("favorite_animal")}
+                                    placeholder=""
+                                />
+                            </Stack>
 
-                        <Stack w="48%" gap={0}>
-                            <InputLabel>Favorite Activity</InputLabel>
-                            <Input
-                                placeholder=""
-                                value={values.last_name || ""}
-                                onChange={(event) =>
-                                    onChange({
-                                        last_name: event.currentTarget.value,
-                                    })
-                                }
-                            />
-                        </Stack>
-                    </Group>
+                            <Stack w="48%" gap={0}>
+                                <InputLabel>Favorite Activity</InputLabel>
+                                <Input
+                                    {...form.getInputProps("favorite_activity")}
+                                    placeholder=""
+                                />
+                            </Stack>
+                        </Group>
 
-                    <DateInput
-                        label="Birthdate"
-                        placeholder="MM/DD/YYYY"
-                        valueFormat="MM/DD/YYYY"
-                    />
+                        <DateInput
+                            label="Birthdate"
+                            placeholder="MM/DD/YYYY"
+                            valueFormat="MM/DD/YYYY"
+                        />
 
-                    <Textarea
-                        label="Bio"
-                        placeholder="Introduce yourself - what are your goals, do you like to be challenged? Give us a brief overview"
-                        value={values.bio || ""}
-                        onChange={(event) =>
-                            onChange({
-                                bio: event.currentTarget.value,
-                            })
-                        }
-                        rows={4}
-                    />
+                        <Textarea
+                            {...form.getInputProps("bio")}
+                            label="Bio"
+                            placeholder="Introduce yourself - what are your goals, do you like to be challenged? Give us a brief overview"
+                            rows={4}
+                        />
+                    </Stack>
                 </Stack>
-            </Stack>
 
-            <SpacedDivider
-                label="Where are you in your journey?"
-                labelPosition="left"
-                labelColor="blue"
-                labelSize="lg"
-                spacing="sm"
-            />
+                <SpacedDivider
+                    label="Where are you in your journey?"
+                    labelPosition="left"
+                    labelColor="blue"
+                    labelSize="lg"
+                    spacing="sm"
+                />
 
-            <Stack gap="1em">
-                <Center>
-                    <Group>
-                        <Chip
-                            color="green"
-                            size="md"
-                            onClick={() => toggleStep("hobby")}
-                        >
-                            I'm a hobbyist
-                        </Chip>
+                <Stack gap="1em">
+                    <Center>
+                        <Group>
+                            <Chip
+                                color="green"
+                                size="md"
+                                onClick={() => toggleStep("hobby")}
+                            >
+                                I'm a hobbyist
+                            </Chip>
 
-                        <Chip
-                            color="green"
-                            size="md"
-                            onClick={() => toggleStep("education")}
-                        >
-                            I am or have been a student
-                        </Chip>
+                            <Chip
+                                color="green"
+                                size="md"
+                                onClick={() => toggleStep("education")}
+                            >
+                                I am or have been a student
+                            </Chip>
 
-                        <Chip
-                            color="green"
-                            size="md"
-                            onClick={() => toggleStep("employment")}
-                        >
-                            I'm working in the industry
-                        </Chip>
-                    </Group>
-                </Center>
-            </Stack>
+                            <Chip
+                                color="green"
+                                size="md"
+                                onClick={() => toggleStep("employment")}
+                            >
+                                I'm working in the industry
+                            </Chip>
+                        </Group>
+                    </Center>
+                </Stack>
 
-            <SpacedDivider
-                label="What do you specialize in?"
-                labelPosition="left"
-                labelColor="blue"
-                labelSize="lg"
-                spacing="sm"
-            />
+                <SpacedDivider
+                    label="What do you specialize in?"
+                    labelPosition="left"
+                    labelColor="blue"
+                    labelSize="lg"
+                    spacing="sm"
+                />
 
-            <Stack gap="1em">
-                <Center>
-                    <Group>
-                        <Chip
-                            color="green"
-                            size="md"
-                            onClick={() => toggleStep("hobby")}
-                        >
-                            Frontend
-                        </Chip>
+                <Stack gap="1em">
+                    <Center>
+                        <Group>
+                            <Chip
+                                color="green"
+                                size="md"
+                                checked={disciplines.includes(
+                                    EngineeringDiscipline.Frontend
+                                )}
+                                onClick={() =>
+                                    handleToggleDiscipline(
+                                        EngineeringDiscipline.Frontend
+                                    )
+                                }
+                            >
+                                Frontend
+                            </Chip>
 
-                        <Chip
-                            color="green"
-                            size="md"
-                            onClick={() => toggleStep("education")}
-                        >
-                            Backend
-                        </Chip>
+                            <Chip
+                                color="green"
+                                size="md"
+                                checked={disciplines.includes(
+                                    EngineeringDiscipline.Backend
+                                )}
+                                onClick={() =>
+                                    handleToggleDiscipline(
+                                        EngineeringDiscipline.Backend
+                                    )
+                                }
+                            >
+                                Backend
+                            </Chip>
 
-                        <Chip
-                            color="green"
-                            size="md"
-                            onClick={() => toggleStep("employment")}
-                        >
-                            Database
-                        </Chip>
+                            <Chip
+                                color="green"
+                                size="md"
+                                checked={disciplines.includes(
+                                    EngineeringDiscipline.Database
+                                )}
+                                onClick={() =>
+                                    handleToggleDiscipline(
+                                        EngineeringDiscipline.Database
+                                    )
+                                }
+                            >
+                                Database
+                            </Chip>
 
-                        <Chip
-                            color="green"
-                            size="md"
-                            onClick={() => toggleStep("employment")}
-                        >
-                            Infrastructure / DevOps
-                        </Chip>
-                    </Group>
-                </Center>
-            </Stack>
+                            <Chip
+                                color="green"
+                                size="md"
+                                checked={disciplines.includes(
+                                    EngineeringDiscipline.DevOps
+                                )}
+                                onClick={() =>
+                                    handleToggleDiscipline(
+                                        EngineeringDiscipline.DevOps
+                                    )
+                                }
+                            >
+                                Infrastructure / DevOps
+                            </Chip>
+                        </Group>
+                    </Center>
+                </Stack>
 
-            <SpacedDivider
-                label="What programming languages are you proficient in?"
-                labelPosition="left"
-                labelColor="blue"
-                labelSize="lg"
-                spacing="sm"
-            />
+                <SpacedDivider
+                    label="What programming languages are you proficient in?"
+                    labelPosition="left"
+                    labelColor="blue"
+                    labelSize="lg"
+                    spacing="sm"
+                />
 
-            <AdvancedPillInput
-                values={values.programming_languages.map((x) => x.name)}
-                onChange={handleMergeProgrammingLanguages}
-            />
+                <AdvancedPillInput
+                    {...form.getInputProps("programming_languages")}
+                    valueFetch={(query) =>
+                        AutocompleteApi.getProgrammingLanguages(query)
+                    }
+                />
 
-            <SpacedDivider
-                label="Which frameworks / libraries have you worked with?"
-                labelPosition="left"
-                labelColor="blue"
-                labelSize="lg"
-                spacing="sm"
-            />
+                <SpacedDivider
+                    label="Which frameworks / libraries have you worked with?"
+                    labelPosition="left"
+                    labelColor="blue"
+                    labelSize="lg"
+                    spacing="sm"
+                />
 
-            <AdvancedPillInput
-                values={values.libraries.map((x) => x.name)}
-                onChange={handleMergeLibraries}
-            />
-        </>
-    );
-};
+                <AdvancedPillInput
+                    {...form.getInputProps("libraries")}
+                    valueFetch={(query) => {
+                        return AutocompleteApi.getLibraries(disciplines, query);
+                    }}
+                />
+            </>
+        );
+    }
+);

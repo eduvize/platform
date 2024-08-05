@@ -1,10 +1,11 @@
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { AuthContext } from "../AuthContext";
+import { useContextSelector } from "use-context-selector";
 
 type LoginFuncType = (email: string, password: string) => void;
 
 export const useLogin = (): [LoginFuncType, boolean, CallableFunction] => {
-    const { login } = useContext(AuthContext);
+    const login = useContextSelector(AuthContext, (v) => v.login);
     const [failed, setFailed] = useState(false);
 
     return [

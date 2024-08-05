@@ -1,8 +1,12 @@
 import { useContext } from "react";
 import { UserContext } from "../UserContext";
+import { useContextSelector } from "use-context-selector";
 
 export const useOnboarding = () => {
-    const { onboardingStatus } = useContext(UserContext);
+    const onboardingStatus = useContextSelector(
+        UserContext,
+        (v) => v.onboardingStatus
+    );
 
     return (
         onboardingStatus || {

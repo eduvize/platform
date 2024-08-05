@@ -9,13 +9,13 @@ import {
     Text,
     Title,
 } from "@mantine/core";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { useCurrentUser } from "../../../../context/user/hooks";
 import { useForm } from "@mantine/form";
 import { BasicInfoStep, ProfileStepper } from "./steps";
 import { ProfileUpdatePayload } from "../../../../api/contracts/ProfileUpdatePayload";
 
-export const Profile = () => {
+export const Profile = memo(() => {
     const [userDetails, refresh] = useCurrentUser();
     const [steps, setSteps] = useState(["basic"]);
     const [canMoveOn, setCanMoveOn] = useState(false);
@@ -74,9 +74,8 @@ export const Profile = () => {
                         <Card shadow="xs" padding="xl" withBorder>
                             <BasicInfoStep
                                 userDetails={userDetails}
-                                values={form.values}
                                 toggleStep={handleToggleStep}
-                                onChange={(values) => form.setValues(values)}
+                                form={form}
                                 onAvatarChange={() => refresh()}
                             />
                             {/*<HobbiesStep />*/}
@@ -96,4 +95,4 @@ export const Profile = () => {
             </Stack>
         </Container>
     );
-};
+});

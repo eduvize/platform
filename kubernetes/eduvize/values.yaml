@@ -74,6 +74,9 @@ secretEnvironmentBlock:
     - name: S3_SECRET_KEY
       secret: s3
       key: root-password
+    - name: OPENAI_KEY
+      secret: openai
+      key: api-key
   postgres:
     - name: POSTGRES_USER
       secret: postgres

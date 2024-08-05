@@ -1,5 +1,6 @@
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { AuthContext } from "../AuthContext";
+import { useContextSelector } from "use-context-selector";
 
 type RegisterFuncType = (
     email: string,
@@ -12,7 +13,7 @@ export const useRegistration = (): [
     boolean,
     CallableFunction
 ] => {
-    const { register } = useContext(AuthContext);
+    const register = useContextSelector(AuthContext, (v) => v.register);
     const [isFailed, setIsFailed] = useState(false);
 
     return [

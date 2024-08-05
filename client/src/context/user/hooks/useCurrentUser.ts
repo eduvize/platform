@@ -1,10 +1,11 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { UserDto } from "../../../models/dto";
 import { UserContext } from "../UserContext";
 import UserApi from "../../../api/UserApi";
+import { useContextSelector } from "use-context-selector";
 
 export const useCurrentUser = (): [UserDto | null, CallableFunction] => {
-    const { userDetails } = useContext(UserContext);
+    const userDetails = useContextSelector(UserContext, (v) => v.userDetails);
     const [cachedDetails, setCachedDetails] = useState<UserDto | null>(
         userDetails
     );

@@ -1,2 +1,0 @@
-class PromptService:
-    pass

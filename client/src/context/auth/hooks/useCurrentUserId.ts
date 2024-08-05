@@ -1,8 +1,8 @@
-import { useContext } from "react";
 import { AuthContext } from "../AuthContext";
+import { useContextSelector } from "use-context-selector";
 
 export const useCurrentUserId = () => {
-    const { userId } = useContext(AuthContext);
+    const userId = useContextSelector(AuthContext, (v) => v.userId);
 
     return userId;
 };

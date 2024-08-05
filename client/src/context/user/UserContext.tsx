@@ -1,4 +1,5 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext } from "use-context-selector";
+import { useEffect, useState } from "react";
 import { useCurrentUserId } from "../auth";
 import { UserDto, UserOnboardingStatusDto } from "../../models/dto";
 import { notifications } from "@mantine/notifications";
