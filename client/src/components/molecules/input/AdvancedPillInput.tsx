@@ -7,7 +7,7 @@ import {
     CheckIcon,
 } from "@mantine/core";
 import { useThrottledCallback } from "@mantine/hooks";
-import { memo, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface AdvancedPillInputProps {
     valueFetch?: (query: string) => Promise<string[]>;
@@ -15,6 +15,8 @@ interface AdvancedPillInputProps {
     value?: string[];
     onChange?: (value: string[]) => void;
     placeholder?: string;
+    valueSelector?: (value: any) => string;
+    valueMapper?: (value: string) => any;
 }
 
 export const AdvancedPillInput = ({
@@ -23,14 +25,32 @@ export const AdvancedPillInput = ({
     value,
     onChange,
     placeholder,
+    valueSelector,
+    valueMapper,
 }: AdvancedPillInputProps) => {
+    function mapValues(elements: any[]) {
+        if (!valueSelector) {
+            return elements;
+        }
+
+        return elements.map((element) => {
+            if (typeof element === "string") {
+                return element;
+            }
+
+            return valueSelector(element);
+        });
+    }
+
     const [remoteOptions, setRemoteOptions] = useState<string[]>([]);
     const [query, setQuery] = useState("");
     const combobox = useCombobox({
         onDropdownClose: () => combobox.resetSelectedOption(),
         onDropdownOpen: () => combobox.updateSelectedOptionIndex("active"),
     });
-    const [values, setValues] = useState<string[]>(defaultValue || value || []);
+
+    const initialValue = defaultValue || value || [];
+    const values = mapValues(initialValue);
 
     const handleAutocompletion = useThrottledCallback((query: string) => {
         if (!valueFetch) return;
@@ -41,6 +61,16 @@ export const AdvancedPillInput = ({
             setRemoteOptions(options);
         });
     }, 300);
+
+    const handleChange = (newValues: string[]) => {
+        if (onChange) {
+            if (valueMapper) {
+                onChange(newValues.map(valueMapper));
+            } else {
+                onChange(newValues);
+            }
+        }
+    };
 
     useEffect(() => {
         if (!valueFetch) return;
@@ -55,19 +85,15 @@ export const AdvancedPillInput = ({
     }, [valueFetch, query]);
 
     useEffect(() => {
-        if (onChange) {
-            onChange(values);
-        }
-
         if (query.length > 0) {
             combobox.openDropdown();
         } else {
             combobox.closeDropdown();
         }
-    }, [query, values]);
+    }, [query]);
 
     const handleValueRemove = (val: string) => {
-        setValues(values.filter((v) => v !== val));
+        handleChange(values.filter((v) => v !== val));
     };
 
     const options = useMemo(
@@ -98,16 +124,16 @@ export const AdvancedPillInput = ({
             <Combobox
                 store={combobox}
                 onOptionSubmit={(val) => {
-                    setValues([...values, val]);
+                    handleChange([...values, val]);
                     setQuery("");
                 }}
             >
                 <PillsInput>
                     <Pill.Group>
-                        {value?.map((lang) => (
+                        {values.map((lang) => (
                             <Pill
                                 key={lang}
-                                size="lg"
+                                size="md"
                                 withRemoveButton
                                 onRemove={() => {
                                     handleValueRemove(lang);
@@ -162,10 +188,10 @@ export const AdvancedPillInput = ({
         return (
             <PillsInput>
                 <Pill.Group>
-                    {value?.map((lang) => (
+                    {values.map((lang) => (
                         <Pill
                             key={lang}
-                            size="lg"
+                            size="md"
                             withRemoveButton
                             onRemove={() => {
                                 handleValueRemove(lang);
@@ -180,7 +206,7 @@ export const AdvancedPillInput = ({
                         onKeyDown={(event) => {
                             if (event.key === "Enter") {
                                 event.preventDefault();
-                                setValues([
+                                handleChange([
                                     ...values,
                                     event.currentTarget.value,
                                 ]);
