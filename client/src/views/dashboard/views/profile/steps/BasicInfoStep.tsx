@@ -101,7 +101,7 @@ export const BasicInfoStep = memo(
                     <Stack>
                         <Group justify="space-between">
                             <Stack w="48%" gap={0}>
-                                <InputLabel>First name</InputLabel>
+                                <InputLabel required>First name</InputLabel>
                                 <Input
                                     {...form.getInputProps("first_name")}
                                     placeholder="John"
@@ -109,7 +109,7 @@ export const BasicInfoStep = memo(
                             </Stack>
 
                             <Stack w="48%" gap={0}>
-                                <InputLabel>Last name</InputLabel>
+                                <InputLabel required>Last name</InputLabel>
                                 <Input
                                     {...form.getInputProps("last_name")}
                                     placeholder="Doe"
@@ -119,29 +119,27 @@ export const BasicInfoStep = memo(
 
                         <Group justify="space-between">
                             <Stack w="48%" gap={0}>
-                                <InputLabel>Favorite Animal</InputLabel>
+                                <DateInput
+                                    required
+                                    label="Birthdate"
+                                    placeholder="MM/DD/YYYY"
+                                    valueFormat="MM/DD/YYYY"
+                                />
+                            </Stack>
+
+                            <Stack w="48%" gap={0}>
+                                <InputLabel required>
+                                    Favorite Animal
+                                </InputLabel>
                                 <Input
                                     {...form.getInputProps("favorite_animal")}
                                     placeholder=""
                                 />
                             </Stack>
-
-                            <Stack w="48%" gap={0}>
-                                <InputLabel>Favorite Activity</InputLabel>
-                                <Input
-                                    {...form.getInputProps("favorite_activity")}
-                                    placeholder=""
-                                />
-                            </Stack>
                         </Group>
 
-                        <DateInput
-                            label="Birthdate"
-                            placeholder="MM/DD/YYYY"
-                            valueFormat="MM/DD/YYYY"
-                        />
-
                         <Textarea
+                            required
                             {...form.getInputProps("bio")}
                             label="Bio"
                             placeholder="Introduce yourself - what are your goals, do you like to be challenged? Give us a brief overview"

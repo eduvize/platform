@@ -1,7 +1,9 @@
 import {
+    Box,
     Button,
     Card,
     Container,
+    Divider,
     Flex,
     Grid,
     Space,
@@ -14,6 +16,7 @@ import { useCurrentUser } from "../../../../context/user/hooks";
 import { useForm } from "@mantine/form";
 import { BasicInfoStep, ProfileStepper } from "./steps";
 import { ProfileUpdatePayload } from "../../../../api/contracts/ProfileUpdatePayload";
+import { ResumeBanner } from "./ResumeBanner";
 
 export const Profile = memo(() => {
     const [userDetails, refresh] = useCurrentUser();
@@ -33,13 +36,16 @@ export const Profile = memo(() => {
     const Header = () => {
         return (
             <>
-                <Title size={24} c="blue">
-                    Your Profile
+                <Title size={24} c="blue" fz="h1">
+                    All about you
                 </Title>
+                <Divider my="xs" />
                 <Text size="sm" c="gray">
-                    The information you fill out here will be leveraged by our
-                    AI to provide you with the best possible experience. Be
-                    thorough and honest to see the best results!
+                    Fill out this comprehensive profile to help us design the
+                    perfect AI tutor and courses for you. You can give as much
+                    detail as you'd like, but keep in mind the better we're able
+                    to understand your background and interests, the better we
+                    can work with you.
                 </Text>
             </>
         );
@@ -57,8 +63,8 @@ export const Profile = memo(() => {
         <Container size="lg">
             <Stack>
                 <Grid>
-                    <Grid.Col span={3}>
-                        <Space h="xs" />
+                    <Grid.Col span={3} pt="xl">
+                        <Space h="8em" />
 
                         <ProfileStepper
                             steps={steps}
@@ -66,7 +72,7 @@ export const Profile = memo(() => {
                         />
                     </Grid.Col>
 
-                    <Grid.Col span={9}>
+                    <Grid.Col span={8}>
                         <Header />
 
                         <Space h="lg" />
@@ -90,6 +96,12 @@ export const Profile = memo(() => {
                                 </Flex>
                             )}
                         </Card>
+                    </Grid.Col>
+
+                    <Grid.Col span={1} pos="relative">
+                        <Box pos="absolute" w="15em" ml="xl" top="9em">
+                            <ResumeBanner />
+                        </Box>
                     </Grid.Col>
                 </Grid>
             </Stack>
