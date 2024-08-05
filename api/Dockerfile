@@ -10,7 +10,8 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     libffi-dev \
     libssl-dev \
-    python3-dev
+    python3-dev \
+    poppler-utils
 
 # Harden apt lists and remove unnecessary packages
 RUN apt clean && apt autoremove -y && apt autoclean -y
