@@ -34,9 +34,6 @@ interface BasicInfoStepProps {
 export const BasicInfoStep = memo(
     ({ toggleStep, userDetails, form, onAvatarChange }: BasicInfoStepProps) => {
         const avatarInputRef = useRef<HTMLInputElement>(null);
-        const [disciplines, setDisciplines] = useState<EngineeringDiscipline[]>(
-            []
-        );
 
         const handleAvatarUpload = () => {
             const file = avatarInputRef.current?.files?.[0];
@@ -46,14 +43,6 @@ export const BasicInfoStep = memo(
             UserApi.uploadAvatar(file).then(() => {
                 onAvatarChange();
             });
-        };
-
-        const handleToggleDiscipline = (discipline: EngineeringDiscipline) => {
-            if (disciplines.includes(discipline)) {
-                setDisciplines(disciplines.filter((x) => x !== discipline));
-            } else {
-                setDisciplines([...disciplines, discipline]);
-            }
         };
 
         return (
@@ -161,7 +150,7 @@ export const BasicInfoStep = memo(
                         <Group>
                             <Chip
                                 color="green"
-                                size="md"
+                                size="sm"
                                 onClick={() => toggleStep("hobby")}
                             >
                                 I'm a hobbyist
@@ -169,7 +158,7 @@ export const BasicInfoStep = memo(
 
                             <Chip
                                 color="green"
-                                size="md"
+                                size="sm"
                                 onClick={() => toggleStep("education")}
                             >
                                 I am or have been a student
@@ -177,7 +166,7 @@ export const BasicInfoStep = memo(
 
                             <Chip
                                 color="green"
-                                size="md"
+                                size="sm"
                                 onClick={() => toggleStep("employment")}
                             >
                                 I'm working in the industry
@@ -198,61 +187,45 @@ export const BasicInfoStep = memo(
                     <Center>
                         <Group>
                             <Chip
+                                {...form.getInputProps("disciplines", {
+                                    type: "checkbox",
+                                    value: "frontend",
+                                })}
                                 color="green"
-                                size="md"
-                                checked={disciplines.includes(
-                                    EngineeringDiscipline.Frontend
-                                )}
-                                onClick={() =>
-                                    handleToggleDiscipline(
-                                        EngineeringDiscipline.Frontend
-                                    )
-                                }
+                                size="sm"
                             >
                                 Frontend
                             </Chip>
 
                             <Chip
+                                {...form.getInputProps("disciplines", {
+                                    type: "checkbox",
+                                    value: "backend",
+                                })}
                                 color="green"
-                                size="md"
-                                checked={disciplines.includes(
-                                    EngineeringDiscipline.Backend
-                                )}
-                                onClick={() =>
-                                    handleToggleDiscipline(
-                                        EngineeringDiscipline.Backend
-                                    )
-                                }
+                                size="sm"
                             >
                                 Backend
                             </Chip>
 
                             <Chip
+                                {...form.getInputProps("disciplines", {
+                                    type: "checkbox",
+                                    value: "database",
+                                })}
                                 color="green"
-                                size="md"
-                                checked={disciplines.includes(
-                                    EngineeringDiscipline.Database
-                                )}
-                                onClick={() =>
-                                    handleToggleDiscipline(
-                                        EngineeringDiscipline.Database
-                                    )
-                                }
+                                size="sm"
                             >
                                 Database
                             </Chip>
 
                             <Chip
+                                {...form.getInputProps("disciplines", {
+                                    type: "checkbox",
+                                    value: "devops",
+                                })}
                                 color="green"
-                                size="md"
-                                checked={disciplines.includes(
-                                    EngineeringDiscipline.DevOps
-                                )}
-                                onClick={() =>
-                                    handleToggleDiscipline(
-                                        EngineeringDiscipline.DevOps
-                                    )
-                                }
+                                size="sm"
                             >
                                 Infrastructure / DevOps
                             </Chip>
@@ -274,6 +247,16 @@ export const BasicInfoStep = memo(
                     valueFetch={(query) =>
                         AutocompleteApi.getProgrammingLanguages(query)
                     }
+                    valueSelector={(x) => x.name}
+                    valueMapper={(x) => {
+                        const languages = form.values.programming_languages;
+                        const existing = languages.find((l) => l.name === x);
+
+                        return {
+                            name: x,
+                            proficiency: existing ? existing.proficiency : null,
+                        };
+                    }}
                 />
 
                 <SpacedDivider
@@ -288,7 +271,20 @@ export const BasicInfoStep = memo(
                     {...form.getInputProps("libraries")}
                     placeholder="Type to search for a library or framework"
                     valueFetch={(query) => {
-                        return AutocompleteApi.getLibraries(disciplines, query);
+                        return AutocompleteApi.getLibraries(
+                            form.values.disciplines as EngineeringDiscipline[],
+                            query
+                        );
+                    }}
+                    valueSelector={(x) => x.name}
+                    valueMapper={(x) => {
+                        const libs = form.values.libraries;
+                        const existing = libs.find((l) => l.name === x);
+
+                        return {
+                            name: x,
+                            proficiency: existing ? existing.proficiency : null,
+                        };
                     }}
                 />
             </>

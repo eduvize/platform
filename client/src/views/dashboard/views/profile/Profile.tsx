@@ -28,8 +28,38 @@ export const Profile = memo(() => {
             last_name: userDetails?.profile?.last_name || "",
             bio: userDetails?.profile?.bio || "",
             github_username: userDetails?.profile?.github_username || "",
+            disciplines: [],
             programming_languages: [],
             libraries: [],
+        },
+        enhanceGetInputProps: (payload) => {
+            switch (payload.field) {
+                case "disciplines":
+                    const { value } = payload.options;
+
+                    return {
+                        ...payload.inputProps,
+                        onChange: (checked: boolean) => {
+                            if (checked) {
+                                payload.form.setFieldValue("disciplines", [
+                                    ...payload.form.values.disciplines,
+                                    value,
+                                ]);
+                            } else {
+                                payload.form.setFieldValue(
+                                    "disciplines",
+                                    payload.form.values.disciplines.filter(
+                                        (v) => v !== value
+                                    )
+                                );
+                            }
+                        },
+                        checked:
+                            payload.form.values.disciplines.includes(value),
+                    };
+            }
+
+            return payload.inputProps;
         },
     });
 
@@ -100,7 +130,7 @@ export const Profile = memo(() => {
 
                     <Grid.Col span={1} pos="relative">
                         <Box pos="absolute" w="15em" ml="xl" top="9em">
-                            <ResumeBanner />
+                            <ResumeBanner form={form} />
                         </Box>
                     </Grid.Col>
                 </Grid>
