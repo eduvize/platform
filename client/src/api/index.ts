@@ -1,3 +1,4 @@
 export * from "./AuthApi";
 export * from "./UserApi";
 export * from "./AutocompleteApi";
+export * from "./FileApi";
