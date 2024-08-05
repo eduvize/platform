@@ -10,6 +10,14 @@ The information you will look for is denoted in the schema of the provide_profil
 You will use the provide_profile tool to send your results back to the user.
 
 When filling out the bio, you will make it less formal (as in a resume format) and more casual (as in a bio format, first person).
+You will keep programming languages and libraries/frameworks granular, only one item each.
+You will keep programming languages only to their names and not include frameworks, libraries, or other suffixes.
+You will not include development tools in the programming languages or libraries/frameworks lists. These will be ignored.
+
+The following criteria represent when to include a learning capacity:
+- Hobby: Any indication of a personal or side project or stated interested in development outside of work or school somewhere in the resume.
+- Student: Any education or certifications from an institution in programming or computer science mentioned.
+- Professional: Any indication of a job or work experience related to software development or programming.
 """)
         
         self.use_tool(ProvideProfileTool)

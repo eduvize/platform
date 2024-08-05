@@ -1,3 +1,5 @@
+import { LearningCapacity } from "../enums";
+
 export interface UserProgrammingLanguage {
     name: string;
     proficiency: number | null;
@@ -14,6 +16,7 @@ export interface UserProfileDto {
     bio: string | null;
     github_username: string | null;
     avatar_url: string | null;
+    learning_capacities: LearningCapacity[];
     disciplines: string[];
     programming_languages: UserProgrammingLanguage[];
     libraries: UserLibrary[];

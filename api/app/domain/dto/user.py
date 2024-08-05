@@ -1,5 +1,17 @@
+from enum import Enum
 from typing import List, Optional
 from pydantic import BaseModel, field_validator, computed_field
+
+class UserLearningCapacity(Enum):
+    HOBBY = "hobby"
+    STUDENT = "student"
+    PROFESSIONAL = "professional"
+    
+class UserDiscipline(Enum):
+    FRONTEND = "frontend"
+    BACKEND = "backend"
+    DATABASE = "database"
+    DEVOPS = "devops"
 
 class UserProgrammingLanguage(BaseModel):
     name: str
@@ -21,7 +33,8 @@ class UserProfileDto(BaseModel):
     bio: Optional[str]
     github_username: Optional[str]
     avatar_url: Optional[str]
-    disciplines: List[str]
+    learning_capacities: List[UserLearningCapacity]
+    disciplines: List[UserDiscipline]
     programming_languages: List[UserProgrammingLanguage]
     libraries: List[UserLibrary]
     

@@ -2,6 +2,7 @@ export * from "./BasicInfoStep";
 export * from "./HobbiesStep";
 
 import { Stepper } from "@mantine/core";
+import { UseFormReturnType } from "@mantine/form";
 import {
     IconUser,
     IconHammer,
@@ -9,19 +10,16 @@ import {
     IconDeviceLaptop,
     IconReportSearch,
 } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { ProfileUpdatePayload } from "../../../../../api/contracts";
+import { LearningCapacity } from "../../../../../models/enums";
 
 interface ProfileStepperProps {
-    steps: string[];
-    onCanMoveOn: (canMoveOn: boolean) => void;
+    form: UseFormReturnType<ProfileUpdatePayload>;
 }
 
-export const ProfileStepper = ({ steps, onCanMoveOn }: ProfileStepperProps) => {
+export const ProfileStepper = ({ form }: ProfileStepperProps) => {
     const [stepIndex, setStepIndex] = useState(0);
-
-    useEffect(() => {
-        onCanMoveOn(steps.length > 0 && stepIndex < steps.length - 1);
-    }, [steps]);
 
     return (
         <Stepper
@@ -29,45 +27,50 @@ export const ProfileStepper = ({ steps, onCanMoveOn }: ProfileStepperProps) => {
             orientation="vertical"
             onStepClick={(index) => setStepIndex(index)}
         >
-            {steps.includes("basic") && (
-                <Stepper.Step
-                    key="basic"
-                    label="Basic Information"
-                    description="Who are you?"
-                    icon={<IconUser />}
-                />
-            )}
-            {steps.includes("hobby") && (
+            <Stepper.Step
+                key="basic"
+                label="General Information"
+                description="High-level information about you"
+                icon={<IconUser />}
+            />
+            {form.values.learning_capacities.includes(
+                LearningCapacity.Hobby
+            ) && (
                 <Stepper.Step
                     key="hobby"
                     label="Hobby Work"
-                    description="What do you do for fun?"
+                    description="What work you do in your free time"
                     icon={<IconHammer />}
                 />
             )}
-            {steps.includes("education") && (
+            {form.values.learning_capacities.includes(
+                LearningCapacity.Student
+            ) && (
                 <Stepper.Step
                     key="education"
                     label="Education"
-                    description="Where are you in your studies?"
+                    description="Where you're at in your studies"
                     icon={<IconBellSchool />}
                 />
             )}
-            {steps.includes("employment") && (
-                <Stepper.Step
-                    key="employment"
-                    label="Current Employment"
-                    description="What do you do for work?"
-                    icon={<IconDeviceLaptop />}
-                />
-            )}
-            {steps.includes("employment") && (
-                <Stepper.Step
-                    key="experience"
-                    label="Professional Experience"
-                    description="What have you done in the past?"
-                    icon={<IconReportSearch />}
-                />
+            {form.values.learning_capacities.includes(
+                LearningCapacity.Professional
+            ) && (
+                <>
+                    <Stepper.Step
+                        key="employment"
+                        label="Current Employment"
+                        description="What you do right now"
+                        icon={<IconDeviceLaptop />}
+                    />
+
+                    <Stepper.Step
+                        key="experience"
+                        label="Professional Experience"
+                        description="More about your professional history"
+                        icon={<IconReportSearch />}
+                    />
+                </>
             )}
         </Stepper>
     );

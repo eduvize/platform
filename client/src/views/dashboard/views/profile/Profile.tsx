@@ -13,10 +13,37 @@ import {
 } from "@mantine/core";
 import { memo, useState } from "react";
 import { useCurrentUser } from "../../../../context/user/hooks";
-import { useForm } from "@mantine/form";
+import { useForm, UseFormReturnType } from "@mantine/form";
 import { BasicInfoStep, ProfileStepper } from "./steps";
 import { ProfileUpdatePayload } from "../../../../api/contracts/ProfileUpdatePayload";
 import { ResumeBanner } from "./ResumeBanner";
+
+function mapCheckListField(
+    form: UseFormReturnType<ProfileUpdatePayload>,
+    field: string,
+    options: any,
+    inputProps: any
+) {
+    const { value } = options;
+
+    return {
+        ...inputProps,
+        onChange: (checked: boolean) => {
+            if (checked) {
+                form.setFieldValue(field, [
+                    ...(form.values as any)[field],
+                    value,
+                ]);
+            } else {
+                form.setFieldValue(
+                    field,
+                    (form.values as any)[field].filter((v: any) => v !== value)
+                );
+            }
+        },
+        checked: (form.values as any)[field].includes(value),
+    };
+}
 
 export const Profile = memo(() => {
     const [userDetails, refresh] = useCurrentUser();
@@ -28,6 +55,7 @@ export const Profile = memo(() => {
             last_name: userDetails?.profile?.last_name || "",
             bio: userDetails?.profile?.bio || "",
             github_username: userDetails?.profile?.github_username || "",
+            learning_capacities: [],
             disciplines: [],
             programming_languages: [],
             libraries: [],
@@ -35,28 +63,13 @@ export const Profile = memo(() => {
         enhanceGetInputProps: (payload) => {
             switch (payload.field) {
                 case "disciplines":
-                    const { value } = payload.options;
-
-                    return {
-                        ...payload.inputProps,
-                        onChange: (checked: boolean) => {
-                            if (checked) {
-                                payload.form.setFieldValue("disciplines", [
-                                    ...payload.form.values.disciplines,
-                                    value,
-                                ]);
-                            } else {
-                                payload.form.setFieldValue(
-                                    "disciplines",
-                                    payload.form.values.disciplines.filter(
-                                        (v) => v !== value
-                                    )
-                                );
-                            }
-                        },
-                        checked:
-                            payload.form.values.disciplines.includes(value),
-                    };
+                case "learning_capacities":
+                    return mapCheckListField(
+                        payload.form,
+                        payload.field,
+                        payload.options,
+                        payload.inputProps
+                    );
             }
 
             return payload.inputProps;
@@ -81,14 +94,6 @@ export const Profile = memo(() => {
         );
     };
 
-    const handleToggleStep = (step: string) => {
-        if (steps.includes(step)) {
-            setSteps(steps.filter((s) => s !== step));
-        } else {
-            setSteps([...steps, step]);
-        }
-    };
-
     return (
         <Container size="lg">
             <Stack>
@@ -96,10 +101,7 @@ export const Profile = memo(() => {
                     <Grid.Col span={3} pt="xl">
                         <Space h="8em" />
 
-                        <ProfileStepper
-                            steps={steps}
-                            onCanMoveOn={setCanMoveOn}
-                        />
+                        <ProfileStepper form={form} />
                     </Grid.Col>
 
                     <Grid.Col span={8}>
@@ -110,7 +112,6 @@ export const Profile = memo(() => {
                         <Card shadow="xs" padding="xl" withBorder>
                             <BasicInfoStep
                                 userDetails={userDetails}
-                                toggleStep={handleToggleStep}
                                 form={form}
                                 onAvatarChange={() => refresh()}
                             />
@@ -134,6 +135,8 @@ export const Profile = memo(() => {
                         </Box>
                     </Grid.Col>
                 </Grid>
+
+                <Space h="xl" />
             </Stack>
         </Container>
     );

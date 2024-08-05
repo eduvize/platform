@@ -25,14 +25,13 @@ import { EngineeringDiscipline } from "../../../../../models/enums";
 import { UseFormReturnType } from "@mantine/form";
 
 interface BasicInfoStepProps {
-    toggleStep: (step: string) => void;
     userDetails: UserDto | null;
     form: UseFormReturnType<ProfileUpdatePayload>;
     onAvatarChange: () => void;
 }
 
 export const BasicInfoStep = memo(
-    ({ toggleStep, userDetails, form, onAvatarChange }: BasicInfoStepProps) => {
+    ({ userDetails, form, onAvatarChange }: BasicInfoStepProps) => {
         const avatarInputRef = useRef<HTMLInputElement>(null);
 
         const handleAvatarUpload = () => {
@@ -149,25 +148,34 @@ export const BasicInfoStep = memo(
                     <Center>
                         <Group>
                             <Chip
+                                {...form.getInputProps("learning_capacities", {
+                                    type: "checkbox",
+                                    value: "hobby",
+                                })}
                                 color="green"
                                 size="sm"
-                                onClick={() => toggleStep("hobby")}
                             >
                                 I'm a hobbyist
                             </Chip>
 
                             <Chip
+                                {...form.getInputProps("learning_capacities", {
+                                    type: "checkbox",
+                                    value: "student",
+                                })}
                                 color="green"
                                 size="sm"
-                                onClick={() => toggleStep("education")}
                             >
                                 I am or have been a student
                             </Chip>
 
                             <Chip
+                                {...form.getInputProps("learning_capacities", {
+                                    type: "checkbox",
+                                    value: "professional",
+                                })}
                                 color="green"
                                 size="sm"
-                                onClick={() => toggleStep("employment")}
                             >
                                 I'm working in the industry
                             </Chip>
