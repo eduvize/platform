@@ -5,7 +5,6 @@ import {
     useCombobox,
     Combobox,
     CheckIcon,
-    PillsInputFieldProps,
 } from "@mantine/core";
 import { useThrottledCallback } from "@mantine/hooks";
 import { memo, useEffect, useMemo, useState } from "react";
@@ -15,6 +14,7 @@ interface AdvancedPillInputProps {
     defaultValue?: string[];
     value?: string[];
     onChange?: (value: string[]) => void;
+    placeholder?: string;
 }
 
 export const AdvancedPillInput = ({
@@ -22,6 +22,7 @@ export const AdvancedPillInput = ({
     defaultValue,
     value,
     onChange,
+    placeholder,
 }: AdvancedPillInputProps) => {
     const [remoteOptions, setRemoteOptions] = useState<string[]>([]);
     const [query, setQuery] = useState("");
@@ -121,7 +122,7 @@ export const AdvancedPillInput = ({
                                 <PillsInput.Field
                                     onFocus={() => combobox.openDropdown()}
                                     onBlur={() => combobox.closeDropdown()}
-                                    placeholder="Enter a language"
+                                    placeholder={placeholder}
                                     value={query}
                                     onChange={(event) => {
                                         combobox.updateSelectedOptionIndex();
@@ -175,7 +176,7 @@ export const AdvancedPillInput = ({
                     ))}
 
                     <PillsInput.Field
-                        placeholder="Enter a language"
+                        placeholder={placeholder}
                         onKeyDown={(event) => {
                             if (event.key === "Enter") {
                                 event.preventDefault();

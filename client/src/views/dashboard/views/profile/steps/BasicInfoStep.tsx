@@ -56,8 +56,6 @@ export const BasicInfoStep = memo(
             }
         };
 
-        console.log(form.getInputProps("programming_languages"));
-
         return (
             <>
                 <input
@@ -274,6 +272,7 @@ export const BasicInfoStep = memo(
 
                 <AdvancedPillInput
                     {...form.getInputProps("programming_languages")}
+                    placeholder="Type to search for a language"
                     valueFetch={(query) =>
                         AutocompleteApi.getProgrammingLanguages(query)
                     }
@@ -289,6 +288,7 @@ export const BasicInfoStep = memo(
 
                 <AdvancedPillInput
                     {...form.getInputProps("libraries")}
+                    placeholder="Type to search for a library or framework"
                     valueFetch={(query) => {
                         return AutocompleteApi.getLibraries(disciplines, query);
                     }}
