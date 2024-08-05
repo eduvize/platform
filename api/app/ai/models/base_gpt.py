@@ -1,4 +1,5 @@
 import json
+import base64
 from typing import Generator, List, Literal, Tuple, cast
 from openai import OpenAI, Stream
 from openai.types.chat.chat_completion_assistant_message_param import FunctionCall
@@ -8,11 +9,15 @@ from openai.types.chat import (
     ChatCompletionUserMessageParam, 
     ChatCompletionToolMessageParam, 
     ChatCompletionToolParam, 
+    ChatCompletionContentPartParam,
+    ChatCompletionContentPartTextParam,
+    ChatCompletionContentPartImageParam,
     ChatCompletionMessageToolCall, 
     ChatCompletionChunk
 )
-from config import get_openai_key
+from openai.types.chat.chat_completion_content_part_image_param import ImageURL
 from openai.types.shared import FunctionDefinition
+from config import get_openai_key
 from . import BaseModel
 from ..prompts import BasePrompt
 from ..common import BaseChatMessage, BaseChatResponse, BaseTool, ChatRole
@@ -56,7 +61,6 @@ class BaseGPT(BaseModel):
         
         # Loops until there are no more tool calls to process
         while True:
-            print(messages)
             response = cast(Stream[ChatCompletionChunk], self.client.chat.completions.create(
                 model=self.model_name,
                 messages=messages,
@@ -154,6 +158,32 @@ class BaseGPT(BaseModel):
         
     def get_message(self, message: BaseChatMessage) -> dict:
         if message.role == ChatRole.USER:
+            # If images are included, write content out as an array of parts
+            if message.png_images:
+                base64_images = [
+                    f"data:image/png;base64,{base64_str}" 
+                    for base64_str in [
+                        base64.b64encode(image).decode("ascii") 
+                        for image in message.png_images
+                    ]
+                ]
+                
+                return ChatCompletionUserMessageParam(
+                    role="user",
+                    content=[
+                        ChatCompletionContentPartTextParam(
+                            type="text",
+                            text=message.message
+                        ),
+                        *[
+                            ChatCompletionContentPartImageParam(
+                                type="image_url",
+                                image_url=ImageURL(url=image)
+                            ) for image in base64_images
+                        ]
+                    ]
+                )
+                
             return ChatCompletionUserMessageParam(role="user", content=message.message)
         elif message.role == ChatRole.AGENT:
             return ChatCompletionAssistantMessageParam(role="assistant", content=message.message)

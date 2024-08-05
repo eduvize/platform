@@ -8,11 +8,13 @@ class ChatRole(Enum):
 
 class BaseChatMessage:
     role: ChatRole
+    png_images: List[bytes]
     message: str
     
-    def __init__(self, role: ChatRole, message: str):
+    def __init__(self, role: ChatRole, message: str, png_images: List[bytes] = []):
         self.role = role
         self.message = message
+        self.png_images = png_images
 
 class BaseTool:
     name: str

@@ -49,8 +49,8 @@ class BasePrompt:
         
         return self.tool_instances[tool_type.__name__]
         
-    def add_user_message(self, message: str) -> None:
-        self.messages.append(BaseChatMessage(role=ChatRole.USER, message=message))
+    def add_user_message(self, message: str, png_images: List[bytes] = []) -> None:
+        self.messages.append(BaseChatMessage(role=ChatRole.USER, message=message, png_images=png_images))
         
     def add_agent_message(self, message: str) -> None:
         self.messages.append(BaseChatMessage(role=ChatRole.AGENT, message=message))
