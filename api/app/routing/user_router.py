@@ -1,13 +1,12 @@
 from fastapi import APIRouter, Depends, File, UploadFile
-from config import get_dashboard_endpoint
 
+from ..ai.prompts.resume_scan.resume_scanner_prompt import ResumeScannerPrompt
 
 from .middleware.token_middleware import token_extractor, user_id_extractor
 from .contracts.user_contracts import UpdateProfilePayload
 from .contracts.file_contracts import FileUploadResponse
-from .responses import raise_bad_request, redirect, raise_unauthorized
-from ..utilities.endpoints import get_public_endpoint, get_public_ui_endpoint
-from ..services.user_onboarding_service import UserOnboardingService, VerificationExpiredError
+from ..common.conversion.pdf_to_image import get_images_from_pdf_bytes
+from ..services.user_onboarding_service import UserOnboardingService
 from ..domain.dto.user import UserDto
 from ..services.user_service import UserService
 
