@@ -1,5 +1,19 @@
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, field_validator, computed_field
+
+class UserProgrammingLanguage(BaseModel):
+    name: str
+    proficiency: Optional[int]
+    
+    class Config:
+        from_attributes = True
+        
+class UserLibrary(BaseModel):
+    name: str
+    proficiency: Optional[int]
+    
+    class Config:
+        from_attributes = True
 
 class UserProfileDto(BaseModel):
     first_name: Optional[str]
@@ -7,6 +21,9 @@ class UserProfileDto(BaseModel):
     bio: Optional[str]
     github_username: Optional[str]
     avatar_url: Optional[str]
+    disciplines: List[str]
+    programming_languages: List[UserProgrammingLanguage]
+    libraries: List[UserLibrary]
     
     # The config class allows you to specify how the model should be created
     class Config:
