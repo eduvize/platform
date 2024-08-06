@@ -1,46 +1,5 @@
-from enum import Enum
-from typing import List, Optional
 from pydantic import BaseModel, field_validator, computed_field
-
-class UserLearningCapacity(Enum):
-    HOBBY = "hobby"
-    STUDENT = "student"
-    PROFESSIONAL = "professional"
-    
-class UserDiscipline(Enum):
-    FRONTEND = "frontend"
-    BACKEND = "backend"
-    DATABASE = "database"
-    DEVOPS = "devops"
-
-class UserProgrammingLanguage(BaseModel):
-    name: str
-    proficiency: Optional[int]
-    
-    class Config:
-        from_attributes = True
-        
-class UserLibrary(BaseModel):
-    name: str
-    proficiency: Optional[int]
-    
-    class Config:
-        from_attributes = True
-
-class UserProfileDto(BaseModel):
-    first_name: Optional[str]
-    last_name: Optional[str]
-    bio: Optional[str]
-    github_username: Optional[str]
-    avatar_url: Optional[str]
-    learning_capacities: List[UserLearningCapacity]
-    disciplines: List[UserDiscipline]
-    programming_languages: List[UserProgrammingLanguage]
-    libraries: List[UserLibrary]
-    
-    # The config class allows you to specify how the model should be created
-    class Config:
-        from_attributes = True # This is used to create the model from a schema object
+from .profile import UserProfileDto
 
 class UserDto(BaseModel):
     id: str

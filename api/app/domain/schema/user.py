@@ -29,7 +29,7 @@ class User(Context):
     reviews                     = relationship("CurriculumReview", back_populates="user")
     enrollments                 = relationship("CurriculumEnrollment", back_populates="user")
     chat_sessions               = relationship("ChatSession", back_populates="user")
-    
+
 class UserProfile(Context):
     __tablename__ = "user_profiles"
     
@@ -43,12 +43,21 @@ class UserProfile(Context):
     last_updated_at_utc         = Column(TIMESTAMP, nullable=False, default='now()')
     
     user                        = relationship("User", back_populates="profile", uselist=False)
+    frontend                    = relationship("UserProfileFrontend", uselist=False, lazy="joined", backref="user_profiles")
+    backend                     = relationship("UserProfileBackend", uselist=False, lazy="joined", backref="user_profiles")
+    database                    = relationship("UserProfileDatabase", uselist=False, lazy="joined", backref="user_profiles")
+    devops                      = relationship("UserProfileDevops", uselist=False, lazy="joined", backref="user_profiles")
     
+    hobby                       = relationship("UserProfileHobby", uselist=False, lazy="joined", backref="user_profiles")
+    student                     = relationship("UserProfileStudent", uselist=False, lazy="joined", backref="user_profiles")
+    professional                = relationship("UserProfileProfessional", uselist=False, lazy="joined", backref="user_profiles")
+
 class UserSkill(Context):
     __tablename__ = "user_skills"
     
     id                          = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id                     = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    skill_type                  = Column(Integer, nullable=False)
     skill                       = Column(Text, nullable=False)
     proficiency                 = Column(Integer, nullable=False)
     notes                       = Column(Text)

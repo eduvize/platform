@@ -1,0 +1,2 @@
+from .disciplines import UserProfileFrontend, UserProfileBackend, UserProfileDatabase, UserProfileDevops
+from .learning_capacities import UserProfileHobby, UserProfileStudent, UserProfileProfessional

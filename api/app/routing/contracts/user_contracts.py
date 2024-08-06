@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel
 
 class UpdateProfilePayload(BaseModel):
@@ -7,3 +7,5 @@ class UpdateProfilePayload(BaseModel):
     bio: Optional[str] = None
     github_username: Optional[str] = None
     avatar_file_id: Optional[str] = None
+    learning_capacities: Optional[List[str]] = None
+    disciplines: Optional[List[str]] = None

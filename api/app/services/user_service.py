@@ -10,6 +10,15 @@ from ..services.user_onboarding_service import UserOnboardingService
 from ..routing.contracts.user_contracts import UpdateProfilePayload
 from ..common.storage import StoragePurpose, get_bucket, get_public_object_url, object_exists
 from ..domain.schema.user import User, UserIdentifiers, UserIncludes, UserProfile
+from ..domain.schema.profile import (
+    UserProfileFrontend,
+    UserProfileBackend,
+    UserProfileDatabase,
+    UserProfileDevops,
+    UserProfileHobby,
+    UserProfileStudent,
+    UserProfileProfessional
+)
 from ..repositories.user_repository import UserRepository
 
 class UserCreationError(Exception):
@@ -91,7 +100,7 @@ class UserService:
         
         return user
     
-    async def update_profile(self, user_id: str, profile: UpdateProfilePayload):
+    async def update_profile(self, user_id: str, profile_dto: UpdateProfilePayload):
         """
         Updates a user's profile with the provided data.
 
@@ -108,27 +117,63 @@ class UserService:
         if user is None:
             raise ValueError("User not found")
         
+        user.profile.first_name = profile_dto.first_name
+        user.profile.last_name = profile_dto.last_name
+        user.profile.bio = profile_dto.bio
+        user.profile.github_username = profile_dto.github_username
+        
         # If they provided a file id, check if it exists and get the URL for it
-        if profile.avatar_file_id is not None:
+        if profile_dto.avatar_file_id is not None:
             bucket = get_bucket(StoragePurpose.AVATAR)
-            bucket_id = self._get_avatar_bucket_id(user_id, profile.avatar_file_id)
+            bucket_id = self._get_avatar_bucket_id(user_id, profile_dto.avatar_file_id)
             
             if not object_exists(bucket, bucket_id):
                 raise ValueError("Invalid file")
             
-            avatar_url = get_public_object_url(StoragePurpose.AVATAR, bucket_id)
+            user.profile.avatar_url = get_public_object_url(StoragePurpose.AVATAR, bucket_id)
         else:
-            avatar_url = user.profile.avatar_url # Keep the existing avatar if none was provided
+            user.profile.avatar_url = user.profile.avatar_url # Keep the existing avatar if none was provided
+        
+        if profile_dto.learning_capacities:
+            if "hobby" in profile_dto.learning_capacities:
+                user.profile.hobby = UserProfileHobby(user_profile_id=user.profile.id)
+            elif user.profile.hobby is not None:
+                user.profile.hobby = None
+                
+            if "student" in profile_dto.learning_capacities:
+                user.profile.student = UserProfileStudent(user_profile_id=user.profile.id)
+            else:
+                user.profile.student = None
+                
+            if "professional" in profile_dto.learning_capacities:
+                user.profile.professional = UserProfileProfessional(user_profile_id=user.profile.id)
+            else:
+                user.profile.professional = None
+                
+        if profile_dto.disciplines:
+            if "frontend" in profile_dto.disciplines:
+                user.profile.frontend = UserProfileFrontend(user_profile_id=user.profile.id)
+            elif user.profile.frontend is not None:
+                user.profile.frontend = None
+                
+            if "backend" in profile_dto.disciplines:
+                user.profile.backend = UserProfileBackend(user_profile_id=user.profile.id)
+            elif user.profile.backend is not None:
+                user.profile.backend = None
+                
+            if "database" in profile_dto.disciplines:
+                user.profile.database = UserProfileDatabase(user_profile_id=user.profile.id)
+            elif user.profile.database is not None:
+                user.profile.database = None
+                
+            if "devops" in profile_dto.disciplines:
+                user.profile.devops = UserProfileDevops(user_profile_id=user.profile.id)
+            elif user.profile.devops is not None:
+                user.profile.devops = None
         
         await self.user_repo.upsert_profile(
-            user.id, 
-            UserProfile(
-                first_name=profile.first_name,
-                last_name=profile.last_name,
-                bio=profile.bio,
-                github_username=profile.github_username,
-                avatar_url=avatar_url
-            )
+            user_id=user.id, 
+            profile=user.profile
         )
         
     async def upload_avatar(self, user_id: str, file: UploadFile) -> str:
