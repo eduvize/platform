@@ -1,4 +1,4 @@
-from app.ai.common import BaseTool
+from ai.common import BaseTool
 from domain.dto.user import UserProfileDto
 
 class ProvideProfileTool(BaseTool):

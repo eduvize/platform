@@ -1,5 +1,5 @@
 from typing import List
-from app.ai.prompts import BasePrompt
+from ai.prompts import BasePrompt
 from .provide_profile_tool import ProvideProfileTool
 
 class ResumeScannerPrompt(BasePrompt):

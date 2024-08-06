@@ -1,7 +1,7 @@
 from typing import List
 
-from app.ai.prompts.autocomplete import AutocompletePrompt
-from app.common.cache import add_to_set, get_set
+from ai.prompts.autocomplete import AutocompletePrompt
+from common.cache import add_to_set, get_set
 from domain.enums.autocomplete_enums import AutocompleteLibrarySubject
 
 class AutocompleteService:

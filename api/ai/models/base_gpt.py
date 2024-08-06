@@ -18,8 +18,8 @@ from openai.types.chat.chat_completion_content_part_image_param import ImageURL
 from openai.types.shared import FunctionDefinition
 from config import get_openai_key
 from . import BaseModel
-from app.ai.prompts import BasePrompt
-from app.common import BaseChatMessage, BaseChatResponse, BaseTool, ChatRole
+from ai.prompts import BasePrompt
+from common import BaseChatMessage, BaseChatResponse, BaseTool, ChatRole
 
 class ToolCallRecord:
     index: int

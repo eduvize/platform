@@ -1,7 +1,7 @@
 import uuid
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from app.common.database import Context
+from common.database import Context
 
 class UserProfileFrontend(Context):
     __tablename__ = "user_profiles_frontend"
