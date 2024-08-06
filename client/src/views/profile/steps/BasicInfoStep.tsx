@@ -21,7 +21,7 @@ import {
     SpacedDivider,
 } from "../../../components/molecules";
 import AutocompleteApi from "../../../api/AutocompleteApi";
-import { EngineeringDiscipline } from "../../../models/enums";
+import { EngineeringDiscipline, LearningCapacity } from "../../../models/enums";
 import { UseFormReturnType } from "@mantine/form";
 
 interface BasicInfoStepProps {
@@ -152,7 +152,7 @@ export const BasicInfoStep = memo(
                             <Chip
                                 {...form.getInputProps("learning_capacities", {
                                     type: "checkbox",
-                                    value: "hobby",
+                                    value: LearningCapacity.Hobby,
                                 })}
                                 color="blue"
                                 size="sm"
@@ -163,7 +163,7 @@ export const BasicInfoStep = memo(
                             <Chip
                                 {...form.getInputProps("learning_capacities", {
                                     type: "checkbox",
-                                    value: "student",
+                                    value: LearningCapacity.Student,
                                 })}
                                 color="blue"
                                 size="sm"
@@ -174,7 +174,7 @@ export const BasicInfoStep = memo(
                             <Chip
                                 {...form.getInputProps("learning_capacities", {
                                     type: "checkbox",
-                                    value: "professional",
+                                    value: LearningCapacity.Professional,
                                 })}
                                 color="blue"
                                 size="sm"

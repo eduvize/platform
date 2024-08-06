@@ -135,6 +135,8 @@ export const Profile = memo(() => {
         );
     };
 
+    console.log(currentStep);
+
     return (
         <Container size="lg">
             <Stack>

@@ -36,14 +36,32 @@ export const ProfileStepper = ({
         "employment",
         "experience",
     ] as ProfileStep[];
+
+    const visibleSteps = form.values.learning_capacities.reduce(
+        (acc, capacity) => {
+            switch (capacity) {
+                case LearningCapacity.Hobby:
+                    return acc.concat("hobby");
+                case LearningCapacity.Student:
+                    return acc.concat("education");
+                case LearningCapacity.Professional:
+                    return acc.concat("employment", "experience");
+                default:
+                    return acc;
+            }
+        },
+        ["basic"]
+    ) as any[];
+
     const [stepIndex, setStepIndex] = useState(steps.indexOf(currentStep));
 
     useEffect(() => {
-        onChangeStep(steps[stepIndex]);
+        onChangeStep(visibleSteps[stepIndex]);
     }, [stepIndex]);
 
     useEffect(() => {
-        setStepIndex(steps.indexOf(currentStep));
+        console.log("currentStep", currentStep);
+        setStepIndex(visibleSteps.indexOf(currentStep));
     }, [currentStep]);
 
     return (
@@ -68,9 +86,7 @@ export const ProfileStepper = ({
                 }
                 icon={<IconUser />}
             />
-            {form.values.learning_capacities.includes(
-                LearningCapacity.Hobby
-            ) && (
+            {visibleSteps.includes("hobby") && (
                 <Stepper.Step
                     key="hobby"
                     label="Hobby Work"
@@ -78,9 +94,7 @@ export const ProfileStepper = ({
                     icon={<IconHammer />}
                 />
             )}
-            {form.values.learning_capacities.includes(
-                LearningCapacity.Student
-            ) && (
+            {visibleSteps.includes("education") && (
                 <Stepper.Step
                     key="education"
                     label="Education"
@@ -88,9 +102,7 @@ export const ProfileStepper = ({
                     icon={<IconBellSchool />}
                 />
             )}
-            {form.values.learning_capacities.includes(
-                LearningCapacity.Professional
-            ) && (
+            {visibleSteps.includes("employment") && (
                 <>
                     <Stepper.Step
                         key="employment"
