@@ -1,9 +1,14 @@
 import { LearningCapacity } from "../enums";
+import { HobbyProjectDto } from "./HobbyProjectDto";
 
 export interface UserSkill {
     skill_type: number;
     skill: string;
     proficiency: number | null;
+}
+
+export interface HobbyDto {
+    projects: HobbyProjectDto[];
 }
 
 export interface UserProfileDto {
@@ -15,4 +20,5 @@ export interface UserProfileDto {
     learning_capacities: LearningCapacity[];
     disciplines: string[];
     skills: UserSkill[];
+    hobby: HobbyDto | null;
 }

@@ -1,8 +1,8 @@
 import { Button, Paper, Text, Group, Divider } from "@mantine/core";
 import { UseFormReturnType } from "@mantine/form";
 import { useRef, useState } from "react";
-import FileApi from "../../../../api/FileApi";
-import { ProfileUpdatePayload } from "../../../../api/contracts";
+import FileApi from "../../api/FileApi";
+import { ProfileUpdatePayload } from "../../api/contracts";
 import { IconCheck } from "@tabler/icons-react";
 
 interface ResumeBannerProps {

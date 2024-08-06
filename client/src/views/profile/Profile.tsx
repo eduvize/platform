@@ -11,12 +11,13 @@ import {
     Text,
     Title,
 } from "@mantine/core";
-import { memo, useState } from "react";
-import { useCurrentUser } from "../../../../context/user/hooks";
+import { memo, useEffect, useState } from "react";
+import { useCurrentUser } from "../../context/user/hooks";
 import { useForm, UseFormReturnType } from "@mantine/form";
 import { BasicInfoStep, HobbiesStep, ProfileStepper } from "./steps";
-import { ProfileUpdatePayload } from "../../../../api/contracts/ProfileUpdatePayload";
+import { ProfileUpdatePayload } from "../../api/contracts/ProfileUpdatePayload";
 import { ResumeBanner } from "./ResumeBanner";
+import { LearningCapacity } from "../../models/enums";
 
 export type ProfileStep =
     | "basic"
@@ -65,6 +66,7 @@ export const Profile = memo(() => {
             skills: [],
             disciplines: [],
             learning_capacities: [],
+            hobby: null,
         },
         enhanceGetInputProps: (payload) => {
             switch (payload.field) {
@@ -81,6 +83,20 @@ export const Profile = memo(() => {
             return payload.inputProps;
         },
     });
+
+    useEffect(() => {
+        if (form.values.learning_capacities.includes(LearningCapacity.Hobby)) {
+            if (!form.values.hobby) {
+                form.setFieldValue("hobby", {
+                    projects: [],
+                });
+            }
+        } else if (form.values.hobby) {
+            form.setFieldValue("hobby", null);
+        }
+    }, [form.values.learning_capacities]);
+
+    console.log(form.values);
 
     const Header = () => {
         return (

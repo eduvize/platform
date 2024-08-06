@@ -2,6 +2,7 @@ from typing import List, Optional
 from pydantic import BaseModel, computed_field
 from .disciplines import UserProfileFrontend, UserProfileBackend, UserProfileDatabase, UserProfileDevops
 from .learning_capacities import UserProfileHobby, UserProfileStudent, UserProfileProfessional
+from .hobby import HobbyProjectDto
 from ....domain.enums.user_enums import UserDiscipline, UserLearningCapacity, UserSkillType
 
 class UserSkill(BaseModel):

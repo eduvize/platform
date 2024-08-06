@@ -1,7 +1,7 @@
 export * from "./BasicInfoStep";
 export * from "./HobbiesStep";
 
-import { Stepper } from "@mantine/core";
+import { Image, Stepper } from "@mantine/core";
 import { UseFormReturnType } from "@mantine/form";
 import {
     IconUser,
@@ -10,16 +10,40 @@ import {
     IconDeviceLaptop,
     IconReportSearch,
 } from "@tabler/icons-react";
-import { useState } from "react";
-import { ProfileUpdatePayload } from "../../../../../api/contracts";
-import { LearningCapacity } from "../../../../../models/enums";
+import { useEffect, useState } from "react";
+import { ProfileUpdatePayload } from "../../../api/contracts";
+import { LearningCapacity } from "../../../models/enums";
+import { ProfileStep } from "../Profile";
+import { useCurrentUser } from "../../../context/user/hooks";
 
 interface ProfileStepperProps {
     form: UseFormReturnType<ProfileUpdatePayload>;
+    currentStep: ProfileStep;
+    onChangeStep: (step: ProfileStep) => void;
 }
 
-export const ProfileStepper = ({ form }: ProfileStepperProps) => {
-    const [stepIndex, setStepIndex] = useState(0);
+export const ProfileStepper = ({
+    form,
+    currentStep,
+    onChangeStep,
+}: ProfileStepperProps) => {
+    const [userDetails] = useCurrentUser();
+    const steps = [
+        "basic",
+        "hobby",
+        "education",
+        "employment",
+        "experience",
+    ] as ProfileStep[];
+    const [stepIndex, setStepIndex] = useState(steps.indexOf(currentStep));
+
+    useEffect(() => {
+        onChangeStep(steps[stepIndex]);
+    }, [stepIndex]);
+
+    useEffect(() => {
+        setStepIndex(steps.indexOf(currentStep));
+    }, [currentStep]);
 
     return (
         <Stepper
@@ -31,6 +55,16 @@ export const ProfileStepper = ({ form }: ProfileStepperProps) => {
                 key="basic"
                 label="General Information"
                 description="High-level information about you"
+                completedIcon={
+                    userDetails?.profile?.avatar_url ? (
+                        <Image
+                            src={userDetails.profile.avatar_url}
+                            radius="50%"
+                        />
+                    ) : (
+                        <IconUser />
+                    )
+                }
                 icon={<IconUser />}
             />
             {form.values.learning_capacities.includes(

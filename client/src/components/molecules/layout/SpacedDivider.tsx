@@ -7,6 +7,7 @@ interface SpacedDividerProps {
     labelPosition?: "left" | "center" | "right";
     spacePlacement?: "top" | "bottom" | "top-bottom";
     spacing?: "sm" | "md" | "lg" | "xl";
+    bold?: boolean;
 }
 
 export const SpacedDivider = ({
@@ -16,6 +17,7 @@ export const SpacedDivider = ({
     labelPosition,
     spacePlacement,
     spacing,
+    bold,
 }: SpacedDividerProps) => {
     return (
         <>
@@ -26,7 +28,11 @@ export const SpacedDivider = ({
                 labelPosition={labelPosition}
                 label={
                     label ? (
-                        <Text size={labelSize} c={labelColor}>
+                        <Text
+                            size={labelSize}
+                            c={labelColor}
+                            fw={bold ? "bold" : undefined}
+                        >
                             {label}
                         </Text>
                     ) : undefined

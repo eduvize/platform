@@ -12,16 +12,16 @@ import {
     Chip,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
-import { UserDto } from "../../../../../models/dto";
-import { ProfileUpdatePayload } from "../../../../../api/contracts/ProfileUpdatePayload";
+import { UserDto } from "../../../models/dto";
+import { ProfileUpdatePayload } from "../../../api/contracts/ProfileUpdatePayload";
 import { memo, useRef } from "react";
-import UserApi from "../../../../../api/UserApi";
+import UserApi from "../../../api/UserApi";
 import {
     AdvancedPillInput,
     SpacedDivider,
-} from "../../../../../components/molecules";
-import AutocompleteApi from "../../../../../api/AutocompleteApi";
-import { EngineeringDiscipline } from "../../../../../models/enums";
+} from "../../../components/molecules";
+import AutocompleteApi from "../../../api/AutocompleteApi";
+import { EngineeringDiscipline } from "../../../models/enums";
 import { UseFormReturnType } from "@mantine/form";
 
 interface BasicInfoStepProps {
