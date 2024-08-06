@@ -7,8 +7,8 @@
 assets/email/*.html
 
 # react dependencies
-client/node_modules
-client/.pnp
+src/client/node_modules
+src/client/.pnp
 .pnp.js
 
 # react testing
