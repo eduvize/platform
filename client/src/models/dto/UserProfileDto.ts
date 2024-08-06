@@ -1,12 +1,8 @@
 import { LearningCapacity } from "../enums";
 
-export interface UserProgrammingLanguage {
-    name: string;
-    proficiency: number | null;
-}
-
-export interface UserLibrary {
-    name: string;
+export interface UserSkill {
+    skill_type: number;
+    skill: string;
     proficiency: number | null;
 }
 
@@ -18,6 +14,5 @@ export interface UserProfileDto {
     avatar_url: string | null;
     learning_capacities: LearningCapacity[];
     disciplines: string[];
-    programming_languages: UserProgrammingLanguage[];
-    libraries: UserLibrary[];
+    skills: UserSkill[];
 }

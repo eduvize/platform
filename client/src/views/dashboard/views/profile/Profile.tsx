@@ -14,9 +14,16 @@ import {
 import { memo, useState } from "react";
 import { useCurrentUser } from "../../../../context/user/hooks";
 import { useForm, UseFormReturnType } from "@mantine/form";
-import { BasicInfoStep, ProfileStepper } from "./steps";
+import { BasicInfoStep, HobbiesStep, ProfileStepper } from "./steps";
 import { ProfileUpdatePayload } from "../../../../api/contracts/ProfileUpdatePayload";
 import { ResumeBanner } from "./ResumeBanner";
+
+export type ProfileStep =
+    | "basic"
+    | "hobby"
+    | "education"
+    | "professional"
+    | "programming";
 
 function mapCheckListField(
     form: UseFormReturnType<ProfileUpdatePayload>,
@@ -47,18 +54,17 @@ function mapCheckListField(
 
 export const Profile = memo(() => {
     const [userDetails, refresh] = useCurrentUser();
-    const [steps, setSteps] = useState(["basic"]);
     const [canMoveOn, setCanMoveOn] = useState(false);
+    const [currentStep, setCurrentStep] = useState<ProfileStep>("basic");
     const form = useForm<ProfileUpdatePayload>({
         initialValues: {
             first_name: userDetails?.profile?.first_name || "",
             last_name: userDetails?.profile?.last_name || "",
             bio: userDetails?.profile?.bio || "",
             github_username: userDetails?.profile?.github_username || "",
-            learning_capacities: [],
+            skills: [],
             disciplines: [],
-            programming_languages: [],
-            libraries: [],
+            learning_capacities: [],
         },
         enhanceGetInputProps: (payload) => {
             switch (payload.field) {
@@ -101,7 +107,11 @@ export const Profile = memo(() => {
                     <Grid.Col span={3} pt="xl">
                         <Space h="8em" />
 
-                        <ProfileStepper form={form} />
+                        <ProfileStepper
+                            form={form}
+                            currentStep={currentStep}
+                            onChangeStep={(step) => setCurrentStep(step)}
+                        />
                     </Grid.Col>
 
                     <Grid.Col span={8}>
@@ -110,12 +120,22 @@ export const Profile = memo(() => {
                         <Space h="lg" />
 
                         <Card shadow="xs" padding="xl" withBorder>
-                            <BasicInfoStep
-                                userDetails={userDetails}
-                                form={form}
-                                onAvatarChange={() => refresh()}
-                            />
-                            {/*<HobbiesStep />*/}
+                            {currentStep === "basic" && (
+                                <BasicInfoStep
+                                    userDetails={userDetails}
+                                    form={form}
+                                    onAvatarChange={() => refresh()}
+                                />
+                            )}
+
+                            {currentStep === "hobby" && (
+                                <HobbiesStep
+                                    form={form}
+                                    onChangeStep={(step) =>
+                                        setCurrentStep(step)
+                                    }
+                                />
+                            )}
 
                             <Space h="xl" />
 

@@ -16,6 +16,7 @@ interface AdvancedPillInputProps {
     onChange?: (value: string[]) => void;
     placeholder?: string;
     valueSelector?: (value: any) => string;
+    valueFilter?: (value: any) => boolean;
     valueMapper?: (value: string) => any;
 }
 
@@ -26,6 +27,7 @@ export const AdvancedPillInput = ({
     onChange,
     placeholder,
     valueSelector,
+    valueFilter,
     valueMapper,
 }: AdvancedPillInputProps) => {
     function mapValues(elements: any[]) {
@@ -52,6 +54,8 @@ export const AdvancedPillInput = ({
     const initialValue = defaultValue || value || [];
     const values = mapValues(initialValue);
 
+    console.log("values", values);
+
     const handleAutocompletion = useThrottledCallback((query: string) => {
         if (!valueFetch) return;
 
@@ -63,12 +67,28 @@ export const AdvancedPillInput = ({
     }, 300);
 
     const handleChange = (newValues: string[]) => {
+        console.log("new values", newValues);
+
         if (onChange) {
+            let toChange = newValues;
+            let toNotChange: string[] = [];
+
             if (valueMapper) {
-                onChange(newValues.map(valueMapper));
-            } else {
-                onChange(newValues);
+                toChange = toChange.map(valueMapper);
+
+                console.log("mapped toChange", toChange);
             }
+
+            if (valueFilter) {
+                toNotChange = toChange.filter((v) => !valueFilter(v));
+                toChange = toChange.filter(valueFilter);
+
+                console.log("value filter toChange", toChange);
+                console.log("value filter toNotChange", toNotChange);
+            }
+
+            console.log("returning", [...toChange, ...toNotChange]);
+            onChange([...toChange, ...toNotChange]);
         }
     };
 
@@ -99,8 +119,8 @@ export const AdvancedPillInput = ({
     const options = useMemo(
         () =>
             remoteOptions
-                .filter((item) =>
-                    item.toLowerCase().includes(query.trim().toLowerCase())
+                .filter((x) =>
+                    x.toLocaleLowerCase().includes(query.toLocaleLowerCase())
                 )
                 .map((item) => (
                     <Combobox.Option
@@ -130,18 +150,28 @@ export const AdvancedPillInput = ({
             >
                 <PillsInput>
                     <Pill.Group>
-                        {values.map((lang) => (
-                            <Pill
-                                key={lang}
-                                size="md"
-                                withRemoveButton
-                                onRemove={() => {
-                                    handleValueRemove(lang);
-                                }}
-                            >
-                                {lang}
-                            </Pill>
-                        ))}
+                        {values
+                            .filter((x) =>
+                                typeof valueFilter !== "undefined"
+                                    ? valueFilter(
+                                          typeof valueMapper !== "undefined"
+                                              ? valueMapper(x)
+                                              : x
+                                      )
+                                    : true
+                            )
+                            .map((x) => (
+                                <Pill
+                                    key={x}
+                                    size="md"
+                                    withRemoveButton
+                                    onRemove={() => {
+                                        handleValueRemove(x);
+                                    }}
+                                >
+                                    {x}
+                                </Pill>
+                            ))}
 
                         <Combobox.DropdownTarget>
                             <Combobox.EventsTarget>
@@ -188,18 +218,28 @@ export const AdvancedPillInput = ({
         return (
             <PillsInput>
                 <Pill.Group>
-                    {values.map((lang) => (
-                        <Pill
-                            key={lang}
-                            size="md"
-                            withRemoveButton
-                            onRemove={() => {
-                                handleValueRemove(lang);
-                            }}
-                        >
-                            {lang}
-                        </Pill>
-                    ))}
+                    {values
+                        .filter((x) =>
+                            typeof valueFilter !== "undefined"
+                                ? valueFilter(
+                                      typeof valueMapper !== "undefined"
+                                          ? valueMapper(x)
+                                          : x
+                                  )
+                                : true
+                        )
+                        .map((x) => (
+                            <Pill
+                                key={x}
+                                size="md"
+                                withRemoveButton
+                                onRemove={() => {
+                                    handleValueRemove(x);
+                                }}
+                            >
+                                {x}
+                            </Pill>
+                        ))}
 
                     <PillsInput.Field
                         placeholder={placeholder}

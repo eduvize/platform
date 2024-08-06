@@ -14,7 +14,7 @@ import {
 import { DateInput } from "@mantine/dates";
 import { UserDto } from "../../../../../models/dto";
 import { ProfileUpdatePayload } from "../../../../../api/contracts/ProfileUpdatePayload";
-import { memo, useRef, useState } from "react";
+import { memo, useRef } from "react";
 import UserApi from "../../../../../api/UserApi";
 import {
     AdvancedPillInput,
@@ -55,12 +55,13 @@ export const BasicInfoStep = memo(
                 />
 
                 <SpacedDivider
+                    bold
                     label="Basic Information"
                     labelPosition="left"
                     labelColor="blue"
                     labelSize="lg"
                     spacePlacement="bottom"
-                    spacing="sm"
+                    spacing="lg"
                 />
 
                 <Stack gap="1em">
@@ -78,7 +79,7 @@ export const BasicInfoStep = memo(
                                         undefined
                                     }
                                     size="10rem"
-                                    radius="xl"
+                                    radius="50%"
                                 />
                             </UnstyledButton>
                         </Tooltip>
@@ -137,11 +138,12 @@ export const BasicInfoStep = memo(
                 </Stack>
 
                 <SpacedDivider
+                    bold
                     label="Where are you in your journey?"
                     labelPosition="left"
                     labelColor="blue"
                     labelSize="lg"
-                    spacing="sm"
+                    spacing="lg"
                 />
 
                 <Stack gap="1em">
@@ -152,7 +154,7 @@ export const BasicInfoStep = memo(
                                     type: "checkbox",
                                     value: "hobby",
                                 })}
-                                color="green"
+                                color="blue"
                                 size="sm"
                             >
                                 I'm a hobbyist
@@ -163,7 +165,7 @@ export const BasicInfoStep = memo(
                                     type: "checkbox",
                                     value: "student",
                                 })}
-                                color="green"
+                                color="blue"
                                 size="sm"
                             >
                                 I am or have been a student
@@ -174,7 +176,7 @@ export const BasicInfoStep = memo(
                                     type: "checkbox",
                                     value: "professional",
                                 })}
-                                color="green"
+                                color="blue"
                                 size="sm"
                             >
                                 I'm working in the industry
@@ -184,11 +186,12 @@ export const BasicInfoStep = memo(
                 </Stack>
 
                 <SpacedDivider
+                    bold
                     label="What do you specialize in?"
                     labelPosition="left"
                     labelColor="blue"
                     labelSize="lg"
-                    spacing="sm"
+                    spacing="lg"
                 />
 
                 <Stack gap="1em">
@@ -199,7 +202,7 @@ export const BasicInfoStep = memo(
                                     type: "checkbox",
                                     value: "frontend",
                                 })}
-                                color="green"
+                                color="blue"
                                 size="sm"
                             >
                                 Frontend
@@ -210,7 +213,7 @@ export const BasicInfoStep = memo(
                                     type: "checkbox",
                                     value: "backend",
                                 })}
-                                color="green"
+                                color="blue"
                                 size="sm"
                             >
                                 Backend
@@ -221,7 +224,7 @@ export const BasicInfoStep = memo(
                                     type: "checkbox",
                                     value: "database",
                                 })}
-                                color="green"
+                                color="blue"
                                 size="sm"
                             >
                                 Database
@@ -232,7 +235,7 @@ export const BasicInfoStep = memo(
                                     type: "checkbox",
                                     value: "devops",
                                 })}
-                                color="green"
+                                color="blue"
                                 size="sm"
                             >
                                 Infrastructure / DevOps
@@ -242,41 +245,46 @@ export const BasicInfoStep = memo(
                 </Stack>
 
                 <SpacedDivider
+                    bold
                     label="What programming languages are you proficient in?"
                     labelPosition="left"
                     labelColor="blue"
                     labelSize="lg"
-                    spacing="sm"
+                    spacing="lg"
                 />
 
                 <AdvancedPillInput
-                    {...form.getInputProps("programming_languages")}
+                    {...form.getInputProps("skills")}
                     placeholder="Type to search for a language"
                     valueFetch={(query) =>
                         AutocompleteApi.getProgrammingLanguages(query)
                     }
-                    valueSelector={(x) => x.name}
+                    valueSelector={(x) => x.skill}
+                    valueFilter={(x) => x.skill_type === 1}
                     valueMapper={(x) => {
-                        const languages = form.values.programming_languages;
-                        const existing = languages.find((l) => l.name === x);
+                        const existing = form.values.skills.find(
+                            (l) => l.skill === x
+                        );
 
                         return {
-                            name: x,
+                            skill_type: existing ? existing.skill_type : 1,
+                            skill: x,
                             proficiency: existing ? existing.proficiency : null,
                         };
                     }}
                 />
 
                 <SpacedDivider
+                    bold
                     label="Which frameworks / libraries have you worked with?"
                     labelPosition="left"
                     labelColor="blue"
                     labelSize="lg"
-                    spacing="sm"
+                    spacing="lg"
                 />
 
                 <AdvancedPillInput
-                    {...form.getInputProps("libraries")}
+                    {...form.getInputProps("skills")}
                     placeholder="Type to search for a library or framework"
                     valueFetch={(query) => {
                         return AutocompleteApi.getLibraries(
@@ -284,13 +292,16 @@ export const BasicInfoStep = memo(
                             query
                         );
                     }}
-                    valueSelector={(x) => x.name}
+                    valueSelector={(x) => x.skill}
+                    valueFilter={(x) => x.skill_type === 2}
                     valueMapper={(x) => {
-                        const libs = form.values.libraries;
-                        const existing = libs.find((l) => l.name === x);
+                        const existing = form.values.skills.find(
+                            (l) => l.skill === x
+                        );
 
                         return {
-                            name: x,
+                            skill_type: existing ? existing.skill_type : 2,
+                            skill: x,
                             proficiency: existing ? existing.proficiency : null,
                         };
                     }}
