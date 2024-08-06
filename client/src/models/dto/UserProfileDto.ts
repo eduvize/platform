@@ -1,6 +1,15 @@
 import { LearningCapacity } from "../enums";
 import { HobbyProjectDto } from "./HobbyProjectDto";
 
+export enum HobbyReason {
+    LearnNewTechnology = "learn_new_technology",
+    Entertaining = "entertaining",
+    MakeMoney = "make_money",
+    DiversifySkills = "diversify_skills",
+    Challenging = "challenging",
+    CreativeOutlet = "creative_outlet",
+}
+
 export interface UserSkill {
     skill_type: number;
     skill: string;
@@ -8,6 +17,7 @@ export interface UserSkill {
 }
 
 export interface HobbyDto {
+    reasons: HobbyReason[];
     projects: HobbyProjectDto[];
 }
 

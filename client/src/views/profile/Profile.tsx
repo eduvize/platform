@@ -14,7 +14,12 @@ import {
 import { memo, useEffect, useState } from "react";
 import { useCurrentUser } from "../../context/user/hooks";
 import { useForm, UseFormReturnType } from "@mantine/form";
-import { BasicInfoStep, HobbiesStep, ProfileStepper } from "./steps";
+import {
+    BasicInfoStep,
+    EducationStep,
+    HobbiesStep,
+    ProfileStepper,
+} from "./steps";
 import { ProfileUpdatePayload } from "../../api/contracts/ProfileUpdatePayload";
 import { ResumeBanner } from "./ResumeBanner";
 import { LearningCapacity } from "../../models/enums";
@@ -34,22 +39,28 @@ function mapCheckListField(
 ) {
     const { value } = options;
 
+    function getValueFromDotPath(obj: any, path: string): any {
+        return path.split(".").reduce((acc, key) => acc[key], obj);
+    }
+
     return {
         ...inputProps,
         onChange: (checked: boolean) => {
             if (checked) {
                 form.setFieldValue(field, [
-                    ...(form.values as any)[field],
+                    ...getValueFromDotPath(form.values, field),
                     value,
                 ]);
             } else {
                 form.setFieldValue(
                     field,
-                    (form.values as any)[field].filter((v: any) => v !== value)
+                    getValueFromDotPath(form.values, field).filter(
+                        (v: any) => v !== value
+                    )
                 );
             }
         },
-        checked: (form.values as any)[field].includes(value),
+        checked: getValueFromDotPath(form.values, field).includes(value),
     };
 }
 
@@ -78,6 +89,13 @@ export const Profile = memo(() => {
                         payload.options,
                         payload.inputProps
                     );
+                case "hobby.reasons":
+                    return mapCheckListField(
+                        payload.form,
+                        payload.field,
+                        payload.options,
+                        payload.inputProps
+                    );
             }
 
             return payload.inputProps;
@@ -88,6 +106,7 @@ export const Profile = memo(() => {
         if (form.values.learning_capacities.includes(LearningCapacity.Hobby)) {
             if (!form.values.hobby) {
                 form.setFieldValue("hobby", {
+                    reasons: [],
                     projects: [],
                 });
             }
@@ -151,6 +170,10 @@ export const Profile = memo(() => {
                                         setCurrentStep(step)
                                     }
                                 />
+                            )}
+
+                            {currentStep === "education" && (
+                                <EducationStep form={form} />
                             )}
 
                             <Space h="xl" />

@@ -3,11 +3,16 @@ import { HobbyProject, SpacedDivider } from "../../../components/molecules";
 import { UseFormReturnType } from "@mantine/form";
 import { ProfileUpdatePayload } from "../../../api/contracts";
 import { ProfileStep } from "../Profile";
-import { HobbyProjectDto } from "../../../models/dto";
+import { HobbyProjectDto, HobbyReason } from "../../../models/dto";
 
 interface HobbiesStepProps {
     form: UseFormReturnType<ProfileUpdatePayload>;
     onChangeStep: (step: ProfileStep) => void;
+}
+
+interface ReasonChipProps {
+    label: string;
+    value: HobbyReason;
 }
 
 export const HobbiesStep = ({ form, onChangeStep }: HobbiesStepProps) => {
@@ -46,6 +51,21 @@ export const HobbiesStep = ({ form, onChangeStep }: HobbiesStepProps) => {
         );
     };
 
+    const ReasonChip = ({ label, value }: ReasonChipProps) => {
+        return (
+            <Chip
+                {...form.getInputProps("hobby.reasons", {
+                    type: "checkbox",
+                    value,
+                })}
+                color="blue"
+                size="sm"
+            >
+                {label}
+            </Chip>
+        );
+    };
+
     return (
         <>
             <Divider
@@ -58,16 +78,35 @@ export const HobbiesStep = ({ form, onChangeStep }: HobbiesStepProps) => {
             />
 
             <Text c="gray" size="sm" mb="lg">
-                Select all that apply
+                Help us get an idea of what motivates you to work on side
+                projects.
             </Text>
 
             <Group justify="center">
-                <Chip>To Learn New Technologies</Chip>
-                <Chip>It's Entertaining</Chip>
-                <Chip>Trying to Make Money</Chip>
-                <Chip>To Diversify My Skills</Chip>
-                <Chip>I Like a Challenge</Chip>
-                <Chip>It's a Creative Outlet</Chip>
+                <ReasonChip
+                    label="To Learn New Technologies"
+                    value={HobbyReason.LearnNewTechnology}
+                />
+                <ReasonChip
+                    label="It's Entertaining"
+                    value={HobbyReason.Entertaining}
+                />
+                <ReasonChip
+                    label="Trying to Make Money"
+                    value={HobbyReason.MakeMoney}
+                />
+                <ReasonChip
+                    label="To Diversify My Skills"
+                    value={HobbyReason.DiversifySkills}
+                />
+                <ReasonChip
+                    label="I Like a Challenge"
+                    value={HobbyReason.Challenging}
+                />
+                <ReasonChip
+                    label="It's a Creative Outlet"
+                    value={HobbyReason.CreativeOutlet}
+                />
             </Group>
 
             <SpacedDivider

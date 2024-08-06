@@ -1,5 +1,6 @@
 export * from "./BasicInfoStep";
 export * from "./HobbiesStep";
+export * from "./EducationStep";
 
 import { Image, Stepper } from "@mantine/core";
 import { UseFormReturnType } from "@mantine/form";
