@@ -16,7 +16,7 @@ interface HobbyProjectProps extends HobbyProjectDto {
 }
 
 export const HobbyProject = memo((project: HobbyProjectProps) => {
-    const { name, description, purpose, onRemove, onChange } = project;
+    const { project_name, description, purpose, onRemove, onChange } = project;
 
     const handleChange = (value: Partial<HobbyProjectDto>) => {
         onChange?.({ ...project, ...value });
@@ -33,13 +33,13 @@ export const HobbyProject = memo((project: HobbyProjectProps) => {
                     style={{ outline: "none" }}
                     onBlur={(e) =>
                         handleChange({
-                            name:
+                            project_name:
                                 e.currentTarget.textContent ||
                                 "Untitled Project",
                         })
                     }
                 >
-                    {name}
+                    {project_name}
                 </Text>
 
                 <UnstyledButton onClick={onRemove}>
