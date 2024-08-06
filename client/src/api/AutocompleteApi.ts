@@ -18,6 +18,12 @@ class AutocompleteApi extends BaseApi {
             )}&query=${encodeURIComponent(query)}`
         );
     }
+
+    getEducationalInstitutions(query: string): Promise<string[]> {
+        return this.get<string[]>(
+            `educational-institutions?query=${encodeURIComponent(query)}`
+        );
+    }
 }
 
 export default new AutocompleteApi("autocomplete");
