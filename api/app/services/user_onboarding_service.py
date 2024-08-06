@@ -1,12 +1,12 @@
 import datetime
 from fastapi import Depends
 
-from ..utilities.endpoints import get_public_endpoint
-from ..common.email import send_email
-from ..domain.dto.user import UserOnboardingStatusDto
-from ..repositories.user_repository import UserRepository
-from ..common.email.templates import get_welcome_email
-from ..utilities.string_generation import generate_random_string
+from app.utilities.endpoints import get_public_endpoint
+from app.common.email import send_email
+from domain.dto.user import UserOnboardingStatusDto
+from app.repositories.user_repository import UserRepository
+from app.common.email.templates import get_welcome_email
+from app.utilities.string_generation import generate_random_string
 
 class VerificationExpiredError(Exception):
     """

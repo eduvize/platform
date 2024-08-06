@@ -1,10 +1,8 @@
-import jwt
-
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from config import get_token_secret
-from ..responses import raise_unauthorized
-from ...utilities.jwt import InvalidJWTToken, decode_token
+from app.routing.responses import raise_unauthorized
+from app.utilities.jwt import InvalidJWTToken, decode_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 

@@ -1,6 +1,6 @@
 from typing import List
 from .provide_options_tool import ProvideOptionsTool
-from .. import BasePrompt
+from app.ai.prompts import BasePrompt
 
 class AutocompletePrompt(BasePrompt):
     def setup(self) -> None:

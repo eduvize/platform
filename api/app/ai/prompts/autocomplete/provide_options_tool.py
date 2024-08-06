@@ -1,5 +1,5 @@
 from typing import List
-from ...common import BaseTool
+from app.ai.common import BaseTool
 
 class ProvideOptionsTool(BaseTool):
     def __init__(self):

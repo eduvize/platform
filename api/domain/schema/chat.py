@@ -1,4 +1,4 @@
-from ...common.database import Context
+from app.common.database import Context
 from sqlalchemy import TIMESTAMP, Boolean, Column, ForeignKey, Integer, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import relationship

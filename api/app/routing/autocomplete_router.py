@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
-from ..services.autocomplete_service import AutocompleteService
-from ..routing.middleware.token_middleware import token_extractor
+from app.services.autocomplete_service import AutocompleteService
+from app.routing.middleware.token_middleware import token_extractor
 
 router = APIRouter(
     prefix="/autocomplete",

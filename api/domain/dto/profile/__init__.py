@@ -1,10 +1,9 @@
 from typing import List, Optional
 from pydantic import BaseModel, computed_field
-
-from .hobby import UserProfileHobby
-from .disciplines import UserProfileFrontend, UserProfileBackend, UserProfileDatabase, UserProfileDevops
-from .learning_capacities import UserProfileStudent, UserProfileProfessional
-from ....domain.enums.user_enums import UserDiscipline, UserLearningCapacity, UserSkillType
+from domain.dto.profile.hobby import UserProfileHobby
+from domain.dto.profile.disciplines import UserProfileFrontend, UserProfileBackend, UserProfileDatabase, UserProfileDevops
+from domain.dto.profile.learning_capacities import UserProfileStudent, UserProfileProfessional
+from domain.enums.user_enums import UserDiscipline, UserLearningCapacity, UserSkillType
 
 class UserSkill(BaseModel):
     skill_type: UserSkillType

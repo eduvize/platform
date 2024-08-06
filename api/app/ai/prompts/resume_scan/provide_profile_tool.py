@@ -1,6 +1,5 @@
-from typing import List
-from ...common import BaseTool
-from ....domain.dto.user import UserProfileDto
+from app.ai.common import BaseTool
+from domain.dto.user import UserProfileDto
 
 class ProvideProfileTool(BaseTool):
     def __init__(self):

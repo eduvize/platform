@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, File, UploadFile
 
-from ..ai.prompts.resume_scan.resume_scanner_prompt import ResumeScannerPrompt
+from app.ai.prompts.resume_scan.resume_scanner_prompt import ResumeScannerPrompt
 
 from .middleware.token_middleware import token_extractor, user_id_extractor
 from .contracts.user_contracts import UpdateProfilePayload
 from .contracts.file_contracts import FileUploadResponse
-from ..common.conversion.pdf_to_image import get_images_from_pdf_bytes
-from ..services.user_onboarding_service import UserOnboardingService
-from ..domain.dto.user import UserDto
-from ..services.user_service import UserService
+from app.common.conversion.pdf_to_image import get_images_from_pdf_bytes
+from app.services.user_onboarding_service import UserOnboardingService
+from app.services.user_service import UserService
+from domain.dto.user import UserDto
 
 router = APIRouter(
     prefix="/users",

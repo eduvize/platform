@@ -1,5 +1,5 @@
 from pydantic import BaseModel, field_validator, computed_field
-from .profile import UserProfileDto
+from domain.dto.profile import UserProfileDto
 
 class UserDto(BaseModel):
     id: str

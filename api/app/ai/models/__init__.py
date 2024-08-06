@@ -1,7 +1,6 @@
-from enum import Enum
 from typing import Generator, List, Tuple
-from ..prompts import BasePrompt
-from ..common import BaseChatMessage, BaseChatResponse, BaseTool
+from app.ai.prompts import BasePrompt
+from app.common import BaseChatMessage, BaseChatResponse, BaseTool
 
 class BaseModel:
     def get_responses(self, prompt: BasePrompt) -> List[BaseChatResponse]:

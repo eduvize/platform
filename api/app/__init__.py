@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from socketio import ASGIApp
-from .routing import api_router
-from .websocket import socket
+from app.routing import api_router
+from app.websocket import socket
 from starlette.middleware.cors import CORSMiddleware
 
 origins = [

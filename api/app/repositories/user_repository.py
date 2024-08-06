@@ -1,9 +1,9 @@
 from datetime import datetime
-from typing import List, Literal, Optional, Union
+from typing import List, Optional, Union
 from sqlalchemy import UUID
 from sqlalchemy.orm import joinedload
-from ..common.database import get_session
-from ..domain.schema.user import User, UserIdentifiers, UserIncludes, UserProfile
+from app.common.database import get_session
+from domain.schema.user import User, UserIdentifiers, UserIncludes, UserProfile
 
 class UserRepository:
     """

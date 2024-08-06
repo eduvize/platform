@@ -1,6 +1,5 @@
 from typing import Optional
-from fastapi import APIRouter
-from socketio import ASGIApp, AsyncServer
+from socketio import AsyncServer
 import logging
 
 logging.basicConfig(level=logging.INFO)

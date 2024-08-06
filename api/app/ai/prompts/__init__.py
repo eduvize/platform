@@ -1,5 +1,5 @@
 from typing import Dict, List, Type, TypeVar
-from ..common import BaseChatMessage, BaseTool, ChatRole
+from app.ai.common import BaseChatMessage, BaseTool, ChatRole
 
 T = TypeVar('T', bound='BaseTool')
 

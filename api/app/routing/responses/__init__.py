@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 from fastapi.responses import RedirectResponse, JSONResponse
-from ...utilities.endpoints import get_public_endpoint, get_public_ui_endpoint
+from app.utilities.endpoints import get_public_endpoint, get_public_ui_endpoint
 
 def redirect_ui(endpoint: str):
     """
