@@ -1,5 +1,5 @@
 export interface HobbyProjectDto {
-    name: string;
+    project_name: string;
     description?: string;
     purpose?: string;
 }

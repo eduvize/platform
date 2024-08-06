@@ -23,12 +23,81 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     last_updated_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
 
+-- Create schema for skills
+CREATE TABLE IF NOT EXISTS user_profiles_skills (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_id UUID NOT NULL REFERENCES user_profiles(id),
+    skill_type INT NOT NULL,
+    skill TEXT NOT NULL,
+    proficiency INT,
+    notes TEXT
+)
+
+-- Create schema for the hobby portion of the user profile
+CREATE TABLE IF NOT EXISTS user_profiles_hobby (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_id UUID NOT NULL REFERENCES user_profiles(id),
+)
+
+-- Create schema for hobby reasons
+CREATE TABLE IF NOT EXISTS user_profiles_hobby_reasons (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_hobby_id UUID NOT NULL REFERENCES user_profiles_hobby(id),
+    reason TEXT NOT NULL
+)
+
+-- Create schema for hobby projects
+CREATE TABLE IF NOT EXISTS user_profiles_hobby_projects (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_hobby_id UUID NOT NULL REFERENCES user_profiles_hobby(id),
+    project_name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    purpose TEXT,
+)
+
+-- Create the schema for the student portion of the user profile
+CREATE TABLE IF NOT EXISTS user_profiles_student (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_id UUID NOT NULL REFERENCES user_profiles(id),
+)
+
+-- Create the schema for the professional portion of the user profile
+CREATE TABLE IF NOT EXISTS user_profiles_professional (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_id UUID NOT NULL REFERENCES user_profiles(id),
+)
+
+-- Create schema for the frontend portion of the user profile
+CREATE TABLE IF NOT EXISTS user_profiles_frontend (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_id UUID NOT NULL REFERENCES user_profiles(id),
+)
+
+-- Create the schema for the backend portion of the user profile
+CREATE TABLE IF NOT EXISTS user_profiles_backend (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_id UUID NOT NULL REFERENCES user_profiles(id),
+)
+
+-- Create the schema for the database portion of the user profile
+CREATE TABLE IF NOT EXISTS user_profiles_database (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_id UUID NOT NULL REFERENCES user_profiles(id),
+)
+
+-- Create the schema for the devops portion of the user profile
+CREATE TABLE IF NOT EXISTS user_profiles_devops (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_id UUID NOT NULL REFERENCES user_profiles(id),
+)
+
 -- Create schema for User Skills
 CREATE TABLE IF NOT EXISTS user_skills (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id),
+    skill_type INT NOT NULL,
     skill TEXT NOT NULL,
-    proficiency INT NOT NULL,
+    proficiency INT,
     notes TEXT,
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );

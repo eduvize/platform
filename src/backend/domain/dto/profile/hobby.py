@@ -11,7 +11,7 @@ class HobbyReason(Enum):
     CREATIVE_OUTLET = "creative_outlet"
 
 class HobbyProjectDto(BaseModel):
-    name: str
+    project_name: str
     description: str
     purpose: Optional[str]
     
