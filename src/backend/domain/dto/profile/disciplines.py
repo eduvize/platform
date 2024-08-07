@@ -1,21 +1,14 @@
 from pydantic import BaseModel
+from domain.schema.profile.disciplines import UserProfileBackendBase, UserProfileDatabaseBase, UserProfileDevopsBase, UserProfileFrontendBase
 
-class UserProfileFrontend(BaseModel):
-        
-    class Config:
-        from_attributes = True
+class UserProfileFrontend(UserProfileFrontendBase):
+    pass
 
-class UserProfileBackend(BaseModel):
-    
-    class Config:
-        from_attributes = True
+class UserProfileBackend(UserProfileBackendBase):
+    pass
 
-class UserProfileDatabase(BaseModel):
-        
-    class Config:
-        from_attributes = True
+class UserProfileDatabase(UserProfileDatabaseBase):
+    pass
 
-class UserProfileDevops(BaseModel):
-        
-    class Config:
-        from_attributes = True
+class UserProfileDevops(UserProfileDevopsBase):
+    pass

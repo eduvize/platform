@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import List, Optional, Union
 from sqlalchemy import UUID
+from sqlalchemy.orm import selectinload
 from sqlmodel import Session, select
 from domain.schema.user import User, UserIdentifiers, UserIncludes, UserProfile
-from common.database import engine
+from common.database import engine, recursive_load_options
 
 class UserRepository:
     """
@@ -47,8 +48,9 @@ class UserRepository:
             if user is None:
                 return None
             
-            session.merge(profile)
-            session.commit()        
+            # Merge the new profile data into the existing profile
+            user.profile.sqlmodel_update(profile)
+            session.commit()     
     
     async def get_user(self, by: UserIdentifiers, value: Union[str, UUID], include: Optional[List[UserIncludes]] = []) -> Optional[User]:
         """
@@ -79,7 +81,7 @@ class UserRepository:
             
             if include:
                 for field in include:
-                    query = query.join(getattr(User, field))
+                    query = query.options(*recursive_load_options(User, field))
         
             resultset = session.exec(query)
             

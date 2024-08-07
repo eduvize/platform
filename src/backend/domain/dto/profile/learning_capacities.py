@@ -1,13 +1,10 @@
 from enum import Enum
 from typing import List, Optional
 from pydantic import BaseModel
+from domain.schema.profile.learning_capacities import UserProfileProfessionalBase, UserProfileStudentBase
         
-class UserProfileStudent(BaseModel):
-        
-    class Config:
-        from_attributes = True
+class UserProfileStudent(UserProfileStudentBase):
+    pass        
             
-class UserProfileProfessional(BaseModel):
-            
-    class Config:
-        from_attributes = True
+class UserProfileProfessional(UserProfileProfessionalBase):
+    pass

@@ -15,10 +15,10 @@ router = APIRouter(
     dependencies=[Depends(token_extractor), Depends(user_id_extractor)]
 )
 
-@router.get("/me")
+@router.get("/me", response_model=UserDto)
 async def get_me(user_id: str = Depends(user_id_extractor), user_service: UserService = Depends(UserService)):
     current_user = await user_service.get_user("id", user_id)
-    return UserDto.model_validate(current_user)
+    return current_user
 
 @router.get("/me/onboarding")
 async def get_onboarding_status(user_id: str = Depends(user_id_extractor), user_onboarding_service: UserOnboardingService = Depends(UserOnboardingService)):

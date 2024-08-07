@@ -1,7 +1,8 @@
 from pydantic import BaseModel, field_validator, computed_field
+from domain.schema.user import UserBase
 from domain.dto.profile import UserProfileDto
 
-class UserDto(BaseModel):
+class UserDto(UserBase):
     id: str
     username: str
     profile: UserProfileDto
@@ -16,9 +17,6 @@ class UserDto(BaseModel):
             else self.username
         )
     
-    class Config:
-        from_attributes = True
-    
     # Field validators let you transform the data before it is validated in order to map schema to model fields
     @field_validator("id", mode="before")
     def validate_id(cls, v):
@@ -32,6 +30,3 @@ class UserOnboardingStatusDto(BaseModel):
     is_verified: bool
     is_profile_complete: bool
     recently_verified: bool
-    
-    class Config:
-        from_attributes = True

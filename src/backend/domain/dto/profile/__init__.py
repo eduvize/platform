@@ -1,20 +1,18 @@
 from typing import List, Optional
 from pydantic import BaseModel, computed_field
-from domain.dto.profile.hobby import UserProfileHobby
+from domain.schema.user import UserProfileBase, UserProfileSkillBase
+from domain.dto.profile.hobby import UserProfileHobbyDto
 from domain.dto.profile.disciplines import UserProfileFrontend, UserProfileBackend, UserProfileDatabase, UserProfileDevops
 from domain.dto.profile.learning_capacities import UserProfileStudent, UserProfileProfessional
 from domain.enums.user_enums import UserDiscipline, UserLearningCapacity, UserSkillType
 
-class UserSkillDto(BaseModel):
+class UserSkillDto(UserProfileSkillBase):
     skill_type: UserSkillType
     skill: str
     proficiency: Optional[int]
     notes: Optional[str]
     
-    class Config:
-        from_attributes = True
-
-class UserProfileDto(BaseModel):
+class UserProfileDto(UserProfileBase):
     first_name: Optional[str]
     last_name: Optional[str]
     bio: Optional[str]
@@ -23,7 +21,7 @@ class UserProfileDto(BaseModel):
     
     skills: Optional[List[UserSkillDto]] = None
     
-    hobby: Optional[UserProfileHobby] = None
+    hobby: Optional[UserProfileHobbyDto] = None
     student: Optional[UserProfileStudent] = None
     professional: Optional[UserProfileProfessional] = None
     
@@ -58,6 +56,3 @@ class UserProfileDto(BaseModel):
             l.append(UserDiscipline.DEVOPS)
             
         return l
-    
-    class Config:
-        from_attributes = True

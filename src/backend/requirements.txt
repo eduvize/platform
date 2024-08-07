@@ -58,3 +58,4 @@ boto3-stubs[ses]
 openai
 pdf2image
 sqlmodel
+asyncpg
