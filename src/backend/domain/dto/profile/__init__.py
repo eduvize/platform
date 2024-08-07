@@ -13,11 +13,11 @@ class UserSkillDto(UserProfileSkillBase):
     notes: Optional[str]
     
 class UserProfileDto(UserProfileBase):
-    first_name: Optional[str]
-    last_name: Optional[str]
-    bio: Optional[str]
-    github_username: Optional[str]
-    avatar_url: Optional[str]
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    bio: Optional[str] = None
+    github_username: Optional[str] = None
+    avatar_url: Optional[str] = None
     
     skills: Optional[List[UserSkillDto]] = None
     

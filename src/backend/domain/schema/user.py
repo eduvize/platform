@@ -37,7 +37,6 @@ class UserProfileBase(SQLModel):
     bio: Optional[str]                                  = Field()
     github_username: Optional[str]                      = Field()
     avatar_url: Optional[str]                           = Field()
-    
 
 class UserProfile(UserProfileBase, table=True):
     __tablename__ = "user_profiles"

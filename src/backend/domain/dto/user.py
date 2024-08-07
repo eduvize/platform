@@ -1,9 +1,10 @@
+import uuid
 from pydantic import BaseModel, field_validator, computed_field
 from domain.schema.user import UserBase
 from domain.dto.profile import UserProfileDto
 
 class UserDto(UserBase):
-    id: str
+    id: uuid.UUID
     username: str
     profile: UserProfileDto
     created_at_utc: str

@@ -132,43 +132,39 @@ class UserService:
             user.profile.avatar_url = user.profile.avatar_url # Keep the existing avatar if none was provided
         
         if profile_dto.learning_capacities:
-            if "hobby" in profile_dto.learning_capacities:
-                if profile_dto.hobby:
-                    #user.profile.hobby
-                    pass
-                else:
-                    user.profile.hobby = UserProfileHobby(user_profile_id=user.profile.id)
+            if profile_dto.hobby:
+                user.profile.hobby = profile_dto.hobby
             elif user.profile.hobby is not None:
                 user.profile.hobby = None
                 
-            if "student" in profile_dto.learning_capacities:
-                user.profile.student = UserProfileStudent(user_profile_id=user.profile.id)
+            if profile_dto.student:
+                user.profile.student = profile_dto.student
             else:
                 user.profile.student = None
                 
-            if "professional" in profile_dto.learning_capacities:
-                user.profile.professional = UserProfileProfessional(user_profile_id=user.profile.id)
+            if profile_dto.professional:
+                user.profile.professional = profile_dto.professional
             else:
                 user.profile.professional = None
                 
         if profile_dto.disciplines:
-            if "frontend" in profile_dto.disciplines:
-                user.profile.frontend = UserProfileFrontend(user_profile_id=user.profile.id)
+            if profile_dto.frontend:
+                user.profile.frontend = profile_dto.frontend
             elif user.profile.frontend is not None:
                 user.profile.frontend = None
                 
-            if "backend" in profile_dto.disciplines:
-                user.profile.backend = UserProfileBackend(user_profile_id=user.profile.id)
+            if profile_dto.backend:
+                user.profile.backend = profile_dto.backend
             elif user.profile.backend is not None:
                 user.profile.backend = None
                 
-            if "database" in profile_dto.disciplines:
-                user.profile.database = UserProfileDatabase(user_profile_id=user.profile.id)
+            if profile_dto.database:
+                user.profile.database = profile_dto.database
             elif user.profile.database is not None:
                 user.profile.database = None
                 
-            if "devops" in profile_dto.disciplines:
-                user.profile.devops = UserProfileDevops(user_profile_id=user.profile.id)
+            if profile_dto.devops:
+                user.profile.devops = profile_dto.devops
             elif user.profile.devops is not None:
                 user.profile.devops = None
         

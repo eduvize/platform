@@ -60,6 +60,8 @@ class UserOnboardingService:
             raise ValueError("Invalid verification code")
         
         if user.verification_sent_at_utc is None or datetime.datetime.utcnow() - user.verification_sent_at_utc > datetime.timedelta(hours=1):
+            self.send_verification_email(user.id)
+            
             raise VerificationExpiredError()
         
         await self.user_repo.mark_verified(user.id)

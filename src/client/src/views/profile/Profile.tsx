@@ -23,6 +23,7 @@ import {
 import { ProfileUpdatePayload } from "../../api/contracts/ProfileUpdatePayload";
 import { ResumeBanner } from "./ResumeBanner";
 import { LearningCapacity } from "../../models/enums";
+import { useThrottledCallback } from "@mantine/hooks";
 
 export type ProfileStep =
     | "basic"
@@ -65,7 +66,7 @@ function mapCheckListField(
 }
 
 export const Profile = memo(() => {
-    const [userDetails, refresh] = useCurrentUser();
+    const [userDetails, refresh, updateProfile] = useCurrentUser();
     const [canMoveOn, setCanMoveOn] = useState(false);
     const [currentStep, setCurrentStep] = useState<ProfileStep>("basic");
     const form = useForm<ProfileUpdatePayload>({
@@ -103,6 +104,14 @@ export const Profile = memo(() => {
     });
 
     useEffect(() => {
+        if (!userDetails) {
+            return;
+        }
+
+        form.setValues(userDetails.profile);
+    }, [!!userDetails]);
+
+    useEffect(() => {
         if (form.values.learning_capacities.includes(LearningCapacity.Hobby)) {
             if (!form.values.hobby) {
                 form.setFieldValue("hobby", {
@@ -115,7 +124,16 @@ export const Profile = memo(() => {
         }
     }, [form.values.learning_capacities]);
 
-    console.log(form.values);
+    const handleAutoUpdate = useThrottledCallback(() => {
+        console.log("Updating profile...");
+        updateProfile(form.values);
+    }, 1000);
+
+    useEffect(() => {
+        console.log(form.values);
+
+        handleAutoUpdate();
+    }, [form.values]);
 
     const Header = () => {
         return (
