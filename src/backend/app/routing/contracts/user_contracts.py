@@ -1,11 +1,5 @@
-from typing import List, Optional
-from pydantic import BaseModel
+from typing import Optional
+from domain.dto.profile import UserProfileDto
 
-class UpdateProfilePayload(BaseModel):
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    bio: Optional[str] = None
-    github_username: Optional[str] = None
+class UpdateProfilePayload(UserProfileDto):
     avatar_file_id: Optional[str] = None
-    learning_capacities: Optional[List[str]] = None
-    disciplines: Optional[List[str]] = None

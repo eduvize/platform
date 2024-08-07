@@ -1,28 +1,24 @@
-from common.database import Context
-from sqlalchemy import TIMESTAMP, Column, ForeignKey, Integer, Text
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import relationship
 import uuid
+from datetime import datetime
+from sqlmodel import SQLModel, Field, Relationship
 
-class Exercise(Context):
+class Exercise(SQLModel, table=True):
     __tablename__ = "exercises"
     
-    id                          = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    lesson_id                   = Column(PG_UUID(as_uuid=True), ForeignKey("lessons.id"), nullable=False)
-    user_id                     = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    instructions                = Column(Text, nullable=False)
-    expectations                = Column(Text, nullable=False)
+    id: uuid.UUID                           = Field(default_factory=uuid.uuid4, primary_key=True)
+    lesson_id: uuid.UUID                    = Field(default=None, foreign_key="lessons.id")
+    user_id: uuid.UUID                      = Field(default=None, foreign_key="users.id")
+    instructions: str                       = Field(nullable=False)
+    expectations: str                       = Field(nullable=False)
     
-    lesson                      = relationship("Lesson", back_populates="exercises", uselist=False)
-    submissions                 = relationship("ExerciseSubmission", back_populates="exercise")
-    user                        = relationship("User", uselist=False)
-    
-class ExerciseSubmission(Context):
+    submissions: list["ExerciseSubmission"] = Relationship(back_populates="exercise")
+
+class ExerciseSubmission(SQLModel, table=True):
     __tablename__ = "exercise_submissions"
     
-    id                          = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    exercise_id                 = Column(PG_UUID(as_uuid=True), ForeignKey("exercises.id"), nullable=False)
-    content                     = Column(Text, nullable=False)
-    created_at_utc              = Column(TIMESTAMP, nullable=False, default='now()')
+    id: uuid.UUID                   = Field(default_factory=uuid.uuid4, primary_key=True)
+    exercise_id: uuid.UUID          = Field(default=None, foreign_key="exercises.id")
+    content: str                    = Field(nullable=False)
+    created_at_utc: datetime        = Field(nullable=False, default_factory=datetime.utcnow)
     
-    exercise                    = relationship("Exercise", back_populates="submissions", uselist=False)
+    exercise: "Exercise"            = Relationship(back_populates="submissions")

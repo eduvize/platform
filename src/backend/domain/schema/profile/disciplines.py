@@ -1,28 +1,35 @@
 import uuid
-from sqlalchemy import Column, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from common.database import Context
+from sqlmodel import Field, Relationship, SQLModel
+import domain.schema.user as user
 
-class UserProfileFrontend(Context):
+class UserProfileFrontend(SQLModel, table=True):
     __tablename__ = "user_profiles_frontend"
     
-    id                          = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_profile_id             = Column(PG_UUID(as_uuid=True), ForeignKey("user_profiles.id"), nullable=False)
+    id: uuid.UUID                                   = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_profile_id: uuid.UUID                      = Field(default=None, foreign_key="user_profiles.id")
     
-class UserProfileBackend(Context):
+    user_profile: "user.UserProfile"                = Relationship(back_populates="frontend")
+    
+class UserProfileBackend(SQLModel, table=True):
     __tablename__ = "user_profiles_backend"
     
-    id                          = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_profile_id             = Column(PG_UUID(as_uuid=True), ForeignKey("user_profiles.id"), nullable=False)
+    id: uuid.UUID                                   = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_profile_id: uuid.UUID                      = Field(default=None, foreign_key="user_profiles.id")
     
-class UserProfileDatabase(Context):
+    user_profile: "user.UserProfile"                = Relationship(back_populates="backend")
+    
+class UserProfileDatabase(SQLModel, table=True):
     __tablename__ = "user_profiles_database"
     
-    id                          = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_profile_id             = Column(PG_UUID(as_uuid=True), ForeignKey("user_profiles.id"), nullable=False)
+    id: uuid.UUID                                   = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_profile_id: uuid.UUID                      = Field(default=None, foreign_key="user_profiles.id")
     
-class UserProfileDevops(Context):
+    user_profile: "user.UserProfile"                = Relationship(back_populates="database")
+    
+class UserProfileDevops(SQLModel, table=True):
     __tablename__ = "user_profiles_devops"
     
-    id                          = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_profile_id             = Column(PG_UUID(as_uuid=True), ForeignKey("user_profiles.id"), nullable=False)
+    id: uuid.UUID                                   = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_profile_id: uuid.UUID                      = Field(default=None, foreign_key="user_profiles.id")
+    
+    user_profile: "user.UserProfile"                = Relationship(back_populates="devops")

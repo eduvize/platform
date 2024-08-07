@@ -1,42 +1,40 @@
-from common.database import Context
-from sqlalchemy import TIMESTAMP, Boolean, Column, ForeignKey, Integer, Text
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import relationship
+from typing import Optional
 import uuid
+from datetime import datetime
+from sqlmodel import SQLModel, Field, Relationship
 
-class ChatSession(Context):
+class ChatSession(SQLModel, table=True):
     __tablename__ = "chat_sessions"
     
-    id                          = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id                     = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    curriculum_id               = Column(PG_UUID(as_uuid=True), ForeignKey("curriculums.id"), nullable=True)
-    lesson_id                   = Column(PG_UUID(as_uuid=True), ForeignKey("lessons.id"), nullable=True)
-    exercise_id                 = Column(PG_UUID(as_uuid=True), ForeignKey("exercises.id"), nullable=True)
-    created_at_utc              = Column(TIMESTAMP, nullable=False, default='now()')
+    id: uuid.UUID                           = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID                      = Field(default=None, foreign_key="users.id")
+    curriculum_id: Optional[uuid.UUID]      = Field(default=None, foreign_key="curriculums.id")
+    lesson_id: Optional[uuid.UUID]          = Field(default=None, foreign_key="curriculum_lessons.id")
+    exercise_id: Optional[uuid.UUID]        = Field(default=None, foreign_key="curriculum_exercises.id")
+    created_at_utc: datetime                = Field(default_factory=datetime.utcnow, nullable=False)
     
-    user                        = relationship("User", back_populates="chat_sessions", uselist=False)
-    messages                    = relationship("ChatMessage", back_populates="session")
-    
-class ChatMessage(Context):
+    messages: list["ChatMessage"]           = Relationship(back_populates="chat_session")
+
+class ChatMessage(SQLModel, table=True):
     __tablename__ = "chat_messages"
     
-    id                          = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    session_id                  = Column(PG_UUID(as_uuid=True), ForeignKey("chat_sessions.id"), nullable=False)
-    is_user                     = Column(Boolean, nullable=False)
-    content                     = Column(Text, nullable=False)
-    created_at_utc              = Column(TIMESTAMP, nullable=False, default='now()')
+    id: uuid.UUID                       = Field(default_factory=uuid.uuid4, primary_key=True)
+    session_id: uuid.UUID               = Field(default=None, foreign_key="chat_sessions.id")
+    is_user: bool                       = Field(nullable=False)
+    content: Optional[str]              = Field()
+    created_at_utc: datetime            = Field(nullable=False, default_factory=datetime.utcnow)
     
-    session                     = relationship("ChatSession", back_populates="messages", uselist=False)
-    tool_calls                  = relationship("ChatToolCall", back_populates="message")
+    chat_session: "ChatSession"         = Relationship(back_populates="messages")
+    tool_calls: list["ChatToolCall"]    = Relationship(back_populates="chat_message")
     
-class ChatToolCall(Context):
+class ChatToolCall(SQLModel, table=True):
     __tablename__ = "chat_tool_calls"
     
-    id                          = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    message_id                  = Column(PG_UUID(as_uuid=True), ForeignKey("chat_messages.id"), nullable=False)
-    tool_call_id                = Column(Text, nullable=False)
-    tool_name                   = Column(Text, nullable=False)
-    json_arguments              = Column(Text, nullable=False)
-    result                      = Column(Text, nullable=False)
+    id: uuid.UUID                   = Field(default_factory=uuid.uuid4, primary_key=True)
+    message_id: uuid.UUID           = Field(default=None, foreign_key="chat_messages.id")
+    tool_call_id: uuid.UUID         = Field(nullable=False)
+    tool_name: str                  = Field(nullable=False)
+    json_arguments: str             = Field(nullable=False)
+    result: str                     = Field(nullable=False)
     
-    message                     = relationship("ChatMessage", back_populates="tool_calls", uselist=False)
+    chat_message: "ChatMessage"     = Relationship(back_populates="tool_calls")

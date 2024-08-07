@@ -1,22 +1,27 @@
 import uuid
-from sqlalchemy import Column, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from common.database import Context
+import domain.schema.user as user
+from sqlmodel import Field, Relationship, SQLModel, ForeignKey
 
-class UserProfileHobby(Context):
-    __tablename__ = "user_profiles_hobby"
-    
-    id                          = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_profile_id             = Column(PG_UUID(as_uuid=True), ForeignKey("user_profiles.id"), nullable=False)
-    
-class UserProfileStudent(Context):
-    __tablename__ = "user_profiles_student"
-    
-    id                          = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_profile_id             = Column(PG_UUID(as_uuid=True), ForeignKey("user_profiles.id"), nullable=False)
-    
-class UserProfileProfessional(Context):
+class UserProfileProfessional(SQLModel, table=True):
     __tablename__ = "user_profiles_professional"
     
-    id                          = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_profile_id             = Column(PG_UUID(as_uuid=True), ForeignKey("user_profiles.id"), nullable=False)
+    id: uuid.UUID                                       = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_profile_id: uuid.UUID                          = Field(default=None, foreign_key="user_profiles.id")
+    
+    user_profile: "user.UserProfile"                    = Relationship(back_populates="professional")
+
+class UserProfileHobby(SQLModel, table=True):
+    __tablename__ = "user_profiles_hobby"
+    
+    id: uuid.UUID                                   = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_profile_id: uuid.UUID                      = Field(default=None, foreign_key="user_profiles.id")
+    
+    user_profile: "user.UserProfile"                = Relationship(back_populates="hobby")
+    
+class UserProfileStudent(SQLModel, table=True):
+    __tablename__ = "user_profiles_student"
+    
+    id: uuid.UUID                                   = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_profile_id: uuid.UUID                      = Field(default=None, foreign_key="user_profiles.id")
+
+    user_profile: "user.UserProfile"                = Relationship(back_populates="student")

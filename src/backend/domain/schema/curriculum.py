@@ -1,43 +1,41 @@
 import uuid
-from sqlalchemy import TIMESTAMP, Column, Double, ForeignKey, Integer, Text
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import relationship
-from common.database import Context
+from datetime import datetime
+from sqlmodel import SQLModel, Field, Relationship
+from domain.schema.user import User
 
-class Curriculum(Context):
+class Curriculum(SQLModel, table=True):
     __tablename__ = "curriculums"
     
-    id                          = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    title                       = Column(Text, nullable=False)
-    description                 = Column(Text, nullable=False)
-    view_count                  = Column(Integer, nullable=False, default=0)
-    enrollment_count            = Column(Integer, nullable=False, default=0)
-    created_at_utc              = Column(TIMESTAMP, nullable=False, default='now()')
+    id: uuid.UUID                               = Field(default_factory=uuid.uuid4, primary_key=True)
+    title: str                                  = Field(nullable=False)
+    description: str                            = Field(nullable=False)
+    view_count: int                             = Field(nullable=False, default=0)
+    enrollment_count: int                       = Field(nullable=False, default=0)
+    created_at_utc: datetime                    = Field(nullable=False, default_factory=datetime.utcnow)
     
-    reviews                    = relationship("CurriculumReview", back_populates="curriculum")
-    enrollments                = relationship("CurriculumEnrollment", back_populates="curriculum")
-    lessons                    = relationship("Lesson", back_populates="curriculum")
-    
-class CurriculumReview(Context):
+    reviews: list["CurriculumReview"]           = Relationship(back_populates="curriculum")
+    enrollments: list["CurriculumEnrollment"]   = Relationship(back_populates="curriculum")
+
+class CurriculumReview(SQLModel, table=True):
     __tablename__ = "curriculum_reviews"
     
-    id                          = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    curriculum_id               = Column(PG_UUID(as_uuid=True), ForeignKey("curriculums.id"), nullable=False)
-    user_id                     = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    rating                      = Column(Double, nullable=False)
-    review                      = Column(Text, nullable=False)
-    created_at_utc              = Column(TIMESTAMP, nullable=False, default='now()')
+    id: uuid.UUID                       = Field(default_factory=uuid.uuid4, primary_key=True)
+    curriculum_id: uuid.UUID            = Field(default=None, foreign_key="curriculums.id")
+    user_id: uuid.UUID                  = Field(default=None, foreign_key="users.id")
+    rating: float                       = Field(nullable=False)
+    review: str                         = Field(nullable=False)
+    created_at_utc: datetime            = Field(nullable=False, default_factory=datetime.utcnow)
     
-    curriculum                  = relationship("Curriculum", back_populates="reviews", uselist=False)
-    user                        = relationship("User", uselist=False)
+    curriculum: Curriculum              = Relationship(back_populates="reviews")
+    user: User                          = Relationship(back_populates="curriculum_reviews")
     
-class CurriculumEnrollment(Context):
+class CurriculumEnrollment(SQLModel, table=True):
     __tablename__ = "curriculum_enrollments"
     
-    id                          = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    curriculum_id               = Column(PG_UUID(as_uuid=True), ForeignKey("curriculums.id"), nullable=False)
-    user_id                     = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    created_at_utc              = Column(TIMESTAMP, nullable=False, default='now()')
+    id: uuid.UUID                       = Field(default_factory=uuid.uuid4, primary_key=True)
+    curriculum_id: uuid.UUID            = Field(default=None, foreign_key="curriculums.id")
+    user_id: uuid.UUID                  = Field(default=None, foreign_key="users.id")
+    created_at_utc: datetime            = Field(nullable=False, default_factory=datetime.utcnow)
     
-    curriculum                  = relationship("Curriculum", back_populates="enrollments", uselist=False)
-    user                        = relationship("User", uselist=False)
+    curriculum: Curriculum              = Relationship(back_populates="enrollments")
+    user: User                          = Relationship(back_populates="curriculum_enrollments")

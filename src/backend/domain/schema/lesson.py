@@ -1,17 +1,11 @@
 import uuid
-from common.database import Context
-from sqlalchemy import TIMESTAMP, Column, ForeignKey, Integer, Text
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import relationship
+from sqlmodel import SQLModel, Field, Relationship
 
-class Lesson(Context):
+class Lesson(SQLModel, table=True):
     __tablename__ = "lessons"
     
-    id                          = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    curriculum_id               = Column(PG_UUID(as_uuid=True), ForeignKey("curriculums.id"), nullable=False)
-    title                       = Column(Text, nullable=False)
-    description                 = Column(Text, nullable=False)
-    curriculum_index            = Column(Integer, nullable=False)
-    
-    curriculum                  = relationship("Curriculum", back_populates="lessons", uselist=False)
-    exercises                   = relationship("Exercise", back_populates="lesson")
+    id: uuid.UUID                   = Field(default_factory=uuid.uuid4, primary_key=True)
+    curriculum_id: uuid.UUID        = Field(default=None, foreign_key="curriculums.id")
+    title: str                      = Field(nullable=False)
+    description: str                = Field(nullable=False)
+    curriculum_index: int           = Field(nullable=False)

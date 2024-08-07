@@ -5,7 +5,7 @@ from domain.dto.profile.disciplines import UserProfileFrontend, UserProfileBacke
 from domain.dto.profile.learning_capacities import UserProfileStudent, UserProfileProfessional
 from domain.enums.user_enums import UserDiscipline, UserLearningCapacity, UserSkillType
 
-class UserSkill(BaseModel):
+class UserSkillDto(BaseModel):
     skill_type: UserSkillType
     skill: str
     proficiency: Optional[int]
@@ -21,7 +21,7 @@ class UserProfileDto(BaseModel):
     github_username: Optional[str]
     avatar_url: Optional[str]
     
-    skills: Optional[List[UserSkill]] = None
+    skills: Optional[List[UserSkillDto]] = None
     
     hobby: Optional[UserProfileHobby] = None
     student: Optional[UserProfileStudent] = None

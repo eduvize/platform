@@ -69,9 +69,6 @@ class UserService:
         # Create the user record
         user = await self.user_repo.create_user(email_address, username, password_hash)
         
-        # Create a blank profile
-        await self.user_repo.upsert_profile(user.id, UserProfile())
-        
         # Begin onboarding with verification
         await self.onboarding_service.send_verification_email(user.id)
         
@@ -136,7 +133,11 @@ class UserService:
         
         if profile_dto.learning_capacities:
             if "hobby" in profile_dto.learning_capacities:
-                user.profile.hobby = UserProfileHobby(user_profile_id=user.profile.id)
+                if profile_dto.hobby:
+                    #user.profile.hobby
+                    pass
+                else:
+                    user.profile.hobby = UserProfileHobby(user_profile_id=user.profile.id)
             elif user.profile.hobby is not None:
                 user.profile.hobby = None
                 
