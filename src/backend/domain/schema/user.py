@@ -1,8 +1,7 @@
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 from sqlmodel import Field, Relationship, SQLModel
 import domain.schema.curriculum as curriculum
-from domain.schema.profile import UserProfileFrontend, UserProfileBackend, UserProfileDatabase, UserProfileDevops
 from domain.schema.profile import UserProfileHobby, UserProfileStudent, UserProfileProfessional
 import uuid
 
@@ -34,6 +33,7 @@ class User(UserBase, table=True):
 class UserProfileBase(SQLModel):
     first_name: Optional[str]                           = Field()
     last_name: Optional[str]                            = Field()
+    birthdate: Optional[datetime]                       = Field()
     bio: Optional[str]                                  = Field()
     github_username: Optional[str]                      = Field()
     avatar_url: Optional[str]                           = Field()
@@ -45,11 +45,7 @@ class UserProfile(UserProfileBase, table=True):
     user_id: uuid.UUID                                  = Field(default=None, foreign_key="users.id")
     last_updated_at_utc: datetime                       = Field(default_factory=datetime.utcnow, nullable=False)
     
-    frontend: Optional["UserProfileFrontend"]           = Relationship(back_populates="user_profile")
-    backend: Optional["UserProfileBackend"]             = Relationship(back_populates="user_profile")
-    database: Optional["UserProfileDatabase"]           = Relationship(back_populates="user_profile")
-    devops: Optional["UserProfileDevops"]               = Relationship(back_populates="user_profile")
-    
+    disciplines: list["UserProfileDiscipline"]          = Relationship(back_populates="user_profile")
     skills: list["UserProfileSkill"]                    = Relationship(back_populates="user_profile")
     
     hobby: Optional["UserProfileHobby"]                 = Relationship(back_populates="user_profile")
@@ -57,6 +53,18 @@ class UserProfile(UserProfileBase, table=True):
     professional: Optional["UserProfileProfessional"]   = Relationship(back_populates="user_profile")
     
     user: User                                          = Relationship(back_populates="profile")
+    
+class UserProfileDisciplineBase(SQLModel):
+    discipline_type: int            = Field(nullable=False)
+    proficiency: Optional[int]      = Field(default=None)
+    
+class UserProfileDiscipline(UserProfileDisciplineBase, table=True):
+    __tablename__ = "user_profiles_disciplines"
+    
+    id: uuid.UUID                   = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_profile_id: uuid.UUID      = Field(default=None, foreign_key="user_profiles.id")
+    
+    user_profile: UserProfile       = Relationship(back_populates="disciplines")
 
 class UserProfileSkillBase(SQLModel):
     skill_type: int                 = Field(nullable=False)

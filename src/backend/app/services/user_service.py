@@ -7,18 +7,10 @@ from fastapi import Depends, UploadFile
 from mimetypes import guess_extension, guess_type
 
 from app.services.user_onboarding_service import UserOnboardingService
-from app.routing.contracts.user_contracts import UpdateProfilePayload
-from common.storage import StoragePurpose, get_bucket, get_public_object_url, object_exists
-from domain.schema.user import User, UserIdentifiers, UserIncludes, UserProfile
-from domain.schema.profile import (
-    UserProfileFrontend,
-    UserProfileBackend,
-    UserProfileDatabase,
-    UserProfileDevops,
-    UserProfileHobby,
-    UserProfileStudent,
-    UserProfileProfessional
-)
+from domain.dto.profile import UserProfileDto
+from domain.dto.profile.hobby import UserProfileHobbyDto
+from common.storage import StoragePurpose, get_bucket, get_public_object_url
+from domain.schema.user import User, UserIdentifiers, UserIncludes
 from app.repositories.user_repository import UserRepository
 
 class UserCreationError(Exception):
@@ -74,7 +66,7 @@ class UserService:
         
         return user
     
-    async def get_user(self, by: UserIdentifiers, value: str, include: List[UserIncludes] = ["profile"]) -> User:
+    async def get_user(self, by: UserIdentifiers, value: str, include: List[UserIncludes] = ["profile.*"]) -> User:
         """
         Retrieves a user by one of their unique identifiers, optionally providing related data.
         Profiles are included by default.
@@ -97,7 +89,7 @@ class UserService:
         
         return user
     
-    async def update_profile(self, user_id: str, profile_dto: UpdateProfilePayload):
+    async def update_profile(self, user_id: str, profile_dto: UserProfileDto):
         """
         Updates a user's profile with the provided data.
 
@@ -109,68 +101,23 @@ class UserService:
             ValueError: User not found
             ValueError: Invalid file was supplied for avatar
         """
-        user = await self.get_user("id", user_id, ["profile"])
+        user = await self.get_user("id", user_id, include=[])
         
         if user is None:
             raise ValueError("User not found")
         
-        user.profile.first_name = profile_dto.first_name
-        user.profile.last_name = profile_dto.last_name
-        user.profile.bio = profile_dto.bio
-        user.profile.github_username = profile_dto.github_username
-        
-        # If they provided a file id, check if it exists and get the URL for it
-        if profile_dto.avatar_file_id is not None:
-            bucket = get_bucket(StoragePurpose.AVATAR)
-            bucket_id = self._get_avatar_bucket_id(user_id, profile_dto.avatar_file_id)
+        if "hobby" not in profile_dto.learning_capacities:
+            profile_dto.hobby = None
             
-            if not object_exists(bucket, bucket_id):
-                raise ValueError("Invalid file")
+        if "student" not in profile_dto.learning_capacities:
+            profile_dto.student = None
             
-            user.profile.avatar_url = get_public_object_url(StoragePurpose.AVATAR, bucket_id)
-        else:
-            user.profile.avatar_url = user.profile.avatar_url # Keep the existing avatar if none was provided
-        
-        if profile_dto.learning_capacities:
-            if profile_dto.hobby:
-                user.profile.hobby = profile_dto.hobby
-            elif user.profile.hobby is not None:
-                user.profile.hobby = None
-                
-            if profile_dto.student:
-                user.profile.student = profile_dto.student
-            else:
-                user.profile.student = None
-                
-            if profile_dto.professional:
-                user.profile.professional = profile_dto.professional
-            else:
-                user.profile.professional = None
-                
-        if profile_dto.disciplines:
-            if profile_dto.frontend:
-                user.profile.frontend = profile_dto.frontend
-            elif user.profile.frontend is not None:
-                user.profile.frontend = None
-                
-            if profile_dto.backend:
-                user.profile.backend = profile_dto.backend
-            elif user.profile.backend is not None:
-                user.profile.backend = None
-                
-            if profile_dto.database:
-                user.profile.database = profile_dto.database
-            elif user.profile.database is not None:
-                user.profile.database = None
-                
-            if profile_dto.devops:
-                user.profile.devops = profile_dto.devops
-            elif user.profile.devops is not None:
-                user.profile.devops = None
-        
+        if "professional" not in profile_dto.learning_capacities:
+            profile_dto.professional = None
+
         await self.user_repo.upsert_profile(
             user_id=user.id, 
-            profile=user.profile
+            profile=profile_dto
         )
         
     async def upload_avatar(self, user_id: str, file: UploadFile) -> str:
@@ -206,7 +153,7 @@ class UserService:
         # Upload the file
         bucket.put_object(Key=bucket_id, Body=await file.read(), ContentType=mimetype, ACL="public-read")
         
-        return object_id
+        await self.user_repo.set_avatar_url(user_id, get_public_object_url(StoragePurpose.AVATAR, bucket_id))
     
     def _get_avatar_bucket_id(self, user_id: str, object_id: str) -> str:
         """

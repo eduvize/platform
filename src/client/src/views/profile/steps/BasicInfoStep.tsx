@@ -10,18 +10,24 @@ import {
     Input,
     Textarea,
     Chip,
+    Text,
+    Button,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { UserDto } from "../../../models/dto";
 import { ProfileUpdatePayload } from "../../../api/contracts/ProfileUpdatePayload";
-import { memo, useRef } from "react";
+import { memo, useCallback, useMemo, useRef } from "react";
 import UserApi from "../../../api/UserApi";
 import {
     AdvancedPillInput,
     SpacedDivider,
 } from "../../../components/molecules";
 import AutocompleteApi from "../../../api/AutocompleteApi";
-import { EngineeringDiscipline, LearningCapacity } from "../../../models/enums";
+import {
+    EngineeringDiscipline,
+    LearningCapacity,
+    UserSkillType,
+} from "../../../models/enums";
 import { UseFormReturnType } from "@mantine/form";
 
 interface BasicInfoStepProps {
@@ -34,6 +40,27 @@ export const BasicInfoStep = memo(
     ({ userDetails, form, onAvatarChange }: BasicInfoStepProps) => {
         const avatarInputRef = useRef<HTMLInputElement>(null);
 
+        const isComplete = useMemo(() => {
+            const languages = form.values.skills.filter(
+                (s) => s.skill_type === UserSkillType.ProgrammingLanguage
+            );
+
+            const libraries = form.values.skills.filter(
+                (s) => s.skill_type === UserSkillType.Library
+            );
+
+            return (
+                form.values.first_name &&
+                form.values.last_name &&
+                form.values.birthdate &&
+                form.values.bio &&
+                form.values.learning_capacities.length > 0 &&
+                form.values.disciplines.length > 0 &&
+                languages.length > 0 &&
+                libraries.length > 0
+            );
+        }, [form.values]);
+
         const handleAvatarUpload = () => {
             const file = avatarInputRef.current?.files?.[0];
 
@@ -44,8 +71,40 @@ export const BasicInfoStep = memo(
             });
         };
 
+        const handleToggleDiscipline = (discipline: EngineeringDiscipline) => {
+            const existing = form.values.disciplines.find(
+                (x) => x.discipline_type === discipline
+            );
+
+            if (existing) {
+                form.setFieldValue(
+                    "disciplines",
+                    form.values.disciplines.filter(
+                        (x) => x.discipline_type !== discipline
+                    )
+                );
+            } else {
+                form.setFieldValue("disciplines", [
+                    ...form.values.disciplines,
+                    {
+                        discipline_type: discipline,
+                        proficiency: null,
+                    },
+                ]);
+            }
+        };
+
+        const getDisciplineChecked = useCallback(
+            (discipline: EngineeringDiscipline) => {
+                return form.values.disciplines.some(
+                    (x) => x.discipline_type === discipline
+                );
+            },
+            [form.values.disciplines]
+        );
+
         return (
-            <>
+            <Stack>
                 <input
                     type="file"
                     ref={avatarInputRef}
@@ -54,17 +113,7 @@ export const BasicInfoStep = memo(
                     style={{ display: "none" }}
                 />
 
-                <SpacedDivider
-                    bold
-                    label="Basic Information"
-                    labelPosition="left"
-                    labelColor="blue"
-                    labelSize="lg"
-                    spacePlacement="bottom"
-                    spacing="lg"
-                />
-
-                <Stack gap="1em">
+                <Stack gap="md">
                     <Center>
                         <Tooltip
                             label="Upload a profile picture"
@@ -109,6 +158,7 @@ export const BasicInfoStep = memo(
                         <Group justify="space-between">
                             <Stack w="48%" gap={0}>
                                 <DateInput
+                                    {...form.getInputProps("birthdate")}
                                     required
                                     label="Birthdate"
                                     placeholder="MM/DD/YYYY"
@@ -137,176 +187,267 @@ export const BasicInfoStep = memo(
                     </Stack>
                 </Stack>
 
-                <SpacedDivider
-                    bold
-                    label="Where are you in your journey?"
-                    labelPosition="left"
-                    labelColor="blue"
-                    labelSize="lg"
-                    spacing="lg"
-                />
+                <Stack gap={0}>
+                    <SpacedDivider
+                        bold
+                        label="Your Journey"
+                        labelPosition="left"
+                        labelColor="blue"
+                        labelSize="lg"
+                        spacePlacement="top"
+                        spacing="lg"
+                    />
 
-                <Stack gap="1em">
-                    <Center>
-                        <Group>
-                            <Chip
-                                {...form.getInputProps("learning_capacities", {
-                                    type: "checkbox",
-                                    value: LearningCapacity.Hobby,
-                                })}
-                                color="blue"
-                                size="sm"
-                            >
-                                I'm a hobbyist
-                            </Chip>
+                    <Text size="sm" c="gray" mb="md">
+                        Tell us a bit about your journey as a developer.
+                    </Text>
 
-                            <Chip
-                                {...form.getInputProps("learning_capacities", {
-                                    type: "checkbox",
-                                    value: LearningCapacity.Student,
-                                })}
-                                color="blue"
-                                size="sm"
-                            >
-                                I am or have been a student
-                            </Chip>
+                    <Stack gap="md">
+                        <Center>
+                            <Group>
+                                <Chip
+                                    {...form.getInputProps(
+                                        "learning_capacities",
+                                        {
+                                            type: "checkbox",
+                                            value: LearningCapacity.Hobby,
+                                        }
+                                    )}
+                                    color="blue"
+                                    size="sm"
+                                >
+                                    I'm a hobbyist
+                                </Chip>
 
-                            <Chip
-                                {...form.getInputProps("learning_capacities", {
-                                    type: "checkbox",
-                                    value: LearningCapacity.Professional,
-                                })}
-                                color="blue"
-                                size="sm"
-                            >
-                                I'm working in the industry
-                            </Chip>
-                        </Group>
-                    </Center>
+                                <Chip
+                                    {...form.getInputProps(
+                                        "learning_capacities",
+                                        {
+                                            type: "checkbox",
+                                            value: LearningCapacity.Student,
+                                        }
+                                    )}
+                                    color="blue"
+                                    size="sm"
+                                >
+                                    I am or have been a student
+                                </Chip>
+
+                                <Chip
+                                    {...form.getInputProps(
+                                        "learning_capacities",
+                                        {
+                                            type: "checkbox",
+                                            value: LearningCapacity.Professional,
+                                        }
+                                    )}
+                                    color="blue"
+                                    size="sm"
+                                >
+                                    I'm working in the industry
+                                </Chip>
+                            </Group>
+                        </Center>
+                    </Stack>
                 </Stack>
 
-                <SpacedDivider
-                    bold
-                    label="What do you specialize in?"
-                    labelPosition="left"
-                    labelColor="blue"
-                    labelSize="lg"
-                    spacing="lg"
-                />
+                <Stack gap={0}>
+                    <SpacedDivider
+                        bold
+                        label="Tech Stack"
+                        labelPosition="left"
+                        labelColor="blue"
+                        labelSize="lg"
+                        spacePlacement="top"
+                        spacing="lg"
+                    />
 
-                <Stack gap="1em">
-                    <Center>
-                        <Group>
-                            <Chip
-                                {...form.getInputProps("disciplines", {
-                                    type: "checkbox",
-                                    value: "frontend",
-                                })}
-                                color="blue"
-                                size="sm"
-                            >
-                                Frontend
-                            </Chip>
+                    <Text size="sm" c="gray" mb="md">
+                        What parts of the stack do you involve yourself with?
+                    </Text>
 
-                            <Chip
-                                {...form.getInputProps("disciplines", {
-                                    type: "checkbox",
-                                    value: "backend",
-                                })}
-                                color="blue"
-                                size="sm"
-                            >
-                                Backend
-                            </Chip>
+                    <Stack gap="md">
+                        <Center>
+                            <Group>
+                                <Chip
+                                    color="blue"
+                                    size="sm"
+                                    checked={getDisciplineChecked(
+                                        EngineeringDiscipline.Frontend
+                                    )}
+                                    onClick={() =>
+                                        handleToggleDiscipline(
+                                            EngineeringDiscipline.Frontend
+                                        )
+                                    }
+                                >
+                                    Frontend
+                                </Chip>
 
-                            <Chip
-                                {...form.getInputProps("disciplines", {
-                                    type: "checkbox",
-                                    value: "database",
-                                })}
-                                color="blue"
-                                size="sm"
-                            >
-                                Database
-                            </Chip>
+                                <Chip
+                                    color="blue"
+                                    size="sm"
+                                    checked={getDisciplineChecked(
+                                        EngineeringDiscipline.Backend
+                                    )}
+                                    onClick={() =>
+                                        handleToggleDiscipline(
+                                            EngineeringDiscipline.Backend
+                                        )
+                                    }
+                                >
+                                    Backend
+                                </Chip>
 
-                            <Chip
-                                {...form.getInputProps("disciplines", {
-                                    type: "checkbox",
-                                    value: "devops",
-                                })}
-                                color="blue"
-                                size="sm"
-                            >
-                                Infrastructure / DevOps
-                            </Chip>
-                        </Group>
-                    </Center>
+                                <Chip
+                                    color="blue"
+                                    size="sm"
+                                    checked={getDisciplineChecked(
+                                        EngineeringDiscipline.Database
+                                    )}
+                                    onClick={() =>
+                                        handleToggleDiscipline(
+                                            EngineeringDiscipline.Database
+                                        )
+                                    }
+                                >
+                                    Database
+                                </Chip>
+
+                                <Chip
+                                    color="blue"
+                                    size="sm"
+                                    checked={getDisciplineChecked(
+                                        EngineeringDiscipline.DevOps
+                                    )}
+                                    onClick={() =>
+                                        handleToggleDiscipline(
+                                            EngineeringDiscipline.DevOps
+                                        )
+                                    }
+                                >
+                                    Infrastructure / DevOps
+                                </Chip>
+                            </Group>
+                        </Center>
+                    </Stack>
                 </Stack>
 
-                <SpacedDivider
-                    bold
-                    label="What programming languages are you proficient in?"
-                    labelPosition="left"
-                    labelColor="blue"
-                    labelSize="lg"
-                    spacing="lg"
-                />
+                <Stack gap={0}>
+                    <SpacedDivider
+                        bold
+                        label="Programming Languages"
+                        labelPosition="left"
+                        labelColor="blue"
+                        labelSize="lg"
+                        spacePlacement="top"
+                        spacing="lg"
+                    />
 
-                <AdvancedPillInput
-                    {...form.getInputProps("skills")}
-                    placeholder="Type to search for a language"
-                    valueFetch={(query) =>
-                        AutocompleteApi.getProgrammingLanguages(query)
-                    }
-                    valueSelector={(x) => x.skill}
-                    valueFilter={(x) => x.skill_type === 1}
-                    valueMapper={(x) => {
-                        const existing = form.values.skills.find(
-                            (l) => l.skill === x
-                        );
+                    <Text size="sm" c="gray" mb="lg">
+                        What languages have you worked with?
+                    </Text>
 
-                        return {
-                            skill_type: existing ? existing.skill_type : 1,
-                            skill: x,
-                            proficiency: existing ? existing.proficiency : null,
-                        };
-                    }}
-                />
+                    <AdvancedPillInput
+                        {...form.getInputProps("skills")}
+                        placeholder="Type to search for a language"
+                        valueFetch={(query) =>
+                            AutocompleteApi.getProgrammingLanguages(
+                                form.values.disciplines.map(
+                                    (d) => d.discipline_type
+                                ),
+                                query
+                            )
+                        }
+                        valueSelector={(x) => x.skill}
+                        valueFilter={(x) => x.skill_type === 1}
+                        valueMapper={(x) => {
+                            const existing = form.values.skills.find(
+                                (l) => l.skill === x
+                            );
 
-                <SpacedDivider
-                    bold
-                    label="Which frameworks / libraries have you worked with?"
-                    labelPosition="left"
-                    labelColor="blue"
-                    labelSize="lg"
-                    spacing="lg"
-                />
+                            return {
+                                skill_type: existing ? existing.skill_type : 1,
+                                skill: x,
+                                proficiency: existing
+                                    ? existing.proficiency
+                                    : null,
+                            };
+                        }}
+                        disabled={form.values.disciplines.length === 0}
+                    />
+                </Stack>
 
-                <AdvancedPillInput
-                    {...form.getInputProps("skills")}
-                    placeholder="Type to search for a library or framework"
-                    valueFetch={(query) => {
-                        return AutocompleteApi.getLibraries(
-                            form.values.disciplines as EngineeringDiscipline[],
-                            query
-                        );
-                    }}
-                    valueSelector={(x) => x.skill}
-                    valueFilter={(x) => x.skill_type === 2}
-                    valueMapper={(x) => {
-                        const existing = form.values.skills.find(
-                            (l) => l.skill === x
-                        );
+                <Stack gap={0}>
+                    <SpacedDivider
+                        bold
+                        label="Frameworks / Libraries"
+                        labelPosition="left"
+                        labelColor="blue"
+                        labelSize="lg"
+                        spacePlacement="top"
+                        spacing="lg"
+                    />
 
-                        return {
-                            skill_type: existing ? existing.skill_type : 2,
-                            skill: x,
-                            proficiency: existing ? existing.proficiency : null,
-                        };
-                    }}
-                />
-            </>
+                    <Text size="sm" c="gray" mb="lg">
+                        What libraries and frameworks have you worked with?
+                    </Text>
+
+                    <AdvancedPillInput
+                        {...form.getInputProps("skills")}
+                        placeholder="Type to search for a library or framework"
+                        valueFetch={(query) => {
+                            const disciplineTypes = form.values.disciplines.map(
+                                (x) => x.discipline_type
+                            );
+                            const disciplineNames = disciplineTypes.map(
+                                (x) => EngineeringDiscipline[x]
+                            );
+
+                            return AutocompleteApi.getLibraries(
+                                disciplineNames,
+                                form.values.skills
+                                    .filter(
+                                        (s) =>
+                                            s.skill_type ===
+                                            UserSkillType.ProgrammingLanguage
+                                    )
+                                    .map((s) => s.skill),
+                                query
+                            );
+                        }}
+                        valueSelector={(x) => x.skill}
+                        valueFilter={(x) => x.skill_type === 2}
+                        valueMapper={(x) => {
+                            const existing = form.values.skills.find(
+                                (l) => l.skill === x
+                            );
+
+                            return {
+                                skill_type: existing ? existing.skill_type : 2,
+                                skill: x,
+                                proficiency: existing
+                                    ? existing.proficiency
+                                    : null,
+                            };
+                        }}
+                        disabled={
+                            form.values.skills.filter(
+                                (s) =>
+                                    s.skill_type ===
+                                    UserSkillType.ProgrammingLanguage
+                            ).length === 0 &&
+                            form.values.disciplines.length === 0
+                        }
+                    />
+                </Stack>
+
+                <Space h="lg" />
+
+                <Button variant="gradient" disabled={!isComplete}>
+                    Save and Continue
+                </Button>
+            </Stack>
         );
     }
 );

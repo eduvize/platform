@@ -10,19 +10,21 @@ router = APIRouter(
 )
 
 @router.get("/programming-languages")
-async def get_autocomplete_options(query: str, autocomplete_service: AutocompleteService = Depends(AutocompleteService)):
+async def get_autocomplete_options(disciplines: str, query: str, autocomplete_service: AutocompleteService = Depends(AutocompleteService)):
     """
     Retrieves a list of programming languages for use in an autocomplete field
     """
-    return autocomplete_service.get_programming_languages(query)
+    discipline_list = disciplines.split(",")
+    return autocomplete_service.get_programming_languages(discipline_list, query)
     
 @router.get("/libraries")
-async def get_library_options(subjects: str, query: str, autocomplete_service: AutocompleteService = Depends(AutocompleteService)):
+async def get_library_options(subjects: str, languages: str, query: str, autocomplete_service: AutocompleteService = Depends(AutocompleteService)):
     """
     Retrieves a list of libraries for use in an autocomplete field
     """
     subject_list = subjects.split(",")
-    return autocomplete_service.get_libraries(subject_list, query)
+    language_list = languages.split(",")
+    return autocomplete_service.get_libraries(subject_list, language_list, query)
 
 @router.get("/educational-institutions")
 async def get_educational_institution_options(query: str, autocomplete_service: AutocompleteService = Depends(AutocompleteService)):

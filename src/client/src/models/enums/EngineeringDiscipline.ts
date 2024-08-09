@@ -1,7 +1,6 @@
 export enum EngineeringDiscipline {
-    Frontend = "frontend",
-    Backend = "backend",
-    Database = "database",
-    DevOps = "devops",
-    Testing = "testing",
+    Frontend = 1,
+    Backend = 2,
+    Database = 3,
+    DevOps = 4,
 }

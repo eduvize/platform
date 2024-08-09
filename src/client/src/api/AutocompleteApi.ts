@@ -2,20 +2,35 @@ import { EngineeringDiscipline } from "../models/enums";
 import BaseApi from "./BaseApi";
 
 class AutocompleteApi extends BaseApi {
-    getProgrammingLanguages(query: string): Promise<string[]> {
+    getProgrammingLanguages(
+        disciplines: EngineeringDiscipline[],
+        query: string
+    ): Promise<string[]> {
+        const params = {
+            disciplines: disciplines
+                .map((d) => EngineeringDiscipline[d])
+                .join(","),
+            query: encodeURIComponent(query),
+        };
+
         return this.get<string[]>(
-            `programming-languages?query=${encodeURIComponent(query)}`
+            `programming-languages?${new URLSearchParams(params).toString()}`
         );
     }
 
     getLibraries(
-        subjects: EngineeringDiscipline[],
+        subjects: string[],
+        languages: string[],
         query: string
     ): Promise<string[]> {
+        const params = {
+            subjects: subjects.join(","),
+            languages: languages.join(","),
+            query: encodeURIComponent(query),
+        };
+
         return this.get<string[]>(
-            `libraries?subjects=${subjects.join(
-                ","
-            )}&query=${encodeURIComponent(query)}`
+            `libraries?${new URLSearchParams(params).toString()}`
         );
     }
 

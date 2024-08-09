@@ -19,7 +19,7 @@ from openai.types.shared import FunctionDefinition
 from config import get_openai_key
 from . import BaseModel
 from ai.prompts import BasePrompt
-from common import BaseChatMessage, BaseChatResponse, BaseTool, ChatRole
+from ai.common import BaseChatMessage, BaseChatResponse, BaseTool, ChatRole
 
 class ToolCallRecord:
     index: int

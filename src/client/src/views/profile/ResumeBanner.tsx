@@ -4,12 +4,19 @@ import { useRef, useState } from "react";
 import FileApi from "../../api/FileApi";
 import { ProfileUpdatePayload } from "../../api/contracts";
 import { IconCheck } from "@tabler/icons-react";
+import { notifications } from "@mantine/notifications";
 
 interface ResumeBannerProps {
     form: UseFormReturnType<ProfileUpdatePayload>;
+    onParsing: () => void;
+    onCompleted: () => void;
 }
 
-export function ResumeBanner({ form }: ResumeBannerProps) {
+export function ResumeBanner({
+    form,
+    onParsing,
+    onCompleted,
+}: ResumeBannerProps) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
     const [wasUploaded, setWasUploaded] = useState(false);
@@ -19,13 +26,32 @@ export function ResumeBanner({ form }: ResumeBannerProps) {
         if (!file) return;
 
         setUploading(true);
+        onParsing();
         FileApi.getProfileFromResume(file)
             .then((profile) => {
                 form.setValues(profile);
                 setWasUploaded(true);
+
+                notifications.show({
+                    title: "Resume processed",
+                    message:
+                        "We've successfully processed your resume. Feel free to make any changes.",
+                    color: "blue",
+                    autoClose: 8000,
+                });
+            })
+            .catch(() => {
+                notifications.show({
+                    title: "Failed to process resume",
+                    message:
+                        "We couldn't process your resume. Please try again or fill out your profile manually.",
+                    color: "red",
+                    autoClose: 8000,
+                });
             })
             .finally(() => {
                 setUploading(false);
+                onCompleted();
             });
     };
 

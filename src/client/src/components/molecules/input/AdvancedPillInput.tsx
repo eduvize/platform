@@ -6,7 +6,7 @@ import {
     Combobox,
     CheckIcon,
 } from "@mantine/core";
-import { useThrottledCallback } from "@mantine/hooks";
+import { useDebouncedCallback, useThrottledCallback } from "@mantine/hooks";
 import { useEffect, useMemo, useState } from "react";
 
 interface AdvancedPillInputProps {
@@ -15,6 +15,7 @@ interface AdvancedPillInputProps {
     value?: string[];
     onChange?: (value: string[]) => void;
     placeholder?: string;
+    disabled?: boolean;
     valueSelector?: (value: any) => string;
     valueFilter?: (value: any) => boolean;
     valueMapper?: (value: string) => any;
@@ -29,6 +30,7 @@ export const AdvancedPillInput = ({
     valueSelector,
     valueFilter,
     valueMapper,
+    disabled,
 }: AdvancedPillInputProps) => {
     function mapValues(elements: any[]) {
         if (!valueSelector) {
@@ -56,7 +58,7 @@ export const AdvancedPillInput = ({
 
     console.log("values", values);
 
-    const handleAutocompletion = useThrottledCallback((query: string) => {
+    const handleAutocompletion = useDebouncedCallback((query: string) => {
         if (!valueFetch) return;
 
         if (query.trim().length === 0) return;
@@ -105,12 +107,17 @@ export const AdvancedPillInput = ({
     }, [valueFetch, query]);
 
     useEffect(() => {
+        if (disabled) {
+            combobox.closeDropdown();
+            return;
+        }
+
         if (query.length > 0) {
             combobox.openDropdown();
         } else {
             combobox.closeDropdown();
         }
-    }, [query]);
+    }, [query, disabled]);
 
     const handleValueRemove = (val: string) => {
         handleChange(values.filter((v) => v !== val));
@@ -197,6 +204,7 @@ export const AdvancedPillInput = ({
                                             }
                                         }
                                     }}
+                                    disabled={disabled}
                                 />
                             </Combobox.EventsTarget>
                         </Combobox.DropdownTarget>
@@ -253,6 +261,7 @@ export const AdvancedPillInput = ({
                                 event.currentTarget.value = "";
                             }
                         }}
+                        disabled={disabled}
                     />
                 </Pill.Group>
             </PillsInput>

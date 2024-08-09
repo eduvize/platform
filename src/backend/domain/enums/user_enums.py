@@ -11,7 +11,7 @@ class UserLearningCapacity(Enum):
     PROFESSIONAL = "professional"
     
 class UserDiscipline(Enum):
-    FRONTEND = "frontend"
-    BACKEND = "backend"
-    DATABASE = "database"
-    DEVOPS = "devops"
+    FRONTEND = 1
+    BACKEND = 2
+    DATABASE = 3
+    DEVOPS = 4

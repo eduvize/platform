@@ -31,13 +31,13 @@ def get_aws_secret_key() -> str:
 
 # Database
 def get_database_connection_string(driver: Optional[str] = None) -> str:
-    DRIVER = f"+{driver}" if driver is not None else ""
+    DRIVER = f"postgresql+{driver}" if driver is not None else "postgresql"
     DB_HOST = os.getenv("POSTGRES_HOST", "localhost")
     DB_USER = os.getenv("POSTGRES_USER")
     DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
     DB_NAME = os.getenv("POSTGRES_DB")
 
-    return f"postgresql{DRIVER}://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+    return f"{DRIVER}://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
 
 # Access tokens
 def get_token_expiration() -> int:

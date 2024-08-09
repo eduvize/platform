@@ -23,14 +23,7 @@ class UserApi extends BaseApi {
     uploadAvatar(file: File) {
         const data = new FormData();
         data.append("file", file);
-        return this.postForm<FileUploadResponse>(
-            "me/profile/avatar",
-            data
-        ).then(({ file_id }) => {
-            return this.updateProfile({
-                avatar_file_id: file_id,
-            });
-        });
+        return this.postForm<FileUploadResponse>("me/profile/avatar", data);
     }
 }
 

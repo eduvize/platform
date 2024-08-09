@@ -1,6 +1,6 @@
 from typing import Generator, List, Tuple
 from ai.prompts import BasePrompt
-from common import BaseChatMessage, BaseChatResponse, BaseTool
+from ai.common import BaseChatMessage, BaseChatResponse, BaseTool
 
 class BaseModel:
     def get_responses(self, prompt: BasePrompt) -> List[BaseChatResponse]:

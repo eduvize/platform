@@ -1,38 +1,50 @@
+import uuid
+from datetime import datetime
 from typing import List, Optional
-from pydantic import BaseModel, computed_field
-from domain.schema.user import UserProfileBase, UserProfileSkillBase
+from pydantic import computed_field, field_validator
+from domain.schema.user import UserProfileBase, UserProfileSkillBase, UserProfileDisciplineBase
 from domain.dto.profile.hobby import UserProfileHobbyDto
-from domain.dto.profile.disciplines import UserProfileFrontend, UserProfileBackend, UserProfileDatabase, UserProfileDevops
-from domain.dto.profile.learning_capacities import UserProfileStudent, UserProfileProfessional
+from domain.dto.profile.learning_capacities import UserProfileStudentDto, UserProfileProfessionalDto
 from domain.enums.user_enums import UserDiscipline, UserLearningCapacity, UserSkillType
 
 class UserSkillDto(UserProfileSkillBase):
+    id: Optional[str] = None
     skill_type: UserSkillType
     skill: str
-    proficiency: Optional[int]
-    notes: Optional[str]
+    proficiency: Optional[int] = 0
+    notes: Optional[str] = None
+    
+    @field_validator("id", mode="plain")
+    def validate_id(cls, v: str) -> str:
+        if isinstance(v, uuid.UUID):
+            return str(v)
+
+        return v
+    
+class UserProfileDisciplineDto(UserProfileDisciplineBase):
+    discipline_type: UserDiscipline
+    proficiency: Optional[int] = None
     
 class UserProfileDto(UserProfileBase):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    birthdate: Optional[datetime] = None
     bio: Optional[str] = None
     github_username: Optional[str] = None
     avatar_url: Optional[str] = None
     
+    learning_capacities: Optional[List[str]] = None
+    
+    disciplines: Optional[List[UserProfileDisciplineDto]] = None
     skills: Optional[List[UserSkillDto]] = None
     
     hobby: Optional[UserProfileHobbyDto] = None
-    student: Optional[UserProfileStudent] = None
-    professional: Optional[UserProfileProfessional] = None
-    
-    frontend: Optional[UserProfileFrontend] = None
-    backend: Optional[UserProfileBackend] = None
-    database: Optional[UserProfileDatabase] = None
-    devops: Optional[UserProfileDevops] = None
+    student: Optional[UserProfileStudentDto] = None
+    professional: Optional[UserProfileProfessionalDto] = None
     
     @computed_field
     @property
-    def learning_capacities(self) -> List[UserLearningCapacity]:
+    def selected_learning_capacities(self) -> List[UserLearningCapacity]:
         l: UserLearningCapacity = []
         if self.hobby:
             l.append(UserLearningCapacity.HOBBY)
@@ -40,19 +52,4 @@ class UserProfileDto(UserProfileBase):
             l.append(UserLearningCapacity.STUDENT)
         if self.professional:
             l.append(UserLearningCapacity.PROFESSIONAL)
-        return l
-    
-    @computed_field
-    @property
-    def disciplines(self) -> List[UserDiscipline]:
-        l: UserDiscipline = []
-        if self.frontend:
-            l.append(UserDiscipline.FRONTEND)
-        if self.backend:
-            l.append(UserDiscipline.BACKEND)
-        if self.database:
-            l.append(UserDiscipline.DATABASE)
-        if self.devops:
-            l.append(UserDiscipline.DEVOPS)
-            
         return l

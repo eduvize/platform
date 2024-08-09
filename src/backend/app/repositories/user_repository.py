@@ -1,10 +1,13 @@
 from datetime import datetime
 from typing import List, Optional, Union
 from sqlalchemy import UUID
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 from sqlmodel import Session, select
-from domain.schema.user import User, UserIdentifiers, UserIncludes, UserProfile
-from common.database import engine, recursive_load_options
+from domain.dto.profile import UserProfileDto
+from domain.mapping import map_hobby_data, map_skill_data, delete_hobby_data, map_discipline_data
+from domain.schema.user import User, UserIdentifiers, UserProfile
+from common.database import engine
+from app.utilities.database import recursive_load_options
 
 class UserRepository:
     """
@@ -32,7 +35,7 @@ class UserRepository:
         
         return user
     
-    async def upsert_profile(self, user_id: UUID, profile: UserProfile):
+    async def upsert_profile(self, user_id: UUID, profile: UserProfileDto):
         """
         Creates or replaces a user profile record in the database
 
@@ -41,18 +44,64 @@ class UserRepository:
             profile (UserProfile): The profile data to store
         """
         with Session(engine) as session:
-            user_query = select(User).where(User.id == user_id).join(User.profile)
+            user_query = select(User).where(User.id == user_id).options(joinedload(User.profile))
             resultset = session.exec(user_query)
             
             user = resultset.first()
             if user is None:
                 return None
             
-            # Merge the new profile data into the existing profile
-            user.profile.sqlmodel_update(profile)
-            session.commit()     
+            user.profile.first_name = profile.first_name
+            user.profile.last_name = profile.last_name
+            user.profile.bio = profile.bio
+            user.profile.github_username = profile.github_username
+            user.profile.birthdate = profile.birthdate
+
+            map_discipline_data(session, user.profile, profile.disciplines)
+            map_skill_data(session, user.profile, profile.skills)
+            
+            if profile.hobby:
+                map_hobby_data(session, user.profile.id, profile.hobby)
+            elif user.profile.hobby:
+                delete_hobby_data(session, user.profile.hobby)
+                
+            if profile.student:
+                user.profile.student = profile.student
+            elif user.profile.student:
+                session.delete(user.profile.student)
+                
+            if profile.professional:
+                user.profile.professional = profile.professional
+            elif user.profile.professional:
+                session.delete(user.profile.professional)
+                
+            session.commit()
+            
+    async def set_avatar_url(self, user_id: UUID, avatar_url: str) -> None:
+        """
+        Sets the avatar URL for a user
+
+        Args:
+            user_id (UUID): The ID of the user to set the avatar for
+            avatar_url (str): The URL of the avatar
+        """
+        with Session(engine) as session:
+            query = select(User).where(User.id == user_id).options(joinedload(User.profile))
+            resultset = session.exec(query)
+            
+            user = resultset.first()
+            
+            if not user:
+                return
+            
+            if not user.profile:
+                return
+            
+            user.profile.avatar_url = avatar_url
+            
+            session.commit()
     
-    async def get_user(self, by: UserIdentifiers, value: Union[str, UUID], include: Optional[List[UserIncludes]] = []) -> Optional[User]:
+    async def get_user(self, by: UserIdentifiers, value: Union[str, UUID], include: Optional[List[str]] = []) -> Optional[User]:
         """
         Retrieves a user by one of their unique identifiers, optionally joining related data
 
@@ -62,7 +111,7 @@ class UserRepository:
             include (Optional[List[UserIncludes]], optional): A list of relationships to populate. Defaults to [].
 
         Returns:
-            Optional[User]: _description_
+            Optional[User]: The user record if found, otherwise None
         """
         with Session(engine) as session:
             query = select(User)

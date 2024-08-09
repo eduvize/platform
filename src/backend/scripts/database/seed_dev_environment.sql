@@ -1,4 +1,4 @@
--- Create schema for Users
+-- Create table for Users
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username TEXT NOT NULL UNIQUE,
@@ -11,19 +11,20 @@ CREATE TABLE IF NOT EXISTS users (
     last_login_at_utc TIMESTAMP
 );
 
--- Create schema for User Profiles
+-- Create table for User Profiles
 CREATE TABLE IF NOT EXISTS user_profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id),
     first_name TEXT,
     last_name TEXT,
+    birthdate DATE,
     bio TEXT,
     github_username TEXT,
     avatar_url TEXT,
     last_updated_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
 
--- Create schema for skills
+-- Create table for skills
 CREATE TABLE IF NOT EXISTS user_profiles_skills (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_profile_id UUID NOT NULL REFERENCES user_profiles(id),
@@ -33,20 +34,27 @@ CREATE TABLE IF NOT EXISTS user_profiles_skills (
     notes TEXT
 );
 
--- Create schema for the hobby portion of the user profile
+-- Create table for the hobby portion of the user profile
 CREATE TABLE IF NOT EXISTS user_profiles_hobby (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_profile_id UUID NOT NULL REFERENCES user_profiles(id)
 );
 
--- Create schema for hobby reasons
+-- Create table for hobby skills
+CREATE TABLE IF NOT EXISTS user_profiles_hobby_skills (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_hobby_id UUID NOT NULL REFERENCES user_profiles_hobby(id),
+    skill_id UUID NOT NULL REFERENCES user_profiles_skills(id)
+);
+
+-- Create table for hobby reasons
 CREATE TABLE IF NOT EXISTS user_profiles_hobby_reasons (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_profile_hobby_id UUID NOT NULL REFERENCES user_profiles_hobby(id),
     reason TEXT NOT NULL
 );
 
--- Create schema for hobby projects
+-- Create table for hobby projects
 CREATE TABLE IF NOT EXISTS user_profiles_hobby_projects (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_profile_hobby_id UUID NOT NULL REFERENCES user_profiles_hobby(id),
@@ -55,54 +63,41 @@ CREATE TABLE IF NOT EXISTS user_profiles_hobby_projects (
     purpose TEXT
 );
 
--- Create the schema for the student portion of the user profile
+-- Create table for the student portion of the user profile
 CREATE TABLE IF NOT EXISTS user_profiles_student (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_profile_id UUID NOT NULL REFERENCES user_profiles(id)
 );
 
--- Create the schema for the professional portion of the user profile
+-- Create table for education skills
+CREATE TABLE IF NOT EXISTS user_profiles_student_education_skills (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_student_id UUID NOT NULL REFERENCES user_profiles_student(id),
+    skill_id UUID NOT NULL REFERENCES user_profiles_skills(id)
+);
+
+-- Create table for the professional portion of the user profile
 CREATE TABLE IF NOT EXISTS user_profiles_professional (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_profile_id UUID NOT NULL REFERENCES user_profiles(id)
 );
 
--- Create schema for the frontend portion of the user profile
-CREATE TABLE IF NOT EXISTS user_profiles_frontend (
+-- Create table for professional skills
+CREATE TABLE IF NOT EXISTS user_profiles_professional_skills (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_profile_id UUID NOT NULL REFERENCES user_profiles(id)
+    user_profile_professional_id UUID NOT NULL REFERENCES user_profiles_professional(id),
+    skill_id UUID NOT NULL REFERENCES user_profiles_skills(id)
 );
 
--- Create the schema for the backend portion of the user profile
-CREATE TABLE IF NOT EXISTS user_profiles_backend (
+-- Create table for mapping disciplines and proficiency levels to user profiles
+CREATE TABLE IF NOT EXISTS user_profiles_disciplines (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_profile_id UUID NOT NULL REFERENCES user_profiles(id)
+    user_profile_id UUID NOT NULL REFERENCES user_profiles(id),
+    discipline_type INT NOT NULL,
+    proficiency INT
 );
 
--- Create the schema for the database portion of the user profile
-CREATE TABLE IF NOT EXISTS user_profiles_database (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_profile_id UUID NOT NULL REFERENCES user_profiles(id)
-);
-
--- Create the schema for the devops portion of the user profile
-CREATE TABLE IF NOT EXISTS user_profiles_devops (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_profile_id UUID NOT NULL REFERENCES user_profiles(id)
-);
-
--- Create schema for User Skills
-CREATE TABLE IF NOT EXISTS user_skills (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id),
-    skill_type INT NOT NULL,
-    skill TEXT NOT NULL,
-    proficiency INT,
-    notes TEXT,
-    created_at_utc TIMESTAMP NOT NULL DEFAULT now()
-);
-
--- Create schema for Curriculums
+-- Create table for Curriculums
 CREATE TABLE IF NOT EXISTS curriculums (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
@@ -112,7 +107,7 @@ CREATE TABLE IF NOT EXISTS curriculums (
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
 
--- Create schema for Curriculum Reviews
+-- Create table for Curriculum Reviews
 CREATE TABLE IF NOT EXISTS curriculum_reviews (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     curriculum_id UUID NOT NULL REFERENCES curriculums(id),
@@ -122,7 +117,7 @@ CREATE TABLE IF NOT EXISTS curriculum_reviews (
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
 
--- Create schema for Curriculum Enrollment
+-- Create table for Curriculum Enrollment
 CREATE TABLE IF NOT EXISTS curriculum_enrollments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     curriculum_id UUID NOT NULL REFERENCES curriculums(id),
@@ -130,7 +125,7 @@ CREATE TABLE IF NOT EXISTS curriculum_enrollments (
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
 
--- Create schema for Lessons
+-- Create table for Lessons
 CREATE TABLE IF NOT EXISTS lessons (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     curriculum_id UUID NOT NULL REFERENCES curriculums(id),
@@ -139,7 +134,7 @@ CREATE TABLE IF NOT EXISTS lessons (
     curriculum_index INT NOT NULL
 );
 
--- Create schema for Exercises
+-- Create table for Exercises
 CREATE TABLE IF NOT EXISTS exercises (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     lesson_id UUID NOT NULL REFERENCES lessons(id),
@@ -148,7 +143,7 @@ CREATE TABLE IF NOT EXISTS exercises (
     expectations TEXT NOT NULL
 );
 
--- Create schema for Exercise Submissions
+-- Create table for Exercise Submissions
 CREATE TABLE IF NOT EXISTS exercise_submissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     exercise_id UUID NOT NULL REFERENCES exercises(id),
@@ -156,7 +151,7 @@ CREATE TABLE IF NOT EXISTS exercise_submissions (
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
 
--- Create schema for User Curriculums
+-- Create table for User Curriculums
 CREATE TABLE IF NOT EXISTS user_curriculums (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id),
@@ -165,7 +160,7 @@ CREATE TABLE IF NOT EXISTS user_curriculums (
     current_lesson_id UUID NOT NULL REFERENCES lessons(id)
 );
 
--- Create schema for Chat Sessions
+-- Create table for Chat Sessions
 CREATE TABLE IF NOT EXISTS chat_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id),
@@ -175,7 +170,7 @@ CREATE TABLE IF NOT EXISTS chat_sessions (
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
 
--- Create schema for Chat Messages
+-- Create table for Chat Messages
 CREATE TABLE IF NOT EXISTS chat_messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     session_id UUID NOT NULL REFERENCES chat_sessions(id),
@@ -184,7 +179,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
 
--- Create schema for Chat Tool Calls
+-- Create table for Chat Tool Calls
 CREATE TABLE IF NOT EXISTS chat_tool_calls (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     message_id UUID NOT NULL REFERENCES chat_messages(id),
