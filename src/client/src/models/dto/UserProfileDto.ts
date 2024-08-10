@@ -1,5 +1,6 @@
 import { LearningCapacity } from "../enums";
-import { EducationDto } from "./EducationDto";
+import { SchoolDto } from "./SchoolDto";
+import { EmploymentDto } from "./Employment";
 import { HobbyProjectDto } from "./HobbyProjectDto";
 
 export enum HobbyReason {
@@ -30,7 +31,11 @@ export interface HobbyDto {
 }
 
 export interface StudentDto {
-    schools: EducationDto[];
+    schools: SchoolDto[];
+}
+
+export interface ProfessionalDto {
+    employers: EmploymentDto[];
 }
 
 export interface UserProfileDto {
@@ -46,4 +51,5 @@ export interface UserProfileDto {
     skills: UserSkillDto[];
     hobby: HobbyDto | null;
     student: StudentDto | null;
+    professional: ProfessionalDto | null;
 }

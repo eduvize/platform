@@ -1,9 +1,25 @@
-import { Button, Chip, Divider, Grid, Group, Stack, Text } from "@mantine/core";
-import { HobbyProject, SpacedDivider } from "../../../components/molecules";
+import {
+    Accordion,
+    Button,
+    Chip,
+    Divider,
+    Group,
+    Space,
+    Stack,
+    Text,
+    Textarea,
+    UnstyledButton,
+} from "@mantine/core";
+import { SpacedDivider } from "../../../components/molecules";
 import { UseFormReturnType } from "@mantine/form";
 import { ProfileUpdatePayload } from "../../../api/contracts";
 import { ProfileStep } from "../Profile";
 import { HobbyProjectDto, HobbyReason } from "../../../models/dto";
+import { LearningCapacity, UserSkillType } from "../../../models/enums";
+import { useCallback, useMemo } from "react";
+import { IconCirclePlusFilled } from "@tabler/icons-react";
+import { ProfileAccordion } from "../../../components/organisms";
+import { isHobbyInformationComplete } from "../validation";
 
 interface HobbiesStepProps {
     form: UseFormReturnType<ProfileUpdatePayload>;
@@ -17,6 +33,30 @@ interface ReasonChipProps {
 
 export const HobbiesStep = ({ form, onChangeStep }: HobbiesStepProps) => {
     const projects = form.values.hobby?.projects || [];
+
+    const isComplete = useMemo(
+        () => isHobbyInformationComplete(form),
+        [form.values]
+    );
+
+    const moveNext = useCallback(() => {
+        if (!isComplete) return;
+
+        // Determine the next step
+        if (
+            form.values.learning_capacities.includes(LearningCapacity.Student)
+        ) {
+            onChangeStep("education");
+        } else if (
+            form.values.learning_capacities.includes(
+                LearningCapacity.Professional
+            )
+        ) {
+            onChangeStep("professional");
+        } else {
+            onChangeStep("proficiencies");
+        }
+    }, [isComplete, form.values]);
 
     const handleViewGeneralInfo = () => {
         onChangeStep("basic");
@@ -48,6 +88,31 @@ export const HobbiesStep = ({ form, onChangeStep }: HobbiesStepProps) => {
             projects.map((project, i) =>
                 i === index ? { ...project, ...value } : project
             )
+        );
+    };
+
+    const HobbyProject = (project: HobbyProjectDto & { index: number }) => {
+        return (
+            <>
+                <Textarea
+                    required
+                    {...form.getInputProps(
+                        `hobby.projects.${project.index}.description`
+                    )}
+                    label="Description"
+                    rows={3}
+                    placeholder="Describe the project and what you accomplished, what challenges you faced, and what you learned."
+                />
+
+                <Textarea
+                    {...form.getInputProps(
+                        `hobby.projects.${project.index}.purpose`
+                    )}
+                    label="Purpose"
+                    rows={3}
+                    placeholder="Why did you want to work on it?"
+                />
+            </>
         );
     };
 
@@ -188,12 +253,17 @@ export const HobbiesStep = ({ form, onChangeStep }: HobbiesStepProps) => {
             <Stack gap={0}>
                 <SpacedDivider
                     bold
-                    label="Which projects have been your favorite?"
+                    label="Projects"
                     labelPosition="left"
                     labelColor="blue"
                     labelSize="lg"
                     spacePlacement="top"
                     spacing="lg"
+                    icon={
+                        <UnstyledButton onClick={handleAddProject}>
+                            <IconCirclePlusFilled size={22} color="white" />
+                        </UnstyledButton>
+                    }
                 />
 
                 <Text c="gray" size="sm" mb="lg">
@@ -201,32 +271,31 @@ export const HobbiesStep = ({ form, onChangeStep }: HobbiesStepProps) => {
                     of your side projects and why you enjoyed them.
                 </Text>
 
-                <Grid>
+                <Accordion chevronPosition="left">
                     {projects.map((project, index) => (
-                        <Grid.Col span={12}>
-                            <HobbyProject
-                                {...project}
-                                onChange={(value) =>
-                                    handleProjectChange(index, value)
-                                }
-                                onRemove={() => handleRemoveProject(index)}
-                            />
-                        </Grid.Col>
+                        <ProfileAccordion
+                            index={index}
+                            form={form}
+                            title={project.project_name || "Untitled Project"}
+                            titleField={`hobby.projects.${index}.project_name`}
+                            component={
+                                <HobbyProject index={index} {...project} />
+                            }
+                            onRemove={() => handleRemoveProject(index)}
+                        />
                     ))}
-
-                    <Grid.Col span={12}>
-                        <Button
-                            color="gray"
-                            fullWidth
-                            onClick={handleAddProject}
-                        >
-                            {projects.length === 0
-                                ? "Add a Project"
-                                : "Add Another"}
-                        </Button>
-                    </Grid.Col>
-                </Grid>
+                </Accordion>
             </Stack>
+
+            <Space h="lg" />
+
+            <Button
+                variant="gradient"
+                disabled={!isComplete}
+                onClick={moveNext}
+            >
+                Continue
+            </Button>
         </Stack>
     );
 };

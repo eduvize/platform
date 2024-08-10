@@ -29,37 +29,52 @@ import {
     UserSkillType,
 } from "../../../models/enums";
 import { UseFormReturnType } from "@mantine/form";
+import { ProfileStep } from "../Profile";
+import { isBasicInformationComplete } from "../validation";
 
 interface BasicInfoStepProps {
     userDetails: UserDto | null;
     form: UseFormReturnType<ProfileUpdatePayload>;
     onAvatarChange: () => void;
+    onChangeStep: (step: ProfileStep) => void;
 }
 
 export const BasicInfoStep = memo(
-    ({ userDetails, form, onAvatarChange }: BasicInfoStepProps) => {
+    ({
+        userDetails,
+        form,
+        onAvatarChange,
+        onChangeStep,
+    }: BasicInfoStepProps) => {
         const avatarInputRef = useRef<HTMLInputElement>(null);
 
-        const isComplete = useMemo(() => {
-            const languages = form.values.skills.filter(
-                (s) => s.skill_type === UserSkillType.ProgrammingLanguage
-            );
+        const isComplete = useMemo(
+            () => isBasicInformationComplete(form),
+            [form.values]
+        );
 
-            const libraries = form.values.skills.filter(
-                (s) => s.skill_type === UserSkillType.Library
-            );
+        const moveNext = useCallback(() => {
+            if (!isComplete) return;
 
-            return (
-                form.values.first_name &&
-                form.values.last_name &&
-                form.values.birthdate &&
-                form.values.bio &&
-                form.values.learning_capacities.length > 0 &&
-                form.values.disciplines.length > 0 &&
-                languages.length > 0 &&
-                libraries.length > 0
-            );
-        }, [form.values]);
+            // Determine the next step
+            if (
+                form.values.learning_capacities.includes(LearningCapacity.Hobby)
+            ) {
+                onChangeStep("hobby");
+            } else if (
+                form.values.learning_capacities.includes(
+                    LearningCapacity.Student
+                )
+            ) {
+                onChangeStep("education");
+            } else if (
+                form.values.learning_capacities.includes(
+                    LearningCapacity.Professional
+                )
+            ) {
+                onChangeStep("professional");
+            }
+        }, [isComplete, form.values]);
 
         const handleAvatarUpload = () => {
             const file = avatarInputRef.current?.files?.[0];
@@ -94,6 +109,24 @@ export const BasicInfoStep = memo(
             }
         };
 
+        const handleToggleLearningCapacity = (capacity: LearningCapacity) => {
+            const existing = form.values.learning_capacities.includes(capacity);
+
+            if (existing) {
+                form.setFieldValue(
+                    "learning_capacities",
+                    form.values.learning_capacities.filter(
+                        (x) => x !== capacity
+                    )
+                );
+            } else {
+                form.setFieldValue("learning_capacities", [
+                    ...form.values.learning_capacities,
+                    capacity,
+                ]);
+            }
+        };
+
         const getDisciplineChecked = useCallback(
             (discipline: EngineeringDiscipline) => {
                 return form.values.disciplines.some(
@@ -102,6 +135,15 @@ export const BasicInfoStep = memo(
             },
             [form.values.disciplines]
         );
+
+        const getLearningCapacityChecked = useCallback(
+            (capacity: LearningCapacity) => {
+                return form.values.learning_capacities.includes(capacity);
+            },
+            [form.values.learning_capacities]
+        );
+
+        console.log(form.values.learning_capacities);
 
         return (
             <Stack>
@@ -206,13 +248,14 @@ export const BasicInfoStep = memo(
                         <Center>
                             <Group>
                                 <Chip
-                                    {...form.getInputProps(
-                                        "learning_capacities",
-                                        {
-                                            type: "checkbox",
-                                            value: LearningCapacity.Hobby,
-                                        }
+                                    checked={getLearningCapacityChecked(
+                                        LearningCapacity.Hobby
                                     )}
+                                    onClick={() =>
+                                        handleToggleLearningCapacity(
+                                            LearningCapacity.Hobby
+                                        )
+                                    }
                                     color="blue"
                                     size="sm"
                                 >
@@ -220,13 +263,14 @@ export const BasicInfoStep = memo(
                                 </Chip>
 
                                 <Chip
-                                    {...form.getInputProps(
-                                        "learning_capacities",
-                                        {
-                                            type: "checkbox",
-                                            value: LearningCapacity.Student,
-                                        }
+                                    checked={getLearningCapacityChecked(
+                                        LearningCapacity.Student
                                     )}
+                                    onClick={() =>
+                                        handleToggleLearningCapacity(
+                                            LearningCapacity.Student
+                                        )
+                                    }
                                     color="blue"
                                     size="sm"
                                 >
@@ -234,13 +278,14 @@ export const BasicInfoStep = memo(
                                 </Chip>
 
                                 <Chip
-                                    {...form.getInputProps(
-                                        "learning_capacities",
-                                        {
-                                            type: "checkbox",
-                                            value: LearningCapacity.Professional,
-                                        }
+                                    checked={getLearningCapacityChecked(
+                                        LearningCapacity.Professional
                                     )}
+                                    onClick={() =>
+                                        handleToggleLearningCapacity(
+                                            LearningCapacity.Professional
+                                        )
+                                    }
                                     color="blue"
                                     size="sm"
                                 >
@@ -444,8 +489,12 @@ export const BasicInfoStep = memo(
 
                 <Space h="lg" />
 
-                <Button variant="gradient" disabled={!isComplete}>
-                    Save and Continue
+                <Button
+                    variant="gradient"
+                    disabled={!isComplete}
+                    onClick={moveNext}
+                >
+                    Continue
                 </Button>
             </Stack>
         );

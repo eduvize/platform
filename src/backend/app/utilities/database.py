@@ -35,18 +35,21 @@ def recursive_load_options(
         if getattr(model, relationship).property.mapper.class_ not in visited_models
     ]
     
+    print(f"{model} applicable relationships: {applicable_relationships}")
+    
     if path:
+        print(f"Path: {path}")
         segments = path.split(".")
         
         for segment in segments:
             if segment == "*":
+                print(f"Recurse through all relationships of {model}")
                 addl = recursive_load_options(model, visited_models=visited_models, load_all=True, base_load=base_load)
                 options.extend(addl)
             else:
                 submodel = getattr(model, segment)
                 submodel_type = submodel.property.mapper.class_
                 submodel_relationships = get_relationship_keys(submodel_type)
-                visited_models.add(submodel_type)
                 
                 base_load = make_join(submodel)
                 
@@ -65,16 +68,15 @@ def recursive_load_options(
             make_join(t)
             for t in [
                 getattr(model, key)
-                for key in relationships
+                for key in applicable_relationships
                 if getattr(model, key).property.mapper.class_ not in visited_models
             ]
         ])
         
-        for relationship in relationships:
+        for relationship in applicable_relationships:
             submodel_attr = getattr(model, relationship)
             submodel = submodel_attr.property.mapper.class_
             load = make_join(submodel_attr)
-            visited_models.add(submodel)
-            options += recursive_load_options(submodel, visited_models=visited_models, base_load=load, load_all=True)
+            options.extend(recursive_load_options(submodel, visited_models=visited_models, base_load=load, load_all=True))
 
     return options

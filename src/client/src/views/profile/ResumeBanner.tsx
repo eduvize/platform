@@ -9,12 +9,14 @@ import { notifications } from "@mantine/notifications";
 interface ResumeBannerProps {
     form: UseFormReturnType<ProfileUpdatePayload>;
     onParsing: () => void;
+    onScanned: () => void;
     onCompleted: () => void;
 }
 
 export function ResumeBanner({
     form,
     onParsing,
+    onScanned,
     onCompleted,
 }: ResumeBannerProps) {
     const inputRef = useRef<HTMLInputElement>(null);
@@ -39,6 +41,8 @@ export function ResumeBanner({
                     color: "blue",
                     autoClose: 8000,
                 });
+
+                onScanned();
             })
             .catch(() => {
                 notifications.show({

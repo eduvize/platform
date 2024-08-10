@@ -42,10 +42,10 @@ class UserProfileHobbyProjectBase(SQLModel):
     project_name: str                       = Field(nullable=False)
     description: str                        = Field(nullable=False)
     purpose: Optional[str]                  = Field()
-    user_profile_hobby_id: uuid.UUID        = Field(default=None, foreign_key="user_profiles_hobby.id")
     
 class UserProfileHobbyProject(UserProfileHobbyProjectBase, table=True):
     __tablename__ = "user_profiles_hobby_projects"
     
     id: uuid.UUID                           = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_profile_hobby_id: uuid.UUID        = Field(default=None, foreign_key="user_profiles_hobby.id")
     user_profile_hobby: "UserProfileHobby"  = Relationship(back_populates="projects")

@@ -4,7 +4,8 @@ from typing import List, Optional
 from pydantic import computed_field, field_validator
 from domain.schema.user import UserProfileBase, UserProfileSkillBase, UserProfileDisciplineBase
 from domain.dto.profile.hobby import UserProfileHobbyDto
-from domain.dto.profile.learning_capacities import UserProfileStudentDto, UserProfileProfessionalDto
+from domain.dto.profile.student import UserProfileStudentDto
+from domain.dto.profile.professional import UserProfileProfessionalDto
 from domain.enums.user_enums import UserDiscipline, UserLearningCapacity, UserSkillType
 
 class UserSkillDto(UserProfileSkillBase):
@@ -35,8 +36,8 @@ class UserProfileDto(UserProfileBase):
     
     learning_capacities: Optional[List[str]] = None
     
-    disciplines: Optional[List[UserProfileDisciplineDto]] = None
-    skills: Optional[List[UserSkillDto]] = None
+    disciplines: List[UserProfileDisciplineDto] = []
+    skills: List[UserSkillDto] = []
     
     hobby: Optional[UserProfileHobbyDto] = None
     student: Optional[UserProfileStudentDto] = None

@@ -4,7 +4,16 @@ from sqlalchemy import UUID
 from sqlalchemy.orm import joinedload
 from sqlmodel import Session, select
 from domain.dto.profile import UserProfileDto
-from domain.mapping import map_hobby_data, map_skill_data, delete_hobby_data, map_discipline_data
+from domain.mapping import (
+    map_hobby_data, 
+    delete_hobby_data,
+    map_student_data,
+    delete_student_data, 
+    map_professional_data,
+    delete_professional_data,
+    map_skill_data, 
+    map_discipline_data
+)
 from domain.schema.user import User, UserIdentifiers, UserProfile
 from common.database import engine
 from app.utilities.database import recursive_load_options
@@ -61,19 +70,19 @@ class UserRepository:
             map_skill_data(session, user.profile, profile.skills)
             
             if profile.hobby:
-                map_hobby_data(session, user.profile.id, profile.hobby)
+                map_hobby_data(session, user.profile, profile.hobby)
             elif user.profile.hobby:
                 delete_hobby_data(session, user.profile.hobby)
                 
             if profile.student:
-                user.profile.student = profile.student
+                map_student_data(session, user.profile, profile.student)
             elif user.profile.student:
-                session.delete(user.profile.student)
+                delete_student_data(session, user.profile.student)
                 
             if profile.professional:
-                user.profile.professional = profile.professional
+                map_professional_data(session, user.profile, profile.professional)
             elif user.profile.professional:
-                session.delete(user.profile.professional)
+                delete_professional_data(session, user.profile.professional)
                 
             session.commit()
             

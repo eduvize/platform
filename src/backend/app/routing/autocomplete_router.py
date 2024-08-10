@@ -32,3 +32,10 @@ async def get_educational_institution_options(query: str, autocomplete_service: 
     Retrieves a list of educational institutions for use in an autocomplete field
     """
     return autocomplete_service.get_educational_institutions(query)
+
+@router.get("/educational-focuses")
+async def get_educational_focus_options(school_name: str, query: str, autocomplete_service: AutocompleteService = Depends(AutocompleteService)):
+    """
+    Retrieves a list of educational focuses for use in an autocomplete field
+    """
+    return autocomplete_service.get_educational_focuses(school_name, query)

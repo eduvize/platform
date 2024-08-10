@@ -1,4 +1,4 @@
-import { Image, Stepper } from "@mantine/core";
+import { Image, Stepper, Tooltip } from "@mantine/core";
 import { UseFormReturnType } from "@mantine/form";
 import {
     IconUser,
@@ -12,6 +12,12 @@ import { ProfileUpdatePayload } from "../../api/contracts";
 import { LearningCapacity } from "../../models/enums";
 import { ProfileStep } from "./Profile";
 import { UserDto } from "../../models/dto";
+import {
+    isBasicInformationComplete,
+    isEducationInformationComplete,
+    isHobbyInformationComplete,
+    isProfessionalInformationComplete,
+} from "./validation";
 
 interface ProfileStepperProps {
     userDetails: UserDto | null;
@@ -62,26 +68,75 @@ export const ProfileStepper = ({
         return steps;
     }, [form.values.learning_capacities, form.values.skills]);
 
-    const [stepIndex, setStepIndex] = useState(steps.indexOf(currentStep));
+    const stepIndex = useMemo(
+        () => visibleSteps.indexOf(currentStep),
+        [currentStep, visibleSteps]
+    );
 
     useEffect(() => {
         onChangeStep(visibleSteps[stepIndex]);
-    }, [stepIndex]);
+    }, [stepIndex, visibleSteps]);
 
-    useEffect(() => {
-        if (stepIndex === visibleSteps.indexOf(currentStep)) return;
+    const canSelectHobby = useMemo(
+        () => isBasicInformationComplete(form),
+        [form.values]
+    );
+    const canSelectEducation = useMemo(
+        () =>
+            isBasicInformationComplete(form) &&
+            isHobbyInformationComplete(form),
+        [form.values]
+    );
+    const canSelectProfessional = useMemo(
+        () =>
+            isBasicInformationComplete(form) &&
+            isHobbyInformationComplete(form) &&
+            isEducationInformationComplete(form),
+        [form.values]
+    );
+    const canSelectProficiencies = useMemo(
+        () =>
+            isBasicInformationComplete(form) &&
+            isHobbyInformationComplete(form) &&
+            isEducationInformationComplete(form) &&
+            isProfessionalInformationComplete(form),
+        [form.values]
+    );
 
-        console.log("currentStep", currentStep);
-        setStepIndex(visibleSteps.indexOf(currentStep));
-    }, [currentStep, visibleSteps]);
+    const getStepTextColor = (step: ProfileStep) => {
+        return currentStep === step
+            ? "var(--mantine-color-gray-1)"
+            : (() => {
+                  switch (step) {
+                      case "hobby":
+                          return !canSelectHobby
+                              ? "var(--mantine-color-gray-7)"
+                              : undefined;
+                      case "education":
+                          return !canSelectEducation
+                              ? "var(--mantine-color-gray-7)"
+                              : undefined;
+                      case "professional":
+                          return !canSelectProfessional
+                              ? "var(--mantine-color-gray-7)"
+                              : undefined;
+                      case "proficiencies":
+                          return !canSelectProficiencies
+                              ? "var(--mantine-color-gray-7)"
+                              : undefined;
+                      default:
+                          return undefined;
+                  }
+              })();
+    };
 
     const getStepProps = (step: ProfileStep) => ({
         styles: {
-            stepIcon: {
-                border:
-                    currentStep === step
-                        ? "2px solid var(--mantine-color-blue-text)"
-                        : undefined,
+            stepLabel: {
+                color: getStepTextColor(step),
+            },
+            stepDescription: {
+                color: getStepTextColor(step),
             },
         },
         loading: currentStep === step && pendingSave,
@@ -90,10 +145,9 @@ export const ProfileStepper = ({
 
     return (
         <Stepper
-            allowNextStepsSelect={false}
             active={stepIndex}
             orientation="vertical"
-            onStepClick={(index) => setStepIndex(index)}
+            onStepClick={(index) => onChangeStep(visibleSteps[index])}
         >
             <Stepper.Step
                 {...getStepProps("basic")}
@@ -119,6 +173,8 @@ export const ProfileStepper = ({
                     label="Personal Projects"
                     description="What you do in your free time"
                     icon={<IconHammer />}
+                    completedIcon={<IconHammer />}
+                    disabled={!canSelectHobby}
                 />
             )}
             {visibleSteps.includes("education") && (
@@ -128,6 +184,8 @@ export const ProfileStepper = ({
                     label="Education"
                     description="Academic background and certifications"
                     icon={<IconBellSchool />}
+                    completedIcon={<IconBellSchool />}
+                    disabled={!canSelectEducation}
                 />
             )}
             {visibleSteps.includes("professional") && (
@@ -137,6 +195,8 @@ export const ProfileStepper = ({
                     label="Professional Experience"
                     description="What you've done in the workforce"
                     icon={<IconDeviceLaptop />}
+                    completedIcon={<IconDeviceLaptop />}
+                    disabled={!canSelectProfessional}
                 />
             )}
             {visibleSteps.includes("proficiencies") && (
@@ -146,6 +206,8 @@ export const ProfileStepper = ({
                     label="Proficiencies"
                     description="How you view your skills"
                     icon={<IconStar />}
+                    completedIcon={<IconStar />}
+                    disabled={!canSelectProficiencies}
                 />
             )}
         </Stepper>

@@ -5,11 +5,11 @@ from .provide_profile_tool import ProvideProfileTool
 class ResumeScannerPrompt(BasePrompt):
     def setup(self) -> None:
         self.set_system_prompt("""
-You will look through imag(es) of a resume and extract information from it.
+You will look through images of a resume and extract information from it.
 The information you will look for is denoted in the schema of the provide_profile tool.
-You will use the provide_profile tool to send your results back to the user.
+You will use the provide_profile tool to send your results back to the user. You will not be able to ask questions.
 
-When filling out the bio, you will make it less formal (as in a resume format) and more casual (as in a bio format, first person).
+When filling out the bio and descriptions, you will make it less formal (as in a resume format) and more casual (as in a bio format, first person).
 You will keep programming languages and libraries/frameworks granular, only one item each.
 You will keep programming languages only to their names and not include frameworks, libraries, or other suffixes.
 You will not include development tools in the programming languages or libraries/frameworks lists. These will be ignored.

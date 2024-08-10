@@ -58,6 +58,21 @@ class AutocompleteService:
         
         return options
     
+    def get_educational_focuses(self, school_name: str, query: str) -> List[str]:
+        cache_key = get_cache_key("educational-focuses", f"{school_name}:{query}")
+        existing = get_set(cache_key)
+        
+        if existing:
+            return existing
+        
+        prompt_input = get_educational_focuses_input(school_name, query)
+        prompt = AutocompletePrompt().with_input(prompt_input)
+        options = prompt.get_options()
+        
+        add_to_set(cache_key, options)
+        
+        return options
+    
 def get_library_input(subjects: List[str], languages: List[str], query: str) -> str:
     return f"""
 Development libraries and frameworks that apply to {', or '.join(subjects)} development using {','.join(languages)}.
@@ -73,6 +88,12 @@ Query: {query}
 def get_educational_institutions_input(query: str) -> str:
     return f"""
 Valid universities, colleges, bootcamps, and other educational institutions. If multiple branches exist, specify the main campus.
+Query: {query}
+"""
+
+def get_educational_focuses_input(school_name: str, query: str) -> str:
+    return f"""
+Focuses of study at {school_name}. Majors, minors, concentrations, and specializations.
 Query: {query}
 """
     

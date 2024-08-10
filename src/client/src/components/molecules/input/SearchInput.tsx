@@ -1,18 +1,19 @@
 import { Autocomplete, AutocompleteProps } from "@mantine/core";
-import { useThrottledCallback } from "@mantine/hooks";
+import { useDebouncedCallback, useThrottledCallback } from "@mantine/hooks";
 import { useEffect, useState } from "react";
 
 interface SearchInputProps extends AutocompleteProps {
     valueFetch: (query: string) => Promise<string[]>;
     onChange?: (value: string) => void;
+    value?: string;
 }
 
 export const SearchInput = (props: SearchInputProps) => {
     const { valueFetch } = props;
-    const [value, setValue] = useState("");
+    const [value, setValue] = useState(props.value || "");
     const [results, setResults] = useState<string[]>([]);
 
-    const handleFetchResults = useThrottledCallback((query: string) => {
+    const handleFetchResults = useDebouncedCallback((query: string) => {
         valueFetch(query).then((data) => {
             setResults(data);
         });

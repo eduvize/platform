@@ -24,6 +24,14 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     last_updated_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
 
+-- Create table for disciplines
+CREATE TABLE IF NOT EXISTS user_profiles_disciplines (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_id UUID NOT NULL REFERENCES user_profiles(id),
+    discipline_type INT NOT NULL,
+    proficiency INT
+);
+
 -- Create table for skills
 CREATE TABLE IF NOT EXISTS user_profiles_skills (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -69,6 +77,21 @@ CREATE TABLE IF NOT EXISTS user_profiles_student (
     user_profile_id UUID NOT NULL REFERENCES user_profiles(id)
 );
 
+-- Create table for schools
+CREATE TABLE IF NOT EXISTS user_profiles_schools (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_student_id UUID NOT NULL REFERENCES user_profiles_student(id),
+    school_name TEXT NOT NULL,
+    focus TEXT
+);
+
+-- Create table for school skills
+CREATE TABLE IF NOT EXISTS user_profiles_schools_skills (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_school_id UUID NOT NULL REFERENCES user_profiles_schools(id),
+    skill_id UUID NOT NULL REFERENCES user_profiles_skills(id)
+);
+
 -- Create table for education skills
 CREATE TABLE IF NOT EXISTS user_profiles_student_education_skills (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -82,10 +105,20 @@ CREATE TABLE IF NOT EXISTS user_profiles_professional (
     user_profile_id UUID NOT NULL REFERENCES user_profiles(id)
 );
 
--- Create table for professional skills
-CREATE TABLE IF NOT EXISTS user_profiles_professional_skills (
+-- Create table for employment
+CREATE TABLE IF NOT EXISTS user_profiles_employment (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_profile_professional_id UUID NOT NULL REFERENCES user_profiles_professional(id),
+    company_name TEXT NOT NULL,
+    position TEXT NOT NULL,
+    description TEXT NOT NULL,
+    is_current BOOLEAN NOT NULL
+);
+
+-- Create table for skills used at an employer
+CREATE TABLE IF NOT EXISTS user_profiles_employment_skills (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_profile_employment_id UUID NOT NULL REFERENCES user_profiles_employment(id),
     skill_id UUID NOT NULL REFERENCES user_profiles_skills(id)
 );
 

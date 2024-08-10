@@ -29,9 +29,9 @@ class HobbyProjectDto(UserProfileHobbyProjectBase):
     purpose: Optional[str] = None
         
 class UserProfileHobbyDto(UserProfileHobbyBase):
-    reasons: list[HobbyReason]
-    projects: list[HobbyProjectDto]
-    skills: list[str]
+    reasons: list[HobbyReason] = []
+    projects: list[HobbyProjectDto] = []
+    skills: list[str] = []
     
     @field_validator("skills", mode="plain")
     def validate_skills(cls, v: list[str]) -> list[str]:

@@ -112,7 +112,9 @@ class BaseGPT(BaseModel):
                         json_dict = json.loads(record.arguments)
                         record.result = prompt.process_tool(tool_name=record.name, arguments=json_dict)
                     except json.JSONDecodeError:
-                        record.result = "Invalid json arguments"
+                        record.result = "Error: Invalid json arguments"
+                    except Exception as e:
+                        record.result = f"Error: {e}"
                 
             # Build the response message
             response_message = ChatCompletionAssistantMessageParam(
@@ -143,14 +145,17 @@ class BaseGPT(BaseModel):
             )
             
             # If the finish reason is tool calls, added to the chat context and repeat the loop
-            if finish_reason == "tool_calls":
+            if finish_reason == "tool_calls" or len(tool_call_dict) > 0:
                 messages.append(response_message)
                 
                 for record in tool_call_dict:
                     messages.append(ChatCompletionToolMessageParam(role="tool", tool_call_id=record.id, content=record.result))
                 
+                print(messages)
+                
                 continue
             else:
+                print(f"Ended model loop with finish reason: {finish_reason}")
                 break
             
         return responses

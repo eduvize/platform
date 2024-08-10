@@ -56,8 +56,6 @@ export const AdvancedPillInput = ({
     const initialValue = defaultValue || value || [];
     const values = mapValues(initialValue);
 
-    console.log("values", values);
-
     const handleAutocompletion = useDebouncedCallback((query: string) => {
         if (!valueFetch) return;
 
@@ -66,7 +64,7 @@ export const AdvancedPillInput = ({
         valueFetch(query).then((options) => {
             setRemoteOptions(options);
         });
-    }, 300);
+    }, 500);
 
     const handleChange = (newValues: string[]) => {
         console.log("new values", newValues);
@@ -77,19 +75,13 @@ export const AdvancedPillInput = ({
 
             if (valueMapper) {
                 toChange = toChange.map(valueMapper);
-
-                console.log("mapped toChange", toChange);
             }
 
             if (valueFilter) {
                 toNotChange = toChange.filter((v) => !valueFilter(v));
                 toChange = toChange.filter(valueFilter);
-
-                console.log("value filter toChange", toChange);
-                console.log("value filter toNotChange", toNotChange);
             }
 
-            console.log("returning", [...toChange, ...toNotChange]);
             onChange([...toChange, ...toNotChange]);
         }
     };

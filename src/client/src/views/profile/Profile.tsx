@@ -44,27 +44,38 @@ function mapCheckListField(
     const { value } = options;
 
     function getValueFromDotPath(obj: any, path: string): any {
-        return path.split(".").reduce((acc, key) => acc[key], obj);
+        // Support indexes too
+        const parts = path.split(".");
+
+        return parts.reduce((acc, part) => {
+            if (part.includes("[")) {
+                const [key, index] = part.split("[");
+
+                if (!acc[key]) {
+                    return null;
+                }
+
+                return acc[key][index.replace("]", "")];
+            } else if (!isNaN(parseInt(part))) {
+                return acc[parseInt(part)];
+            }
+
+            return acc[part];
+        }, obj);
     }
 
     return {
         ...inputProps,
         onChange: (checked: boolean) => {
             if (checked) {
-                form.setFieldValue(field, [
-                    ...getValueFromDotPath(form.values, field),
-                    value,
-                ]);
+                console.log(`add ${value} to ${field}`);
+                form.insertListItem(field, value);
             } else {
-                form.setFieldValue(
-                    field,
-                    getValueFromDotPath(form.values, field).filter(
-                        (v: any) => v !== value
-                    )
-                );
+                console.log(`remove ${value} from ${field}`);
+                form.removeListItem(field, value);
             }
         },
-        checked: getValueFromDotPath(form.values, field).includes(value),
+        checked: getValueFromDotPath(form.values, field)?.includes(value),
     };
 }
 
@@ -127,16 +138,10 @@ export const Profile = memo(() => {
             learning_capacities: [],
             hobby: null,
             student: null,
+            professional: null,
         },
         enhanceGetInputProps: (payload) => {
             switch (payload.field) {
-                case "learning_capacities":
-                    return mapCheckListField(
-                        payload.form,
-                        payload.field,
-                        payload.options,
-                        payload.inputProps
-                    );
                 case "hobby.skills":
                     return mapCheckListField(
                         payload.form,
@@ -151,6 +156,21 @@ export const Profile = memo(() => {
                         payload.options,
                         payload.inputProps
                     );
+                default:
+                    if (
+                        (payload.field.startsWith("student.schools") ||
+                            payload.field.startsWith(
+                                "professional.employers"
+                            )) &&
+                        payload.field.endsWith(".skills")
+                    ) {
+                        return mapCheckListField(
+                            payload.form,
+                            payload.field,
+                            payload.options,
+                            payload.inputProps
+                        );
+                    }
             }
 
             return payload.inputProps;
@@ -170,15 +190,48 @@ export const Profile = memo(() => {
             learning_capacities:
                 userDetails.profile.selected_learning_capacities ||
                 userDetails.profile.learning_capacities,
-            hobby: userDetails.profile.hobby
+            hobby: !!userDetails.profile.hobby
                 ? {
                       ...userDetails.profile.hobby,
-                      skills: userDetails.profile.hobby.skills.map(
+                      skills: userDetails.profile.hobby.skills?.map(
                           (skill) =>
                               userDetails.profile.skills.find(
                                   (s) => s.id === skill
                               )!.skill
                       ),
+                  }
+                : null,
+            student: !!userDetails.profile.student
+                ? {
+                      ...userDetails.profile.student,
+                      schools: userDetails.profile.student.schools?.map(
+                          (school) => ({
+                              ...school,
+                              skills: school.skills.map(
+                                  (skill) =>
+                                      userDetails.profile.skills.find(
+                                          (s) => s.id === skill
+                                      )!.skill
+                              ),
+                          })
+                      ),
+                  }
+                : null,
+            professional: !!userDetails.profile.professional
+                ? {
+                      ...userDetails.profile.professional,
+                      employers:
+                          userDetails.profile.professional.employers?.map(
+                              (employer) => ({
+                                  ...employer,
+                                  skills: employer.skills.map(
+                                      (skill) =>
+                                          userDetails.profile.skills.find(
+                                              (s) => s.id === skill
+                                          )!.skill
+                                  ),
+                              })
+                          ),
                   }
                 : null,
         });
@@ -209,6 +262,20 @@ export const Profile = memo(() => {
             }
         } else if (form.values.student) {
             form.setFieldValue("student", null);
+        }
+
+        if (
+            form.values.learning_capacities.includes(
+                LearningCapacity.Professional
+            )
+        ) {
+            if (!form.values.professional) {
+                form.setFieldValue("professional", {
+                    employers: [],
+                });
+            }
+        } else if (form.values.professional) {
+            form.setFieldValue("professional", null);
         }
     }, [form.values.learning_capacities]);
 
@@ -295,7 +362,11 @@ export const Profile = memo(() => {
                                         w="100%"
                                         style={{ zIndex: 2 }}
                                     >
-                                        Parsing your resume...
+                                        Looking over your resume...
+                                        <Text size="sm">
+                                            This should only take a few seconds,
+                                            so hang tight!
+                                        </Text>
                                     </Text>
                                 </Stack>
                             </Box>
@@ -305,6 +376,9 @@ export const Profile = memo(() => {
                                     userDetails={userDetails}
                                     form={form}
                                     onAvatarChange={() => refresh()}
+                                    onChangeStep={(step) =>
+                                        setCurrentStep(step)
+                                    }
                                 />
                             )}
 
@@ -318,11 +392,21 @@ export const Profile = memo(() => {
                             )}
 
                             {currentStep === "education" && (
-                                <EducationStep form={form} />
+                                <EducationStep
+                                    form={form}
+                                    onChangeStep={(step) =>
+                                        setCurrentStep(step)
+                                    }
+                                />
                             )}
 
                             {currentStep === "professional" && (
-                                <ProfessionalStep form={form} />
+                                <ProfessionalStep
+                                    form={form}
+                                    onChangeStep={(step) =>
+                                        setCurrentStep(step)
+                                    }
+                                />
                             )}
 
                             {currentStep === "proficiencies" && (
@@ -345,7 +429,14 @@ export const Profile = memo(() => {
                         <Box pos="absolute" w="15em" ml="xl">
                             <ResumeBanner
                                 form={form}
-                                onParsing={() => setScanningResume(true)}
+                                onParsing={() => {
+                                    setScanningResume(true);
+                                    setCurrentStep("basic");
+                                }}
+                                onScanned={() => {
+                                    initialSetRef.current = true;
+                                    isHydratedRef.current = true;
+                                }}
                                 onCompleted={() => setScanningResume(false)}
                             />
                         </Box>
