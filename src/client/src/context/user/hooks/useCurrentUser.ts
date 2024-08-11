@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { UserDto } from "../../../models/dto/profile";
-import { UserContext } from "../UserContext";
-import UserApi from "../../../api/UserApi";
 import { useContextSelector } from "use-context-selector";
-import { ProfileUpdatePayload } from "../../../api/contracts";
+import { UserApi } from "@api";
+import { ProfileUpdatePayload } from "@contracts";
+import { UserContext } from "@context/user";
+import { UserDto } from "@models/dto";
 
 export const useCurrentUser = (): [
     UserDto | null,

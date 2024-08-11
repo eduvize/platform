@@ -1,9 +1,9 @@
-import { createContext } from "use-context-selector";
 import { useEffect, useState } from "react";
-import { useCurrentUserId } from "../auth";
-import { UserDto, UserOnboardingStatusDto } from "../../models/dto/profile";
+import { createContext } from "use-context-selector";
+import { UserApi } from "@api";
+import { useCurrentUserId } from "@context/auth/hooks";
+import { UserDto, UserOnboardingStatusDto } from "@models/dto";
 import { notifications } from "@mantine/notifications";
-import UserApi from "../../api/UserApi";
 import { IconCheck } from "@tabler/icons-react";
 
 type Context = {

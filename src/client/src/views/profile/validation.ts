@@ -1,6 +1,6 @@
+import { ProfileUpdatePayload } from "@contracts";
+import { UserSkillType } from "@models/enums";
 import { UseFormReturnType } from "@mantine/form";
-import { ProfileUpdatePayload } from "../../api/contracts";
-import { UserSkillType } from "../../models/enums";
 
 export const isBasicInformationComplete = (
     form: UseFormReturnType<ProfileUpdatePayload>

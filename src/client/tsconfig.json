@@ -18,7 +18,18 @@
         "strict": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
-        "noFallthroughCasesInSwitch": true
+        "noFallthroughCasesInSwitch": true,
+
+        "paths": {
+            "@contracts": ["./src/api/contracts"],
+            "@context/*": ["./src/context/*/index.ts"],
+            "@models/*": ["./src/models/*/index.ts"],
+            "@api": ["./src/api"],
+            "@atoms": ["./src/components/atoms"],
+            "@molecules": ["./src/components/molecules"],
+            "@organisms": ["./src/components/organisms"],
+            "@views/*": ["./src/views/*/index.ts"]
+        }
     },
     "include": ["src", "vite-env.d.ts"],
     "references": [{ "path": "./tsconfig.node.json" }]

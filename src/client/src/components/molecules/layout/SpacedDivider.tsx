@@ -1,13 +1,4 @@
-import {
-    Space,
-    Divider,
-    Text,
-    Group,
-    Grid,
-    Center,
-    Stack,
-} from "@mantine/core";
-import { IconCirclePlusFilled } from "@tabler/icons-react";
+import { Space, Divider, Text, Grid, Center } from "@mantine/core";
 
 interface SpacedDividerProps {
     label?: string;

@@ -1,16 +1,8 @@
+import { ProfileUpdatePayload } from "@contracts";
+import { Proficiency } from "@molecules";
+import { EngineeringDiscipline } from "@models/enums";
 import { UseFormReturnType } from "@mantine/form";
-import { ProfileUpdatePayload } from "../../../api/contracts";
-import {
-    Center,
-    Divider,
-    Grid,
-    Group,
-    Rating,
-    Stack,
-    Text,
-} from "@mantine/core";
-import { Proficiency } from "../../../components/molecules";
-import { EngineeringDiscipline } from "../../../models/enums";
+import { Divider, Stack, Text } from "@mantine/core";
 
 interface ProficiencyStepProps {
     form: UseFormReturnType<ProfileUpdatePayload>;

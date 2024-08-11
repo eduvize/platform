@@ -1,6 +1,6 @@
+import { ProfileUpdatePayload } from "@contracts";
+import { UserProfileDto } from "@models/dto";
 import { UseFormReturnType } from "@mantine/form";
-import { UserProfileDto } from "../../models/dto/profile";
-import { ProfileUpdatePayload } from "../../api/contracts";
 
 export const mapInboundProfileData = (profile: UserProfileDto) => {
     return {

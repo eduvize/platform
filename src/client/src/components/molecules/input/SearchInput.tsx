@@ -1,6 +1,6 @@
-import { Autocomplete, AutocompleteProps } from "@mantine/core";
-import { useDebouncedCallback, useThrottledCallback } from "@mantine/hooks";
 import { useEffect, useState } from "react";
+import { Autocomplete, AutocompleteProps } from "@mantine/core";
+import { useDebouncedCallback } from "@mantine/hooks";
 
 interface SearchInputProps extends AutocompleteProps {
     valueFetch: (query: string) => Promise<string[]>;

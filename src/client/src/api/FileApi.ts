@@ -1,5 +1,5 @@
-import { UserProfileDto } from "../models/dto/profile";
 import BaseApi from "./BaseApi";
+import { UserProfileDto } from "@models/dto";
 
 class FileApi extends BaseApi {
     getProfileFromResume = (file: File): Promise<UserProfileDto> => {

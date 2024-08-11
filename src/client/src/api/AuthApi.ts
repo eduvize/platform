@@ -1,5 +1,5 @@
 import BaseApi from "./BaseApi";
-import { TokenResponse } from "./contracts";
+import { TokenResponse } from "@contracts";
 
 class AuthApi extends BaseApi {
     public login(email: string, password: string): Promise<TokenResponse> {

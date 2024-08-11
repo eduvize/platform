@@ -1,4 +1,4 @@
-import { UserProfileDto } from "../profile";
+import { UserProfileDto } from "@models/dto";
 
 export interface UserDto {
     id: string;

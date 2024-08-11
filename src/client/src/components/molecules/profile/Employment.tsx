@@ -1,3 +1,5 @@
+import { ProfileUpdatePayload } from "@contracts";
+import { EmploymentDto } from "@models/dto";
 import {
     Stack,
     Group,
@@ -9,8 +11,6 @@ import {
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { UseFormReturnType } from "@mantine/form";
-import { ProfileUpdatePayload } from "../../../api/contracts";
-import { EmploymentDto } from "../../../models/dto/profile";
 
 export const Employment = (
     employment: EmploymentDto & {

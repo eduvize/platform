@@ -1,5 +1,9 @@
-import { ProfileStep } from "../constants";
-import { isHobbyInformationComplete } from "../validation";
+import { useCallback, useMemo } from "react";
+import { ProfileUpdatePayload } from "@contracts";
+import { HobbyReason } from "@models/dto";
+import { LearningCapacity } from "@models/enums";
+import { HobbyProject, SpacedDivider } from "@molecules";
+import { ProfileAccordion } from "@organisms";
 import {
     Accordion,
     Button,
@@ -11,14 +15,10 @@ import {
     Text,
     UnstyledButton,
 } from "@mantine/core";
-import { HobbyProject, SpacedDivider } from "../../../components/molecules";
 import { UseFormReturnType } from "@mantine/form";
-import { ProfileUpdatePayload } from "../../../api/contracts";
-import { HobbyReason } from "../../../models/dto/profile";
-import { LearningCapacity } from "../../../models/enums";
-import { useCallback, useMemo } from "react";
 import { IconCirclePlusFilled } from "@tabler/icons-react";
-import { ProfileAccordion } from "../../../components/organisms";
+import { ProfileStep } from "../constants";
+import { isHobbyInformationComplete } from "../validation";
 
 interface HobbiesStepProps {
     form: UseFormReturnType<ProfileUpdatePayload>;

@@ -9,14 +9,9 @@ import {
     rem,
     useMantineTheme,
     Center,
-    Button,
 } from "@mantine/core";
 import {
-    IconGauge,
     IconUser,
-    IconCookie,
-    IconTrekking,
-    IconDirection,
     IconDirections,
     IconMapQuestion,
     IconCloudComputing,

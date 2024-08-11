@@ -1,5 +1,13 @@
-import { ProfileStep } from "../constants";
-import { isBasicInformationComplete } from "../validation";
+import { memo, useCallback, useMemo, useRef } from "react";
+import { AutocompleteApi, UserApi } from "@api";
+import { ProfileUpdatePayload } from "@contracts";
+import { UserDto } from "@models/dto";
+import {
+    EngineeringDiscipline,
+    LearningCapacity,
+    UserSkillType,
+} from "@models/enums";
+import { AdvancedPillInput, SpacedDivider } from "@molecules";
 import {
     Space,
     Stack,
@@ -15,21 +23,9 @@ import {
     Text,
     Button,
 } from "@mantine/core";
-import { ProfileUpdatePayload } from "../../../api/contracts/ProfileUpdatePayload";
-import { memo, useCallback, useMemo, useRef } from "react";
-import UserApi from "../../../api/UserApi";
-import {
-    AdvancedPillInput,
-    SpacedDivider,
-} from "../../../components/molecules";
-import AutocompleteApi from "../../../api/AutocompleteApi";
-import {
-    EngineeringDiscipline,
-    LearningCapacity,
-    UserSkillType,
-} from "../../../models/enums";
 import { UseFormReturnType } from "@mantine/form";
-import { UserDto } from "../../../models/dto/user/UserDto";
+import { ProfileStep } from "../constants";
+import { isBasicInformationComplete } from "../validation";
 
 interface BasicInfoStepProps {
     userDetails: UserDto | null;

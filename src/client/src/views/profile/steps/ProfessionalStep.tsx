@@ -1,12 +1,12 @@
+import { useMemo, useCallback } from "react";
+import { ProfileUpdatePayload } from "@contracts";
+import { Employment, SpacedDivider } from "@molecules";
+import { ProfileAccordion } from "@organisms";
+import { UseFormReturnType } from "@mantine/form";
+import { Accordion, Button, Space, Text, UnstyledButton } from "@mantine/core";
+import { IconCirclePlusFilled } from "@tabler/icons-react";
 import { ProfileStep } from "../constants";
 import { isProfessionalInformationComplete } from "../validation";
-import { UseFormReturnType } from "@mantine/form";
-import { Employment, SpacedDivider } from "../../../components/molecules";
-import { ProfileUpdatePayload } from "../../../api/contracts";
-import { Accordion, Button, Space, Text, UnstyledButton } from "@mantine/core";
-import { useMemo, useCallback } from "react";
-import { IconCirclePlusFilled } from "@tabler/icons-react";
-import { ProfileAccordion } from "../../../components/organisms";
 
 interface ProfessionalStepProps {
     form: UseFormReturnType<ProfileUpdatePayload>;

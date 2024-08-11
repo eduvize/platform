@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { AuthContext } from "../AuthContext";
 import { useContextSelector } from "use-context-selector";
+import { AuthContext } from "@context/auth";
 
 type RegisterFuncType = (
     email: string,

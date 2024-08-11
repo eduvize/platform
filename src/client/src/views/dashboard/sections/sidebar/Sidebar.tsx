@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { Center, Tooltip, UnstyledButton, Stack, rem } from "@mantine/core";
+import { Tooltip, UnstyledButton, Stack, rem } from "@mantine/core";
 import {
     IconHome2,
     IconSettings,
     IconLogout,
-    IconVocabulary,
-    IconGraph,
     IconIdBadge2,
     IconBooks,
 } from "@tabler/icons-react";

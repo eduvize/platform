@@ -1,10 +1,10 @@
+import { AutocompleteApi } from "@api";
+import { ProfileUpdatePayload } from "@contracts";
+import { SchoolDto } from "@models/dto";
+import { SearchInput } from "@molecules";
 import { Stack, Group, Switch, InputLabel, Grid } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { UseFormReturnType } from "@mantine/form";
-import AutocompleteApi from "../../../api/AutocompleteApi";
-import { ProfileUpdatePayload } from "../../../api/contracts";
-import { SchoolDto } from "../../../models/dto/profile";
-import { SearchInput } from "../input";
 
 export const School = (
     school: SchoolDto & {

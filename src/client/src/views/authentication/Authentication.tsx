@@ -1,3 +1,8 @@
+import { useEffect, useLayoutEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuthenticated, useLogin, useRegistration } from "@context/auth";
+import { AuthenticationPayload } from "@contracts";
+import { FacebookButton, GoogleButton } from "@atoms";
 import { useToggle, upperFirst } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
 import {
@@ -15,11 +20,6 @@ import {
     Center,
     Space,
 } from "@mantine/core";
-import { FacebookButton, GoogleButton } from "../../components/atoms";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuthenticated, useLogin, useRegistration } from "../../context";
-import { useEffect, useLayoutEffect } from "react";
-import { AuthenticationPayload } from "../../api/contracts";
 
 export const Authentication = (props: PaperProps) => {
     const isAuthenticated = useAuthenticated();

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { EngineeringDiscipline } from "../../../models/enums";
-import AutocompleteApi from "../../../api/AutocompleteApi";
+import { AutocompleteApi } from "@api";
+import { EngineeringDiscipline } from "@models/enums";
 
 export const useAutocomplete = () => {
     const [programmingLanguages, setProgrammingLanguages] = useState<string[]>(
@@ -11,15 +11,26 @@ export const useAutocomplete = () => {
     return {
         programmingLanguages,
         libraries,
-        getProgrammingLanguages: (query: string) => {
-            AutocompleteApi.getProgrammingLanguages(query).then((languages) => {
-                setProgrammingLanguages(languages);
-            });
+        getProgrammingLanguages: (
+            disciplines: EngineeringDiscipline[],
+            query: string
+        ) => {
+            AutocompleteApi.getProgrammingLanguages(disciplines, query).then(
+                (languages) => {
+                    setProgrammingLanguages(languages);
+                }
+            );
         },
-        getLibraries: (subjects: EngineeringDiscipline[], query: string) => {
-            AutocompleteApi.getLibraries(subjects, query).then((libraries) => {
-                setLibraries(libraries);
-            });
+        getLibraries: (
+            subjects: string[],
+            languages: string[],
+            query: string
+        ) => {
+            AutocompleteApi.getLibraries(subjects, languages, query).then(
+                (libraries) => {
+                    setLibraries(libraries);
+                }
+            );
         },
     };
 };

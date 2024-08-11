@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef } from "react";
-import { SocketContext } from "../SocketContext";
+import { SocketContext } from "@context/socket";
 
 export const useSocketEmitter = () => {
     const sendQueue = useRef<Map<string, any[]>>(new Map());

@@ -1,6 +1,6 @@
+import { ProfileUpdatePayload } from "@contracts";
 import { Text, Grid, Rating, Textarea, Flex, Group } from "@mantine/core";
 import { UseFormReturnType } from "@mantine/form";
-import { ProfileUpdatePayload } from "../../../api/contracts";
 
 const MAPPING: Record<number, string> = {
     1: "Beginner",

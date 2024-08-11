@@ -1,7 +1,7 @@
+import { ProfileUpdatePayload } from "@contracts";
+import { HobbyProjectDto } from "@models/dto";
 import { Textarea } from "@mantine/core";
 import { UseFormReturnType } from "@mantine/form";
-import { ProfileUpdatePayload } from "../../../api/contracts";
-import { HobbyProjectDto } from "../../../models/dto/profile";
 
 export const HobbyProject = (
     project: HobbyProjectDto & {

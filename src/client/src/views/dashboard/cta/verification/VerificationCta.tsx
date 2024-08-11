@@ -1,7 +1,7 @@
-import { Text, Title, TextInput, Button, Image } from "@mantine/core";
-import classes from "./VerificationCta.module.css";
-import image from "./image.svg";
 import { Link } from "react-router-dom";
+import image from "./image.svg";
+import { Text, Title, Button, Image } from "@mantine/core";
+import classes from "./VerificationCta.module.css";
 
 export function VerificationCta() {
     return (

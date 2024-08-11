@@ -1,4 +1,4 @@
-import { LearningCapacity } from "../../enums";
+import { LearningCapacity } from "@models/enums";
 import { HobbyDto } from "./HobbyDto";
 import { ProfessionalDto } from "./ProfessionalDto";
 import { StudentDto } from "./StudentDto";

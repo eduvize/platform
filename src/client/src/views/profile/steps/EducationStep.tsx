@@ -1,8 +1,8 @@
-import { ProfileStep } from "../constants";
-import { isEducationInformationComplete } from "../validation";
-import { UseFormReturnType } from "@mantine/form";
-import { ProfileUpdatePayload } from "../../../api/contracts";
-import { School, SpacedDivider } from "../../../components/molecules";
+import { useMemo, useCallback } from "react";
+import { ProfileUpdatePayload } from "@contracts";
+import { LearningCapacity } from "@models/enums";
+import { School, SpacedDivider } from "@molecules";
+import { ProfileAccordion } from "@organisms";
 import {
     Accordion,
     Button,
@@ -11,10 +11,10 @@ import {
     Text,
     UnstyledButton,
 } from "@mantine/core";
-import { useMemo, useCallback } from "react";
-import { LearningCapacity } from "../../../models/enums";
+import { UseFormReturnType } from "@mantine/form";
 import { IconCirclePlusFilled } from "@tabler/icons-react";
-import { ProfileAccordion } from "../../../components/organisms";
+import { ProfileStep } from "../constants";
+import { isEducationInformationComplete } from "../validation";
 
 interface EducationStepProps {
     form: UseFormReturnType<ProfileUpdatePayload>;

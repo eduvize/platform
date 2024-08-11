@@ -1,10 +1,9 @@
+import { Link, NavLink } from "react-router-dom";
+import logo from "../../logo.png";
 import { Menu, Group, Center, Burger } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconChevronDown } from "@tabler/icons-react";
-import logo from "../../logo.png";
 import classes from "./Header.module.css";
-import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
 
 const links = [
     { link: "/dashboard/courses", label: "Courses" },

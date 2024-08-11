@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import {
     PillsInput,
     Group,
@@ -6,8 +7,7 @@ import {
     Combobox,
     CheckIcon,
 } from "@mantine/core";
-import { useDebouncedCallback, useThrottledCallback } from "@mantine/hooks";
-import { useEffect, useMemo, useState } from "react";
+import { useDebouncedCallback } from "@mantine/hooks";
 
 interface AdvancedPillInputProps {
     valueFetch?: (query: string) => Promise<string[]>;

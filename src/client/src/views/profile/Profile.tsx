@@ -1,11 +1,10 @@
+import { memo, useEffect, useRef, useState } from "react";
 import { PROFILE_HEADERS, ProfileStep } from "./constants";
-import {
-    mapCheckListField,
-    mapInboundProfileData,
-    mapOutboundProfileData,
-} from "./util";
 import { ResumeBanner } from "./ResumeBanner";
 import { ProfileStepper } from "./ProfileStepper";
+import { ProfileUpdatePayload } from "@contracts";
+import { useCurrentUser } from "@context/user/hooks";
+import { LearningCapacity } from "@models/enums";
 import {
     Box,
     Card,
@@ -18,9 +17,13 @@ import {
     Text,
     Title,
 } from "@mantine/core";
-import { memo, useEffect, useRef, useState } from "react";
-import { useCurrentUser } from "../../context/user/hooks";
+import { useDebouncedCallback } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
+import {
+    mapCheckListField,
+    mapInboundProfileData,
+    mapOutboundProfileData,
+} from "./util";
 import {
     BasicInfoStep,
     EducationStep,
@@ -28,9 +31,6 @@ import {
     ProfessionalStep,
     ProficiencyStep,
 } from "./steps";
-import { ProfileUpdatePayload } from "../../api/contracts/ProfileUpdatePayload";
-import { LearningCapacity } from "../../models/enums";
-import { useDebouncedCallback } from "@mantine/hooks";
 
 export const Profile = memo(() => {
     const isHydratedRef = useRef(false);

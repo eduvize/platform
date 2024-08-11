@@ -1,3 +1,7 @@
+import { ReactNode, useMemo, useRef, useState } from "react";
+import { ProfileUpdatePayload } from "@contracts";
+import { UserSkillType } from "@models/enums";
+import { SpacedDivider } from "@molecules";
 import {
     Group,
     Text,
@@ -9,12 +13,8 @@ import {
     Center,
     Box,
 } from "@mantine/core";
-import { IconEditCircle, IconX } from "@tabler/icons-react";
-import { SpacedDivider } from "../../molecules/layout";
-import { UserSkillType } from "../../../models/enums";
 import { UseFormReturnType } from "@mantine/form";
-import { ProfileUpdatePayload } from "../../../api/contracts";
-import { ReactNode, useMemo, useRef, useState } from "react";
+import { IconEditCircle, IconX } from "@tabler/icons-react";
 
 interface ProfileAccordionProps {
     index: number;
@@ -29,7 +29,6 @@ interface ProfileAccordionProps {
 
 export const ProfileAccordion = (props: ProfileAccordionProps) => {
     const {
-        index,
         title,
         form,
         titleField,

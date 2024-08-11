@@ -1,11 +1,6 @@
-import {
-    UserDto,
-    UserOnboardingStatusDto,
-    UserProfileDto,
-} from "../models/dto/profile";
 import BaseApi from "./BaseApi";
-import { FileUploadResponse } from "./contracts";
-import { ProfileUpdatePayload } from "./contracts/ProfileUpdatePayload";
+import { FileUploadResponse, ProfileUpdatePayload } from "@contracts";
+import { UserDto, UserOnboardingStatusDto, UserProfileDto } from "@models/dto";
 
 class UserApi extends BaseApi {
     getCurrentUser() {

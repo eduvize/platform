@@ -1,5 +1,5 @@
-import { EngineeringDiscipline } from "../models/enums";
 import BaseApi from "./BaseApi";
+import { EngineeringDiscipline } from "@models/enums";
 
 class AutocompleteApi extends BaseApi {
     getProgrammingLanguages(

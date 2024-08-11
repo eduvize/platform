@@ -1,10 +1,11 @@
-import { Container, Notification, Stack } from "@mantine/core";
-import { SocketProvider, UserProvider } from "../../context";
+import { Route, Routes, useMatch } from "react-router-dom";
+import { SocketProvider } from "@context/socket";
+import { UserProvider } from "@context/user";
+import { useOnboarding } from "@context/user/hooks";
+import { Container } from "@mantine/core";
 import { Header } from "./sections";
 import { SetupCta, VerificationCta } from "./cta";
-import { Route, Routes, useMatch } from "react-router-dom";
 import { Courses, Profile } from "./views";
-import { useOnboarding } from "../../context/user/hooks";
 
 const CallToActionOrView = ({ children }: { children: React.ReactNode }) => {
     const isProfile = useMatch("/dashboard/profile");

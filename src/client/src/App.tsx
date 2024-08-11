@@ -1,9 +1,11 @@
 import React from "react";
-import { createTheme, MantineProvider } from "@mantine/core";
-import { Authentication, Dashboard, Home } from "./views";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { AuthProvider, useAuthenticated } from "./context";
+import { AuthProvider, useAuthenticated } from "@context/auth";
+import { createTheme, MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
+import { Authentication } from "@views/authentication";
+import { Dashboard } from "@views/dashboard";
+import { Home } from "@views/home";
 import "./App.css";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";

@@ -1,9 +1,4 @@
-import { Anchor, Group, ActionIcon, rem } from "@mantine/core";
-import {
-    IconBrandTwitter,
-    IconBrandYoutube,
-    IconBrandInstagram,
-} from "@tabler/icons-react";
+import { Anchor, Group } from "@mantine/core";
 import classes from "./Footer.module.css";
 import logo from "./logo.png";
 
