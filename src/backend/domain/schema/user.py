@@ -2,11 +2,12 @@ from datetime import datetime
 from typing import Any, Literal, Optional
 from sqlmodel import Field, Relationship, SQLModel
 import domain.schema.curriculum as curriculum
+import domain.schema.instructor as instructor
 from domain.schema.profile import UserProfileHobby, UserProfileStudent, UserProfileProfessional
 import uuid
 
 UserIdentifiers = Literal["id", "username", "email", "verification_code"]
-UserIncludes = Literal["profile", "skills", "curriculums", "reviews", "enrollments", "chat_sessions"]
+UserIncludes = Literal["profile", "instructor"]
 
 class UserBase(SQLModel):
     username: str                           = Field(unique=True)
@@ -26,6 +27,7 @@ class User(UserBase, table=True):
     last_login_at_utc: datetime         = Field(default_factory=datetime.utcnow)
     
     profile: "UserProfile"                                              = Relationship(back_populates="user")
+    instructor: Optional["instructor.Instructor"]                       = Relationship(back_populates="user")
     curriculums: list["UserCurriculum"]                                 = Relationship(back_populates="user")
     curriculum_reviews: list["curriculum.CurriculumReview"]             = Relationship(back_populates="user")
     curriculum_enrollments: list["curriculum.CurriculumEnrollment"]     = Relationship(back_populates="user")

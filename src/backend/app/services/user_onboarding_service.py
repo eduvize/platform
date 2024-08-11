@@ -27,7 +27,10 @@ class UserOnboardingService:
     def __init__(self, user_repository: UserRepository = Depends(UserRepository)):
         self.user_repo = user_repository
         
-    async def send_verification_email(self, user_id: str) -> None:
+    async def send_verification_email(
+        self, 
+        user_id: str
+    ) -> None:
         """
         Sends a verification email to a user
         

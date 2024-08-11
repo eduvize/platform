@@ -11,7 +11,11 @@ class InvalidJWTToken(Exception):
         self.message = message
         super().__init__(self.message)
 
-def create_token(data: dict, secret: str, expiration_minutes: int) -> str:
+def create_token(
+    data: dict, 
+    secret: str, 
+    expiration_minutes: int
+) -> str:
     """
     Creates a new JWT token using the provided data, signing key, and expiration time
 
@@ -31,7 +35,10 @@ def create_token(data: dict, secret: str, expiration_minutes: int) -> str:
     
     return token
 
-def decode_token(token: str, secret: Optional[str]) -> dict:
+def decode_token(
+    token: str, 
+    secret: Optional[str]
+) -> dict:
     """
     Validates and decodes a JWT token using the provided secret key
 

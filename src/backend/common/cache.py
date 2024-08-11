@@ -13,7 +13,11 @@ else:
 def _get_client():
     return redis.Redis(host=host, port=port)
 
-def set_key(key: str, value: str, expiration: int = None):
+def set_key(
+    key: str, 
+    value: str, 
+    expiration: int = None
+):
     """
     Sets a key in the Redis cache
 
@@ -42,7 +46,10 @@ def get_key(key: str) -> Optional[str]:
     
     return client.get(key)
 
-def add_to_set(key: str, value: Union[str, List[str]]):
+def add_to_set(
+    key: str, 
+    value: Union[str, List[str]]
+):
     """
     Adds a value to a set in the Redis cache
 
@@ -59,7 +66,10 @@ def add_to_set(key: str, value: Union[str, List[str]]):
     else:
         client.sadd(key, value)
     
-def remove_from_set(key: str, value: Union[str, List[str]]):
+def remove_from_set(
+    key: str, 
+    value: Union[str, List[str]]
+):
     """
     Removes a value from a set in the Redis cache
 

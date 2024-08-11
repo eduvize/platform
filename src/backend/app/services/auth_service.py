@@ -21,7 +21,11 @@ class AuthService:
         # Set up a bcrypt provider for password hashing
         self.crypto_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     
-    async def authenticate(self, email: str, password: str) -> str:
+    async def authenticate(
+        self, 
+        email: str, 
+        password: str
+    ) -> str:
         """
         Handles authenticating a user and generating an access token
 
@@ -42,7 +46,12 @@ class AuthService:
         
         return self._generate_token(str(user.id))
     
-    async def register(self, email: str, username: str, password: str) -> str:
+    async def register(
+        self, 
+        email: str, 
+        username: str, 
+        password: str
+    ) -> str:
         """
         Handles the registration of a new user and generating an access token after successful registration
 
@@ -60,7 +69,10 @@ class AuthService:
         
         return self._generate_token(str(user.id))
     
-    def _generate_token(self, user_id: str) -> str:
+    def _generate_token(
+        self, 
+        user_id: str
+    ) -> str:
         """
         Generates a new user access token using configuration values for signing key and expiration
 
@@ -75,7 +87,11 @@ class AuthService:
         
         return create_token({"id": user_id}, signing_key, token_expiration_minutes)
     
-    def _verify_password(self, plain: str, hashed: str) -> bool:
+    def _verify_password(
+        self, 
+        plain: str, 
+        hashed: str
+    ) -> bool:
         """
         Verifies a provided password against the correct hash
 
@@ -88,7 +104,10 @@ class AuthService:
         """
         return self.crypto_context.verify(plain, hashed)
     
-    def _get_password_hash(self, password: str) -> str:
+    def _get_password_hash(
+        self, 
+        password: str
+    ) -> str:
         """
         Generates a cryptographic hash of a password using the configured hashing algorithm (bcrypt)
 

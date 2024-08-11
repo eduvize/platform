@@ -3,7 +3,11 @@ from botocore.exceptions import ClientError
 
 from config import get_aws_access_key, get_aws_secret_key, get_email_configuration_set, get_email_noreply_address, get_email_region
 
-def send_email(to: str, subject: str, content: str):
+def send_email(
+    to: str, 
+    subject: str, 
+    content: str
+):
     """
     Sends an email to a recipient using Amazon Simple Email Service (SES)
 

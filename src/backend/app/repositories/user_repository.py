@@ -16,7 +16,7 @@ from domain.mapping import (
 )
 from domain.schema.user import User, UserIdentifiers, UserProfile
 from common.database import engine
-from app.utilities.database import recursive_load_options
+from app.utilities.database import recursive_load_options, set_none_for_unavailable_relationships
 
 class UserRepository:
     """
@@ -142,8 +142,11 @@ class UserRepository:
                     query = query.options(*recursive_load_options(User, field))
         
             resultset = session.exec(query)
+            record = resultset.first()
             
-            return resultset.first()
+            set_none_for_unavailable_relationships(record, include)
+            
+            return record
         
     async def set_verification_code(self, user_id: UUID, code: str) -> None:
         """

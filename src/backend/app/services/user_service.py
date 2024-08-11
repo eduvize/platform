@@ -8,7 +8,7 @@ from mimetypes import guess_extension, guess_type
 
 from app.services.user_onboarding_service import UserOnboardingService
 from domain.dto.profile import UserProfileDto
-from common.storage import StoragePurpose, get_bucket, get_public_object_url
+from common.storage import StoragePurpose, get_public_object_url, upload_object
 from domain.schema.user import User, UserIdentifiers, UserIncludes
 from app.repositories import UserRepository
 
@@ -138,31 +138,16 @@ class UserService:
         if user is None:
             raise ValueError("User not found")
         
-        # Get the S3 bucket
-        bucket = get_bucket(StoragePurpose.AVATAR)
-        
         # Parse out mimetype and extension
         mimetype, _ = guess_type(file.filename)
         extension = os.path.splitext(file.filename)[1] if not mimetype else guess_extension(mimetype)
         
-        # Create the object and bucket IDs
-        object_id = uuid.uuid4().hex + extension
-        bucket_id = self._get_avatar_bucket_id(user_id, object_id)
+        # Upload it
+        object_id = await upload_object(StoragePurpose.AVATAR, file.file, extension)
         
-        # Upload the file
-        bucket.put_object(Key=bucket_id, Body=await file.read(), ContentType=mimetype, ACL="public-read")
+        public_url = get_public_object_url(StoragePurpose.AVATAR, object_id)
         
-        await self.user_repo.set_avatar_url(user_id, get_public_object_url(StoragePurpose.AVATAR, bucket_id))
-    
-    def _get_avatar_bucket_id(self, user_id: str, object_id: str) -> str:
-        """
-        Helper function to generate the avatar bucket ID for a specific user
-
-        Args:
-            user_id (str): The user ID
-            object_id (str): The object ID
-
-        Returns:
-            str: A bucket ID
-        """
-        return f"{user_id}/{object_id}"
+        await self.user_repo.set_avatar_url(
+            user_id=user_id, 
+            avatar_url=public_url
+        )

@@ -1,5 +1,6 @@
-from pydantic import BaseModel
+from domain.schema.instructor import InstructorBase
 
 
-class InstructorDto(BaseModel):
+class InstructorDto(InstructorBase):
+    name: str
     avatar_url: str

@@ -60,3 +60,4 @@ pdf2image
 sqlmodel
 asyncpg
 sqlalchemy[asyncio]
+requests

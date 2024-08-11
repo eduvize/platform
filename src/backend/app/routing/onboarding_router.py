@@ -9,7 +9,10 @@ router = APIRouter(
 )
 
 @router.get("/verify")
-async def verify_user(code: str, user_onboarding_service: UserOnboardingService = Depends(UserOnboardingService)):
+async def verify_user(
+    code: str, 
+    user_onboarding_service: UserOnboardingService = Depends(UserOnboardingService)
+):
     try:
         await user_onboarding_service.verify_user(code)
         
