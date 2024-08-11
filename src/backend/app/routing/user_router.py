@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, File, Response, UploadFile
+from .middleware import token_extractor, user_id_extractor
+from app.services import UserService, UserOnboardingService
 
 from app.utilities.profile import get_user_profile_text
 from domain.dto.profile import UserProfileDto
-from .middleware.token_middleware import token_extractor, user_id_extractor
-from app.services.user_onboarding_service import UserOnboardingService
-from app.services.user_service import UserService
 from domain.dto.user import UserDto
 
 router = APIRouter(

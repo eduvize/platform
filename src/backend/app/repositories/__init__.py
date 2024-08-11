@@ -1,0 +1,2 @@
+from .instructor_repository import InstructorRepository
+from .user_repository import UserRepository

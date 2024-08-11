@@ -1,0 +1,2 @@
+class InstructorRepository:
+    pass

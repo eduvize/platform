@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from config import get_dashboard_endpoint
 from .responses import raise_bad_request, redirect_ui
-from app.utilities.endpoints import get_public_ui_endpoint
-from app.services.user_onboarding_service import UserOnboardingService, VerificationExpiredError
+from app.services import UserOnboardingService
+from app.services.user_onboarding_service import VerificationExpiredError
 
 router = APIRouter(
     prefix="/onboarding",

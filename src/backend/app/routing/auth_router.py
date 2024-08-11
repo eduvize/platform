@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
+from app.services import AuthService
 
 from .contracts.auth_contracts import AuthenticationPayload, RegistrationPayload, TokenResponse
-from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth")
 

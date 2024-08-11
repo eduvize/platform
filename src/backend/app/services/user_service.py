@@ -8,10 +8,9 @@ from mimetypes import guess_extension, guess_type
 
 from app.services.user_onboarding_service import UserOnboardingService
 from domain.dto.profile import UserProfileDto
-from domain.dto.profile.hobby import UserProfileHobbyDto
 from common.storage import StoragePurpose, get_bucket, get_public_object_url
 from domain.schema.user import User, UserIdentifiers, UserIncludes
-from app.repositories.user_repository import UserRepository
+from app.repositories import UserRepository
 
 class UserCreationError(Exception):
     def __repr__(self):

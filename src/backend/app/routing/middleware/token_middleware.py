@@ -1,8 +1,8 @@
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
-from config import get_token_secret
 from app.routing.responses import raise_unauthorized
 from app.utilities.jwt import InvalidJWTToken, decode_token
+from config import get_token_secret
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
