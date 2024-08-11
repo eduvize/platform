@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, Response, UploadFile
 
+from app.utilities.profile import get_user_profile_text
 from domain.dto.profile import UserProfileDto
 from .middleware.token_middleware import token_extractor, user_id_extractor
 from app.services.user_onboarding_service import UserOnboardingService
@@ -23,6 +24,12 @@ async def get_onboarding_status(user_id: str = Depends(user_id_extractor), user_
 @router.put("/me/profile")
 async def update_profile(payload: UserProfileDto, user_id: str = Depends(user_id_extractor), user_service: UserService = Depends(UserService)):
     await user_service.update_profile(user_id, payload)
+    
+@router.get("/me/profile/text", response_class=Response)
+async def get_me_profile_text(user_id: str = Depends(user_id_extractor), user_service: UserService = Depends(UserService)):
+    current_user = await user_service.get_user("id", user_id)
+    profile_text = get_user_profile_text(UserProfileDto.from_orm(current_user.profile))
+    return Response(content=profile_text, media_type="text/plain")
     
 @router.post("/me/profile/avatar")
 async def upload_avatar(file: UploadFile = File(...), user_id: str = Depends(user_id_extractor), user_service: UserService = Depends(UserService)):

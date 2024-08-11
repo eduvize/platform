@@ -18,6 +18,9 @@ The following criteria represent when to include a learning capacity:
 - Hobby: Any indication of a personal or side project or stated interested in development outside of work or school somewhere in the resume.
 - Student: Any education or certifications from an institution in programming or computer science mentioned.
 - Professional: Any indication of a job or work experience related to software development or programming.
+
+When filling out start or end dates, if the day is not provided, you will use the first day of the month or end of the month respectively.
+Ex: If the resume says "May 2020", you will use "2020-05-01" or "2020-05-31" respectively.
 """)
         
         self.use_tool(ProvideProfileTool)

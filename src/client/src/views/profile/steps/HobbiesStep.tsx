@@ -1,3 +1,5 @@
+import { ProfileStep } from "../constants";
+import { isHobbyInformationComplete } from "../validation";
 import {
     Accordion,
     Button,
@@ -7,19 +9,16 @@ import {
     Space,
     Stack,
     Text,
-    Textarea,
     UnstyledButton,
 } from "@mantine/core";
-import { SpacedDivider } from "../../../components/molecules";
+import { HobbyProject, SpacedDivider } from "../../../components/molecules";
 import { UseFormReturnType } from "@mantine/form";
 import { ProfileUpdatePayload } from "../../../api/contracts";
-import { ProfileStep } from "../Profile";
-import { HobbyProjectDto, HobbyReason } from "../../../models/dto";
-import { LearningCapacity, UserSkillType } from "../../../models/enums";
+import { HobbyReason } from "../../../models/dto/profile";
+import { LearningCapacity } from "../../../models/enums";
 import { useCallback, useMemo } from "react";
 import { IconCirclePlusFilled } from "@tabler/icons-react";
 import { ProfileAccordion } from "../../../components/organisms";
-import { isHobbyInformationComplete } from "../validation";
 
 interface HobbiesStepProps {
     form: UseFormReturnType<ProfileUpdatePayload>;
@@ -77,43 +76,6 @@ export const HobbiesStep = ({ form, onChangeStep }: HobbiesStepProps) => {
                 description: "",
             },
         ]);
-    };
-
-    const handleProjectChange = (
-        index: number,
-        value: Partial<HobbyProjectDto>
-    ) => {
-        form.setFieldValue(
-            "hobby.projects",
-            projects.map((project, i) =>
-                i === index ? { ...project, ...value } : project
-            )
-        );
-    };
-
-    const HobbyProject = (project: HobbyProjectDto & { index: number }) => {
-        return (
-            <>
-                <Textarea
-                    required
-                    {...form.getInputProps(
-                        `hobby.projects.${project.index}.description`
-                    )}
-                    label="Description"
-                    rows={3}
-                    placeholder="Describe the project and what you accomplished, what challenges you faced, and what you learned."
-                />
-
-                <Textarea
-                    {...form.getInputProps(
-                        `hobby.projects.${project.index}.purpose`
-                    )}
-                    label="Purpose"
-                    rows={3}
-                    placeholder="Why did you want to work on it?"
-                />
-            </>
-        );
     };
 
     const ReasonChip = ({ label, value }: ReasonChipProps) => {
@@ -279,8 +241,25 @@ export const HobbiesStep = ({ form, onChangeStep }: HobbiesStepProps) => {
                             title={project.project_name || "Untitled Project"}
                             titleField={`hobby.projects.${index}.project_name`}
                             component={
-                                <HobbyProject index={index} {...project} />
+                                <HobbyProject
+                                    form={form}
+                                    index={index}
+                                    {...project}
+                                />
                             }
+                            validationFunc={() => {
+                                if (!form.values.hobby) return false;
+                                if (!form.values.hobby.projects) return false;
+
+                                const project =
+                                    form.values.hobby.projects[index];
+                                if (!project) return false;
+
+                                return (
+                                    !!project.project_name &&
+                                    !!project.description
+                                );
+                            }}
                             onRemove={() => handleRemoveProject(index)}
                         />
                     ))}

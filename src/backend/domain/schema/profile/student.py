@@ -1,5 +1,6 @@
 from typing import Optional
 import uuid
+from datetime import datetime, date
 import domain
 from sqlmodel import SQLModel, Field, Relationship
 
@@ -18,6 +19,10 @@ class UserProfileStudent(UserProfileStudentBase, table=True):
 class UserProfileSchoolBase(SQLModel):
     school_name: str                            = Field(nullable=False)
     focus: Optional[str]                        = Field(default=None)
+    start_date: Optional[date]         = Field(default=None)
+    end_date: Optional[date]           = Field(default=None)
+    did_finish: bool                            = Field(default=False)
+    is_current: bool                            = Field(default=False)
     
     user_profile_student_id: uuid.UUID          = Field(default=None, foreign_key="user_profiles_student.id")
 

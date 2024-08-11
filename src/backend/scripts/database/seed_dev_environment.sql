@@ -82,7 +82,11 @@ CREATE TABLE IF NOT EXISTS user_profiles_schools (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_profile_student_id UUID NOT NULL REFERENCES user_profiles_student(id),
     school_name TEXT NOT NULL,
-    focus TEXT
+    start_date DATE,
+    end_date DATE,
+    focus TEXT,
+    did_finish BOOLEAN NOT NULL,
+    is_current BOOLEAN NOT NULL
 );
 
 -- Create table for school skills
@@ -112,6 +116,8 @@ CREATE TABLE IF NOT EXISTS user_profiles_employment (
     company_name TEXT NOT NULL,
     position TEXT NOT NULL,
     description TEXT NOT NULL,
+    start_date DATE,
+    end_date DATE,
     is_current BOOLEAN NOT NULL
 );
 
@@ -127,7 +133,8 @@ CREATE TABLE IF NOT EXISTS user_profiles_disciplines (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_profile_id UUID NOT NULL REFERENCES user_profiles(id),
     discipline_type INT NOT NULL,
-    proficiency INT
+    proficiency INT,
+    notes TEXT
 );
 
 -- Create table for Curriculums

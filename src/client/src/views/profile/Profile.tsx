@@ -1,10 +1,16 @@
+import { PROFILE_HEADERS, ProfileStep } from "./constants";
+import {
+    mapCheckListField,
+    mapInboundProfileData,
+    mapOutboundProfileData,
+} from "./util";
+import { ResumeBanner } from "./ResumeBanner";
+import { ProfileStepper } from "./ProfileStepper";
 import {
     Box,
-    Button,
     Card,
     Container,
     Divider,
-    Flex,
     Grid,
     Skeleton,
     Space,
@@ -14,7 +20,7 @@ import {
 } from "@mantine/core";
 import { memo, useEffect, useRef, useState } from "react";
 import { useCurrentUser } from "../../context/user/hooks";
-import { useForm, UseFormReturnType } from "@mantine/form";
+import { useForm } from "@mantine/form";
 import {
     BasicInfoStep,
     EducationStep,
@@ -23,106 +29,13 @@ import {
     ProficiencyStep,
 } from "./steps";
 import { ProfileUpdatePayload } from "../../api/contracts/ProfileUpdatePayload";
-import { ResumeBanner } from "./ResumeBanner";
 import { LearningCapacity } from "../../models/enums";
 import { useDebouncedCallback } from "@mantine/hooks";
-import { ProfileStepper } from "./ProfileStepper";
-
-export type ProfileStep =
-    | "basic"
-    | "hobby"
-    | "education"
-    | "professional"
-    | "proficiencies";
-
-function mapCheckListField(
-    form: UseFormReturnType<ProfileUpdatePayload>,
-    field: string,
-    options: any,
-    inputProps: any
-) {
-    const { value } = options;
-
-    function getValueFromDotPath(obj: any, path: string): any {
-        // Support indexes too
-        const parts = path.split(".");
-
-        return parts.reduce((acc, part) => {
-            if (part.includes("[")) {
-                const [key, index] = part.split("[");
-
-                if (!acc[key]) {
-                    return null;
-                }
-
-                return acc[key][index.replace("]", "")];
-            } else if (!isNaN(parseInt(part))) {
-                return acc[parseInt(part)];
-            }
-
-            return acc[part];
-        }, obj);
-    }
-
-    return {
-        ...inputProps,
-        onChange: (checked: boolean) => {
-            if (checked) {
-                console.log(`add ${value} to ${field}`);
-                form.insertListItem(field, value);
-            } else {
-                console.log(`remove ${value} from ${field}`);
-                form.removeListItem(field, value);
-            }
-        },
-        checked: getValueFromDotPath(form.values, field)?.includes(value),
-    };
-}
-
-type HeaderInfo = {
-    title: string;
-    description: string;
-};
-
-const HEADERS: Record<ProfileStep, HeaderInfo> = {
-    basic: {
-        title: "About You",
-        description: `
-Fill out basic information about yourself so we can get to know you a little bit better. This is high-level information that will be leveraged
-in order to match you with the best courses that fit your interests and goals, and allows us to better understand your background and experience.
-        `,
-    },
-    hobby: {
-        title: "Hobbies and Interests",
-        description: `
-We'd like to know a little more about what drives your passion projects. Tell us about what motivates you, what technology you're using, and what projects you've poured your time into.
-        `,
-    },
-    education: {
-        title: "Education",
-        description: `
-Tell us about your academic background, such as where you received formal education, what area of study, and any degrees or certifications you've earned.
-        `,
-    },
-    professional: {
-        title: "Professional Experience",
-        description: `
-Tell us about your professional background and experience, such as where you've worked, what roles you've held, and what technologies you've worked with.
-        `,
-    },
-    proficiencies: {
-        title: "Proficiencies",
-        description: `
-Rate yourself on your listed skills and disciplines. This will help us better understand your comfort levels with different technologies and areas of expertise.
-        `,
-    },
-};
 
 export const Profile = memo(() => {
     const isHydratedRef = useRef(false);
     const initialSetRef = useRef(false);
     const [userDetails, refresh, updateProfile] = useCurrentUser();
-    const [canMoveOn, setCanMoveOn] = useState(false);
     const [scanningResume, setScanningResume] = useState(false);
     const [currentStep, setCurrentStep] = useState<ProfileStep>("basic");
     const [pendingSave, setPendingSave] = useState(false);
@@ -130,7 +43,6 @@ export const Profile = memo(() => {
         initialValues: {
             first_name: "",
             last_name: "",
-            birthdate: null,
             bio: null,
             github_username: null,
             skills: [],
@@ -143,12 +55,6 @@ export const Profile = memo(() => {
         enhanceGetInputProps: (payload) => {
             switch (payload.field) {
                 case "hobby.skills":
-                    return mapCheckListField(
-                        payload.form,
-                        payload.field,
-                        payload.options,
-                        payload.inputProps
-                    );
                 case "hobby.reasons":
                     return mapCheckListField(
                         payload.form,
@@ -182,59 +88,7 @@ export const Profile = memo(() => {
             return;
         }
 
-        form.setValues({
-            ...userDetails.profile,
-            birthdate: userDetails.profile.birthdate
-                ? new Date(userDetails.profile.birthdate)
-                : null,
-            learning_capacities:
-                userDetails.profile.selected_learning_capacities ||
-                userDetails.profile.learning_capacities,
-            hobby: !!userDetails.profile.hobby
-                ? {
-                      ...userDetails.profile.hobby,
-                      skills: userDetails.profile.hobby.skills?.map(
-                          (skill) =>
-                              userDetails.profile.skills.find(
-                                  (s) => s.id === skill
-                              )!.skill
-                      ),
-                  }
-                : null,
-            student: !!userDetails.profile.student
-                ? {
-                      ...userDetails.profile.student,
-                      schools: userDetails.profile.student.schools?.map(
-                          (school) => ({
-                              ...school,
-                              skills: school.skills.map(
-                                  (skill) =>
-                                      userDetails.profile.skills.find(
-                                          (s) => s.id === skill
-                                      )!.skill
-                              ),
-                          })
-                      ),
-                  }
-                : null,
-            professional: !!userDetails.profile.professional
-                ? {
-                      ...userDetails.profile.professional,
-                      employers:
-                          userDetails.profile.professional.employers?.map(
-                              (employer) => ({
-                                  ...employer,
-                                  skills: employer.skills.map(
-                                      (skill) =>
-                                          userDetails.profile.skills.find(
-                                              (s) => s.id === skill
-                                          )!.skill
-                                  ),
-                              })
-                          ),
-                  }
-                : null,
-        });
+        form.setValues(mapInboundProfileData(userDetails.profile));
 
         isHydratedRef.current = true;
     }, [!!userDetails]);
@@ -280,7 +134,7 @@ export const Profile = memo(() => {
     }, [form.values.learning_capacities]);
 
     const handleAutoUpdate = useDebouncedCallback(() => {
-        updateProfile(form.values);
+        updateProfile(mapOutboundProfileData(form));
         setPendingSave(false);
     }, 1000);
 
@@ -306,11 +160,11 @@ export const Profile = memo(() => {
                 <Grid.Col span={8}>
                     <Stack gap={0}>
                         <Title size={24} c="blue" fz="h1">
-                            {HEADERS[currentStep].title}
+                            {PROFILE_HEADERS[currentStep].title}
                         </Title>
                         <Divider my="xs" />
                         <Text size="sm" c="gray">
-                            {HEADERS[currentStep].description}
+                            {PROFILE_HEADERS[currentStep].description}
                         </Text>
                     </Stack>
                 </Grid.Col>
@@ -414,14 +268,6 @@ export const Profile = memo(() => {
                             )}
 
                             <Space h="xl" />
-
-                            {canMoveOn && (
-                                <Flex justify="flex-end">
-                                    <Button variant="outline">
-                                        Let's move on
-                                    </Button>
-                                </Flex>
-                            )}
                         </Card>
                     </Grid.Col>
 

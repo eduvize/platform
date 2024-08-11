@@ -114,7 +114,11 @@ def map_student_data(session: Session, user_profile: UserProfile, student_dto: U
         new_school = UserProfileSchool(
             user_profile_student_id=user_profile.student.id, 
             school_name=school.school_name,
-            focus=school.focus
+            focus=school.focus,
+            start_date=school.start_date,
+            end_date=school.end_date,
+            did_finish=school.did_finish,
+            is_current=school.is_current
         )
         session.add(new_school)
 
@@ -166,6 +170,8 @@ def map_professional_data(session: Session, user_profile: UserProfile, professio
             company_name=job.company_name, 
             position=job.position, 
             description=job.description, 
+            start_date=job.start_date,
+            end_date=job.end_date,
             is_current=job.is_current, 
             user_profile_professional_id=professional.id
         )
@@ -371,7 +377,8 @@ def map_discipline_data(session: Session, user_profile: UserProfile, disciplines
         new_discipline = UserProfileDiscipline(
             user_profile_id=user_profile.id, 
             discipline_type=discipline.discipline_type.value, 
-            proficiency=discipline.proficiency
+            proficiency=discipline.proficiency,
+            notes=discipline.notes
         )
         session.add(new_discipline)
         

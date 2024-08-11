@@ -1,7 +1,7 @@
 import { createContext } from "use-context-selector";
 import { useEffect, useState } from "react";
 import { useCurrentUserId } from "../auth";
-import { UserDto, UserOnboardingStatusDto } from "../../models/dto";
+import { UserDto, UserOnboardingStatusDto } from "../../models/dto/profile";
 import { notifications } from "@mantine/notifications";
 import UserApi from "../../api/UserApi";
 import { IconCheck } from "@tabler/icons-react";

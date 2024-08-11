@@ -1,25 +1,12 @@
+import { ProfileStep } from "../constants";
+import { isProfessionalInformationComplete } from "../validation";
 import { UseFormReturnType } from "@mantine/form";
-import { SpacedDivider } from "../../../components/molecules";
+import { Employment, SpacedDivider } from "../../../components/molecules";
 import { ProfileUpdatePayload } from "../../../api/contracts";
-import {
-    Accordion,
-    Button,
-    Group,
-    Input,
-    InputLabel,
-    Space,
-    Stack,
-    Switch,
-    Text,
-    Textarea,
-    UnstyledButton,
-} from "@mantine/core";
+import { Accordion, Button, Space, Text, UnstyledButton } from "@mantine/core";
 import { useMemo, useCallback } from "react";
-import { ProfileStep } from "../Profile";
 import { IconCirclePlusFilled } from "@tabler/icons-react";
 import { ProfileAccordion } from "../../../components/organisms";
-import { EmploymentDto } from "../../../models/dto/Employment";
-import { isProfessionalInformationComplete } from "../validation";
 
 interface ProfessionalStepProps {
     form: UseFormReturnType<ProfileUpdatePayload>;
@@ -62,47 +49,6 @@ export const ProfessionalStep = ({
         form.setFieldValue("professional.employers", updatedEmployers);
     };
 
-    const Employment = (employment: EmploymentDto & { index: number }) => {
-        return (
-            <>
-                <Stack gap={0}>
-                    <Group>
-                        <Switch
-                            {...form.getInputProps(
-                                `professional.employers.${employment.index}.is_current`,
-                                { type: "checkbox" }
-                            )}
-                        />
-                        <InputLabel>I'm working here now</InputLabel>
-                    </Group>
-                </Stack>
-
-                <Stack gap={0}>
-                    <InputLabel>Position</InputLabel>
-                    <Input
-                        required
-                        {...form.getInputProps(
-                            `professional.employers.${employment.index}.position`
-                        )}
-                        placeholder="Software Engineer, Data Analyst, etc."
-                    />
-                </Stack>
-
-                <Stack gap={0}>
-                    <InputLabel>Description</InputLabel>
-                    <Textarea
-                        required
-                        {...form.getInputProps(
-                            `professional.employers.${employment.index}.description`
-                        )}
-                        rows={3}
-                        placeholder="Describe your role, responsibilities, and accomplishments."
-                    />
-                </Stack>
-            </>
-        );
-    };
-
     return (
         <>
             <SpacedDivider
@@ -130,7 +76,31 @@ export const ProfessionalStep = ({
                         title={employer.company_name || `Employer ${index + 1}`}
                         titleField={`professional.employers.${index}.company_name`}
                         skillField={`professional.employers.${index}.skills`}
-                        component={<Employment index={index} {...employer} />}
+                        validationFunc={() => {
+                            if (!form.values.professional) return false;
+                            if (!form.values.professional.employers)
+                                return false;
+
+                            const employer =
+                                form.values.professional.employers[index];
+                            if (!employer) return false;
+
+                            return (
+                                !!employer.company_name &&
+                                !!employer.position &&
+                                !!employer.description &&
+                                !!employer.start_date &&
+                                (employer.is_current || !!employer.end_date) &&
+                                employer.skills.length > 0
+                            );
+                        }}
+                        component={
+                            <Employment
+                                form={form}
+                                index={index}
+                                {...employer}
+                            />
+                        }
                         onRemove={() => handleRemoveEmployer(index)}
                     />
                 ))}

@@ -5,6 +5,7 @@ import FileApi from "../../api/FileApi";
 import { ProfileUpdatePayload } from "../../api/contracts";
 import { IconCheck } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
+import { mapInboundProfileData } from "./util";
 
 interface ResumeBannerProps {
     form: UseFormReturnType<ProfileUpdatePayload>;
@@ -31,7 +32,7 @@ export function ResumeBanner({
         onParsing();
         FileApi.getProfileFromResume(file)
             .then((profile) => {
-                form.setValues(profile);
+                form.setValues(mapInboundProfileData(profile));
                 setWasUploaded(true);
 
                 notifications.show({

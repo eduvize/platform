@@ -1,3 +1,5 @@
+from datetime import datetime, date
+from typing import Optional
 import uuid
 import domain
 from sqlmodel import SQLModel, Field, Relationship
@@ -19,6 +21,8 @@ class UserProfileEmploymentBase(SQLModel):
     company_name: str                                       = Field(nullable=False)
     position: str                                           = Field(nullable=False)
     description: str                                        = Field(nullable=False)
+    start_date: Optional[date]                     = Field(default=None)
+    end_date: Optional[date]                       = Field(default=None)
     is_current: bool                                        = Field(default=False)
     
 

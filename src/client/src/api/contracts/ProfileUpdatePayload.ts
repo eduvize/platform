@@ -1,4 +1,4 @@
-import { UserProfileDto } from "../../models/dto";
+import { UserProfileDto } from "../../models/dto/profile";
 
 export interface ProfileUpdatePayload
     extends Omit<UserProfileDto, "avatar_url"> {

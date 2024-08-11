@@ -25,6 +25,7 @@ class UserSkillDto(UserProfileSkillBase):
 class UserProfileDisciplineDto(UserProfileDisciplineBase):
     discipline_type: UserDiscipline
     proficiency: Optional[int] = None
+    notes: Optional[str] = None
     
 class UserProfileDto(UserProfileBase):
     first_name: Optional[str] = None

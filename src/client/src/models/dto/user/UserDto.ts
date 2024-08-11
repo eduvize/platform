@@ -1,4 +1,4 @@
-import { UserProfileDto } from "./UserProfileDto";
+import { UserProfileDto } from "../profile";
 
 export interface UserDto {
     id: string;

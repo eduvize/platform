@@ -9,7 +9,7 @@ import {
     Stack,
     Text,
 } from "@mantine/core";
-import { DisciplineProficiency } from "../../../components/molecules";
+import { Proficiency } from "../../../components/molecules";
 import { EngineeringDiscipline } from "../../../models/enums";
 
 interface ProficiencyStepProps {
@@ -30,28 +30,21 @@ export const ProficiencyStep = ({ form }: ProficiencyStepProps) => {
         (x) => x.discipline_type === EngineeringDiscipline.DevOps
     );
 
-    const handleDisciplineChange = (
-        discipline: EngineeringDiscipline,
-        proficiency: number
-    ) => {
-        form.setFieldValue("disciplines", [
-            ...form.values.disciplines.filter(
-                (x) => x.discipline_type !== discipline
-            ),
-            {
-                discipline_type: discipline,
-                proficiency,
-            },
-        ]);
-    };
+    const frontendIndex = form.values.disciplines.findIndex(
+        (x) => x.discipline_type === EngineeringDiscipline.Frontend
+    );
 
-    const handleSkillChange = (index: number, value: number) => {
-        form.setFieldValue("skills", [
-            ...form.values.skills.map((skill, i) =>
-                i === index ? { ...skill, proficiency: value } : skill
-            ),
-        ]);
-    };
+    const backendIndex = form.values.disciplines.findIndex(
+        (x) => x.discipline_type === EngineeringDiscipline.Backend
+    );
+
+    const databaseIndex = form.values.disciplines.findIndex(
+        (x) => x.discipline_type === EngineeringDiscipline.Database
+    );
+
+    const devopsIndex = form.values.disciplines.findIndex(
+        (x) => x.discipline_type === EngineeringDiscipline.DevOps
+    );
 
     return (
         <Stack>
@@ -66,54 +59,38 @@ export const ProficiencyStep = ({ form }: ProficiencyStepProps) => {
                 />
 
                 {!!frontend && (
-                    <DisciplineProficiency
+                    <Proficiency
                         title="Frontend"
-                        value={frontend.proficiency}
-                        onChange={(val) =>
-                            handleDisciplineChange(
-                                EngineeringDiscipline.Frontend,
-                                val
-                            )
-                        }
+                        form={form}
+                        field={`disciplines.${frontendIndex}`}
+                        valueFetch={() => frontend.proficiency}
                     />
                 )}
 
                 {!!backend && (
-                    <DisciplineProficiency
+                    <Proficiency
                         title="Backend"
-                        value={backend.proficiency}
-                        onChange={(val) =>
-                            handleDisciplineChange(
-                                EngineeringDiscipline.Backend,
-                                val
-                            )
-                        }
+                        form={form}
+                        field={`disciplines.${backendIndex}`}
+                        valueFetch={() => backend.proficiency}
                     />
                 )}
 
                 {!!database && (
-                    <DisciplineProficiency
+                    <Proficiency
                         title="Database"
-                        value={database.proficiency}
-                        onChange={(val) =>
-                            handleDisciplineChange(
-                                EngineeringDiscipline.Database,
-                                val
-                            )
-                        }
+                        form={form}
+                        field={`disciplines.${databaseIndex}`}
+                        valueFetch={() => database.proficiency}
                     />
                 )}
 
                 {!!devops && (
-                    <DisciplineProficiency
+                    <Proficiency
                         title="Infrastructure / DevOps"
-                        value={devops.proficiency}
-                        onChange={(val) =>
-                            handleDisciplineChange(
-                                EngineeringDiscipline.DevOps,
-                                val
-                            )
-                        }
+                        form={form}
+                        field={`disciplines.${devopsIndex}`}
+                        valueFetch={() => devops.proficiency}
                     />
                 )}
             </Stack>
@@ -129,26 +106,12 @@ export const ProficiencyStep = ({ form }: ProficiencyStepProps) => {
                 />
 
                 {form.values.skills.map((skill, index) => (
-                    <Grid>
-                        <Grid.Col span={6}>
-                            <Text size="lg">{skill.skill}</Text>
-                        </Grid.Col>
-
-                        <Grid.Col span={6}>
-                            <Center>
-                                <Rating
-                                    defaultValue={2}
-                                    color="teal"
-                                    size="lg"
-                                    count={4}
-                                    value={skill.proficiency || 0}
-                                    onChange={(val) =>
-                                        handleSkillChange(index, val)
-                                    }
-                                />
-                            </Center>
-                        </Grid.Col>
-                    </Grid>
+                    <Proficiency
+                        title={skill.skill}
+                        form={form}
+                        field={`skills.${index}`}
+                        valueFetch={() => form.values.skills[index].proficiency}
+                    />
                 ))}
             </Stack>
         </Stack>

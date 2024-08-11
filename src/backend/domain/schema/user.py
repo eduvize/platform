@@ -57,6 +57,7 @@ class UserProfile(UserProfileBase, table=True):
 class UserProfileDisciplineBase(SQLModel):
     discipline_type: int            = Field(nullable=False)
     proficiency: Optional[int]      = Field(default=None)
+    notes: Optional[str]            = Field()
     
 class UserProfileDiscipline(UserProfileDisciplineBase, table=True):
     __tablename__ = "user_profiles_disciplines"

@@ -1,3 +1,5 @@
+import { ProfileStep } from "../constants";
+import { isBasicInformationComplete } from "../validation";
 import {
     Space,
     Stack,
@@ -13,8 +15,6 @@ import {
     Text,
     Button,
 } from "@mantine/core";
-import { DateInput } from "@mantine/dates";
-import { UserDto } from "../../../models/dto";
 import { ProfileUpdatePayload } from "../../../api/contracts/ProfileUpdatePayload";
 import { memo, useCallback, useMemo, useRef } from "react";
 import UserApi from "../../../api/UserApi";
@@ -29,8 +29,7 @@ import {
     UserSkillType,
 } from "../../../models/enums";
 import { UseFormReturnType } from "@mantine/form";
-import { ProfileStep } from "../Profile";
-import { isBasicInformationComplete } from "../validation";
+import { UserDto } from "../../../models/dto/user/UserDto";
 
 interface BasicInfoStepProps {
     userDetails: UserDto | null;
@@ -193,28 +192,6 @@ export const BasicInfoStep = memo(
                                 <Input
                                     {...form.getInputProps("last_name")}
                                     placeholder="Doe"
-                                />
-                            </Stack>
-                        </Group>
-
-                        <Group justify="space-between">
-                            <Stack w="48%" gap={0}>
-                                <DateInput
-                                    {...form.getInputProps("birthdate")}
-                                    required
-                                    label="Birthdate"
-                                    placeholder="MM/DD/YYYY"
-                                    valueFormat="MM/DD/YYYY"
-                                />
-                            </Stack>
-
-                            <Stack w="48%" gap={0}>
-                                <InputLabel required>
-                                    Favorite Animal
-                                </InputLabel>
-                                <Input
-                                    {...form.getInputProps("favorite_animal")}
-                                    placeholder=""
                                 />
                             </Stack>
                         </Group>

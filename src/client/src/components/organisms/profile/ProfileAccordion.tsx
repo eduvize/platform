@@ -3,11 +3,6 @@ import {
     Text,
     Stack,
     Chip,
-    Divider,
-    Input,
-    InputLabel,
-    Textarea,
-    Switch,
     AccordionItem,
     Accordion,
     ActionIcon,
@@ -19,8 +14,7 @@ import { SpacedDivider } from "../../molecules/layout";
 import { UserSkillType } from "../../../models/enums";
 import { UseFormReturnType } from "@mantine/form";
 import { ProfileUpdatePayload } from "../../../api/contracts";
-import { EmploymentDto } from "../../../models/dto/Employment";
-import { ReactNode, useRef, useState } from "react";
+import { ReactNode, useMemo, useRef, useState } from "react";
 
 interface ProfileAccordionProps {
     index: number;
@@ -28,13 +22,22 @@ interface ProfileAccordionProps {
     form: UseFormReturnType<ProfileUpdatePayload>;
     titleField: string;
     skillField?: string;
+    validationFunc?: () => boolean;
     component: ReactNode;
     onRemove?: () => void;
 }
 
 export const ProfileAccordion = (props: ProfileAccordionProps) => {
-    const { index, title, form, titleField, skillField, component, onRemove } =
-        props;
+    const {
+        index,
+        title,
+        form,
+        titleField,
+        skillField,
+        validationFunc,
+        component,
+        onRemove,
+    } = props;
     const nameRef = useRef<HTMLDivElement>(null);
     const [showNameEdit, setShowNameEdit] = useState(false);
     const [editingName, setEditingName] = useState(false);
@@ -62,6 +65,12 @@ export const ProfileAccordion = (props: ProfileAccordionProps) => {
         form.setFieldValue(titleField, nameRef.current?.textContent || "");
     };
 
+    const isValid = useMemo(() => {
+        if (!validationFunc) return true;
+
+        return validationFunc();
+    }, [form.values, validationFunc]);
+
     return (
         <AccordionItem key={title} value={title}>
             <Center>
@@ -73,6 +82,7 @@ export const ProfileAccordion = (props: ProfileAccordionProps) => {
                         <Group>
                             <Text
                                 size="lg"
+                                c={isValid ? "gray" : "yellow"}
                                 contentEditable={editingName}
                                 onBlur={handleBlurChange}
                                 ref={nameRef}

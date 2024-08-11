@@ -16,7 +16,6 @@ export const isBasicInformationComplete = (
     return (
         form.values.first_name &&
         form.values.last_name &&
-        form.values.birthdate &&
         form.values.bio &&
         form.values.learning_capacities.length > 0 &&
         form.values.disciplines.length > 0 &&
@@ -49,7 +48,10 @@ export const isHobbyInformationComplete = (
     return (
         form.values.hobby.reasons.length > 0 &&
         hobbyLanguages.length > 0 &&
-        hobbyLibraries.length > 0
+        hobbyLibraries.length > 0 &&
+        form.values.hobby.projects.every((project) => {
+            return project.project_name && project.description;
+        })
     );
 };
 
@@ -63,7 +65,13 @@ export const isEducationInformationComplete = (
     return (
         schools.length > 0 &&
         schools.every((school) => {
-            return school.school_name && school.focus;
+            return (
+                school.school_name &&
+                school.focus &&
+                school.start_date &&
+                (school.is_current || school.end_date) &&
+                school.skills.length > 0
+            );
         })
     );
 };
@@ -81,7 +89,10 @@ export const isProfessionalInformationComplete = (
             return (
                 employer.company_name &&
                 employer.position &&
-                employer.description
+                employer.description &&
+                employer.start_date &&
+                (employer.is_current || employer.end_date) &&
+                employer.skills.length > 0
             );
         })
     );

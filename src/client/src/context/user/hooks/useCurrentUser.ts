@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { UserDto } from "../../../models/dto";
+import { UserDto } from "../../../models/dto/profile";
 import { UserContext } from "../UserContext";
 import UserApi from "../../../api/UserApi";
 import { useContextSelector } from "use-context-selector";

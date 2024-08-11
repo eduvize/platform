@@ -37,6 +37,10 @@ class ProvideProfileTool(BaseTool):
                         UserProfileSchoolDto.model_construct(
                             school_name=school.name,
                             focus=school.focus,
+                            start_date=school.start_month,
+                            end_date=school.end_month,
+                            is_current=school.is_current,
+                            did_finish=school.did_finish
                         )    
                         for school in scan.schools
                     ]
@@ -64,6 +68,8 @@ class ProvideProfileTool(BaseTool):
                         UserProfileEmploymentDto.model_construct(
                             company_name=employer.company_name,
                             position=employer.position,
+                            start_date=employer.start_month,
+                            end_date=employer.end_month,
                             is_current=employer.is_current,
                             description=employer.description
                         )
@@ -74,7 +80,6 @@ class ProvideProfileTool(BaseTool):
             self.result = UserProfileDto.model_construct(
                 first_name=scan.first_name,
                 last_name=scan.last_name,
-                birthdate=scan.birthdate,
                 bio=scan.bio,
                 github_username=scan.github_username,
                 learning_capacities=learning_capacities,

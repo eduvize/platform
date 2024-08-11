@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
-from typing import List, Optional
-from pydantic import BaseModel
+from typing import List, Optional, Union
+from pydantic import BaseModel, field_validator
 
 class Discipline(Enum):
     FRONTEND = "Frontend"
@@ -20,17 +20,22 @@ class HobbyProject(BaseModel):
 class School(BaseModel):
     school_name: str
     focus: Optional[str] = None
+    start_month: Optional[date] = None
+    end_month: Optional[date] = None
+    did_finish: bool
+    is_current: bool
     
 class Employment(BaseModel):
     company_name: str
     position: str
+    start_month: Optional[date] = None
+    end_month: Optional[date] = None
     is_current: bool
     description: str
 
 class ProfileScan(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
-    birthdate: Optional[datetime] = None
     bio: Optional[str] = None
     github_username: Optional[str] = None
     is_hobbyist: bool

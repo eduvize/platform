@@ -1,6 +1,8 @@
+import { ProfileStep } from "../constants";
+import { isEducationInformationComplete } from "../validation";
 import { UseFormReturnType } from "@mantine/form";
 import { ProfileUpdatePayload } from "../../../api/contracts";
-import { SearchInput, SpacedDivider } from "../../../components/molecules";
+import { School, SpacedDivider } from "../../../components/molecules";
 import {
     Accordion,
     Button,
@@ -11,12 +13,8 @@ import {
 } from "@mantine/core";
 import { useMemo, useCallback } from "react";
 import { LearningCapacity } from "../../../models/enums";
-import { ProfileStep } from "../Profile";
 import { IconCirclePlusFilled } from "@tabler/icons-react";
 import { ProfileAccordion } from "../../../components/organisms";
-import AutocompleteApi from "../../../api/AutocompleteApi";
-import { SchoolDto } from "../../../models/dto";
-import { isEducationInformationComplete } from "../validation";
 
 interface EducationStepProps {
     form: UseFormReturnType<ProfileUpdatePayload>;
@@ -57,44 +55,10 @@ export const EducationStep = ({ form, onChangeStep }: EducationStepProps) => {
         ]);
     };
 
-    const handleSchoolChange = (
-        index: number,
-        value: { school_name?: string; focus?: string }
-    ) => {
-        form.setFieldValue(
-            "student.schools",
-            schools.map((school, i) =>
-                i === index ? { ...school, ...value } : school
-            )
-        );
-    };
-
     const handleRemoveSchool = (index: number) => {
         form.setFieldValue(
             "student.schools",
             schools.filter((_, i) => i !== index)
-        );
-    };
-
-    const School = (school: SchoolDto & { index: number }) => {
-        return (
-            <>
-                <SearchInput
-                    required
-                    {...form.getInputProps(
-                        `student.schools.${school.index}.focus`
-                    )}
-                    valueFetch={(query) =>
-                        AutocompleteApi.getEducationalFocuses(
-                            school.school_name,
-                            query
-                        )
-                    }
-                    label="Primary Focus"
-                    placeholder="Major, program, or focus area"
-                    disabled={!school.school_name}
-                />
-            </>
         );
     };
 
@@ -126,7 +90,24 @@ export const EducationStep = ({ form, onChangeStep }: EducationStepProps) => {
                         title={school.school_name || `School #${index + 1}`}
                         titleField={`student.schools.${index}.school_name`}
                         skillField={`student.schools.${index}.skills`}
-                        component={<School index={index} {...school} />}
+                        validationFunc={() => {
+                            if (!form.values.student) return false;
+                            if (!form.values.student.schools) return false;
+
+                            const school = form.values.student.schools[index];
+                            if (!school) return false;
+
+                            return (
+                                !!school.school_name &&
+                                !!school.focus &&
+                                !!school.start_date &&
+                                (school.is_current || !!school.end_date) &&
+                                school.skills.length > 0
+                            );
+                        }}
+                        component={
+                            <School form={form} index={index} {...school} />
+                        }
                         onRemove={() => handleRemoveSchool(index)}
                     />
                 ))}

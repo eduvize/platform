@@ -1,4 +1,11 @@
-import { Image, Stepper, Tooltip } from "@mantine/core";
+import { ProfileStep } from "./constants";
+import {
+    isBasicInformationComplete,
+    isEducationInformationComplete,
+    isHobbyInformationComplete,
+    isProfessionalInformationComplete,
+} from "./validation";
+import { Image, Stepper } from "@mantine/core";
 import { UseFormReturnType } from "@mantine/form";
 import {
     IconUser,
@@ -7,17 +14,10 @@ import {
     IconDeviceLaptop,
     IconStar,
 } from "@tabler/icons-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { ProfileUpdatePayload } from "../../api/contracts";
 import { LearningCapacity } from "../../models/enums";
-import { ProfileStep } from "./Profile";
-import { UserDto } from "../../models/dto";
-import {
-    isBasicInformationComplete,
-    isEducationInformationComplete,
-    isHobbyInformationComplete,
-    isProfessionalInformationComplete,
-} from "./validation";
+import { UserDto } from "../../models/dto/user/UserDto";
 
 interface ProfileStepperProps {
     userDetails: UserDto | null;
@@ -36,14 +36,6 @@ export const ProfileStepper = ({
     currentStep,
     onChangeStep,
 }: ProfileStepperProps) => {
-    const steps: ProfileStep[] = [
-        "basic",
-        "hobby",
-        "education",
-        "professional",
-        "proficiencies",
-    ];
-
     const visibleSteps = useMemo(() => {
         let steps = form.values.learning_capacities.reduce(
             (acc, capacity) => {

@@ -1,10 +1,15 @@
+from datetime import datetime, date
 from pydantic import field_validator
-from typing import Optional
+from typing import Optional, Union
 from domain.schema.profile.student import UserProfileStudentBase, UserProfileSchoolBase, UserProfileSchoolSkillBase
 
 class UserProfileSchoolDto(UserProfileSchoolBase):
     school_name: str
     focus: Optional[str] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    did_finish: bool
+    is_current: bool
     skills: list[str] = []
     
     @field_validator("skills", mode="plain")

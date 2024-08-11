@@ -2,7 +2,7 @@ import {
     UserDto,
     UserOnboardingStatusDto,
     UserProfileDto,
-} from "../models/dto";
+} from "../models/dto/profile";
 import BaseApi from "./BaseApi";
 import { FileUploadResponse } from "./contracts";
 import { ProfileUpdatePayload } from "./contracts/ProfileUpdatePayload";

@@ -1,4 +1,4 @@
-import { UserProfileDto } from "../models/dto";
+import { UserProfileDto } from "../models/dto/profile";
 import BaseApi from "./BaseApi";
 
 class FileApi extends BaseApi {

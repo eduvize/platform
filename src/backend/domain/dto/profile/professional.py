@@ -1,3 +1,5 @@
+from datetime import datetime, date
+from typing import Optional, Union
 from pydantic import field_validator
 from domain.schema.profile.professional import (
     UserProfileEmploymentBase, 
@@ -9,6 +11,8 @@ class UserProfileEmploymentDto(UserProfileEmploymentBase):
     company_name: str
     position: str
     description: str
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
     is_current: bool
     skills: list[str] = []
     
@@ -23,6 +27,18 @@ class UserProfileEmploymentDto(UserProfileEmploymentBase):
                 values.append(skill)
                 
         return values
+    
+    @classmethod
+    @field_validator("start_date", "end_date", mode="plain")
+    def validate_dates(cls, v: Optional[Union[date, str]]) -> Optional[date]:
+        print(v)
+        if v:
+            if isinstance(v, date):
+                return v
+            elif isinstance(v, str):
+                return datetime.strptime(v, "%Y-%m-%d").date()
+        else:
+            return None
 
 class UserProfileProfessionalDto(UserProfileProfessionalBase):
     employers: list[UserProfileEmploymentDto] = []
