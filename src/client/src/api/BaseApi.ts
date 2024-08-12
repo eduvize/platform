@@ -26,6 +26,39 @@ abstract class BaseApi {
             .then((response) => response.json());
     }
 
+    protected async postEventStream<T>(
+        url: string,
+        data: any,
+        onData: (data: T) => void
+    ) {
+        const response = await fetch(`${apiEndpoint}/${this.prefix}/${url}`, {
+            method: "POST",
+            headers: this.get_headers(),
+            body: JSON.stringify(data),
+        });
+
+        const reader = response.body!.getReader();
+
+        const decoder = new TextDecoder();
+
+        while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+                break;
+            }
+
+            const text = decoder.decode(value);
+
+            try {
+                const json = JSON.parse(text);
+                onData(json);
+            } catch (e) {
+                onData(text as any);
+            }
+        }
+    }
+
     protected postForm<T>(url: string, data: FormData): Promise<T> {
         return fetch(`${apiEndpoint}/${this.prefix}/${url}`, {
             method: "POST",

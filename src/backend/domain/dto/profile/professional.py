@@ -31,7 +31,6 @@ class UserProfileEmploymentDto(UserProfileEmploymentBase):
     @classmethod
     @field_validator("start_date", "end_date", mode="plain")
     def validate_dates(cls, v: Optional[Union[date, str]]) -> Optional[date]:
-        print(v)
         if v:
             if isinstance(v, date):
                 return v

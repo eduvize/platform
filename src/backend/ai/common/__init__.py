@@ -9,12 +9,20 @@ class ChatRole(Enum):
 class BaseChatMessage:
     role: ChatRole
     png_images: List[bytes]
-    message: str
+    message: Optional[str]
+    tool_calls: List["BaseToolCall"] = []
     
-    def __init__(self, role: ChatRole, message: str, png_images: List[bytes] = []):
+    def __init__(
+        self, 
+        role: ChatRole, 
+        message: Optional[str], 
+        png_images: List[bytes] = [],
+        tool_calls: List["BaseToolCall"] = []
+    ):
         self.role = role
         self.message = message
         self.png_images = png_images
+        self.tool_calls = tool_calls
 
 class BaseTool:
     name: str
@@ -47,9 +55,27 @@ class BaseToolCall:
         self.name = name
         self.arguments = arguments
         
-class BaseChatResponse(BaseChatMessage):
-    tool_calls: List[BaseToolCall]
+class BaseToolCallWithResult(BaseToolCall):
+    result: str
     
-    def __init__(self, message: str, tool_calls: List[BaseToolCall]):
+    def __init__(
+        self, 
+        id: str, 
+        name: str, 
+        arguments: dict, 
+        result: str
+    ):
+        super().__init__(
+            id, 
+            name, 
+            arguments
+        )
+        
+        self.result = result
+        
+class BaseChatResponse(BaseChatMessage):
+    tool_calls: List[BaseToolCallWithResult]
+    
+    def __init__(self, message: str, tool_calls: List[BaseToolCallWithResult]):
         super().__init__(ChatRole.AGENT, message)
         self.tool_calls = tool_calls

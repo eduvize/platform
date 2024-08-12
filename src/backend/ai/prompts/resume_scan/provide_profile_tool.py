@@ -24,8 +24,6 @@ class ProvideProfileTool(BaseTool):
         hobby: Optional[UserProfileHobbyDto] = None
         professional: Optional[UserProfileProfessionalDto] = None
 
-        print(arguments)
-        
         try:
             scan = ProfileScan(**arguments)
             

@@ -20,6 +20,7 @@ const CallToActionOrView = ({ children }: { children: React.ReactNode }) => {
 
 export const Dashboard = () => {
     const { is_profile_complete, is_verified } = useOnboarding();
+    const isCourses = useMatch("/dashboard/courses");
 
     const containerWidth = !is_profile_complete || !is_verified ? "lg" : "xl";
 
@@ -28,7 +29,7 @@ export const Dashboard = () => {
             <UserProvider>
                 <Header />
 
-                <Container size={containerWidth}>
+                <Container size={containerWidth} fluid={!!isCourses}>
                     <Routes>
                         <Route
                             path="/"

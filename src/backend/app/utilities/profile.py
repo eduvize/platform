@@ -44,7 +44,6 @@ def get_user_profile_text(user_profile: UserProfileDto):
     Returns:
         str: The string representation of the user profile
     """
-    print(user_profile)
     stack_parts = []
     
     for discipline in user_profile.disciplines:

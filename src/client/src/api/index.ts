@@ -4,6 +4,7 @@ import FileApi from "./FileApi";
 import UserApi from "./UserApi";
 import InstructorApi from "./InstructorApi";
 import ValidationApi from "./ValidationApi";
+import ChatApi from "./ChatApi";
 
 export {
     AuthApi,
@@ -12,4 +13,5 @@ export {
     UserApi,
     InstructorApi,
     ValidationApi,
+    ChatApi,
 };
