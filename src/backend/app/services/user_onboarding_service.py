@@ -24,7 +24,10 @@ class UserOnboardingService:
     """    
     user_repo: UserRepository
     
-    def __init__(self, user_repository: UserRepository = Depends(UserRepository)):
+    def __init__(
+        self, 
+        user_repository: UserRepository = Depends(UserRepository)
+    ):
         self.user_repo = user_repository
         
     async def send_verification_email(
@@ -82,11 +85,7 @@ class UserOnboardingService:
         user = await self.user_repo.get_user("id", user_id, ["profile"])
         
         # Check required profile fields
-        is_profile_complete = all([
-            user.profile.first_name,
-            user.profile.last_name,
-            user.profile.bio,
-        ])
+        is_profile_complete = await self.is_profile_complete(user_id)
         
         return UserOnboardingStatusDto.model_construct(
             is_verified= not user.pending_verification,
@@ -97,6 +96,76 @@ class UserOnboardingService:
                 and datetime.datetime.utcnow() - user.verification_sent_at_utc < datetime.timedelta(seconds=10)
             )
         )
+        
+    async def is_profile_complete(self, user_id: str) -> bool:
+        user = await self.user_repo.get_user(
+            by="id", 
+            value=user_id, 
+            include=["profile.*"]
+        )
+        
+        if user is None:
+            return False
+        
+        if user.profile is None:
+            return False
+        
+        profile = user.profile
+        
+        if (
+            profile.first_name is None or
+            profile.last_name is None or
+            profile.bio is None or
+            profile.disciplines is None
+            or len(profile.disciplines) == 0
+            or len(profile.skills) == 0
+        ):
+            return False
+        
+        if profile.hobby is None and profile.student is None and profile.professional is None:
+            return False
+        
+        if profile.hobby:
+            if profile.hobby.reasons is None or len(profile.hobby.reasons) == 0:
+                return False
+            
+            if any([
+                project.project_name is None or project.description is None
+                for project in profile.hobby.projects
+            ]):
+                return False
+            
+        if profile.student:
+            if profile.student.schools is None or len(profile.student.schools) == 0:
+                return False
+            
+            if any([(
+                    school.school_name is None or 
+                    school.focus is None or
+                    school.start_date is None or
+                    (school.end_date is None and not school.is_current) or
+                    school.did_finish is None or
+                    len(school.skills) == 0
+                )
+                for school in profile.student.schools
+            ]):
+                return False
+            
+        if profile.professional:
+            if profile.professional.employers is None or len(profile.professional.employers) == 0:
+                return False
+            
+            if any([
+                employer.company_name is None or
+                employer.position is None or
+                employer.start_date is None or
+                (employer.end_date is None and not employer.is_current) or
+                employer.description is None
+                for employer in profile.professional.employers
+            ]):
+                return False
+            
+        return True
         
 def get_verification_url(code: str) -> str:
     """

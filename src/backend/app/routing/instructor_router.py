@@ -31,3 +31,11 @@ async def generate_instructor(
         user_id=user_id, 
         animal_name=animal
     )
+    
+@router.post("/approve")
+async def approve_instructor(
+    user_id: str = Depends(user_id_extractor), 
+    instructor_service: InstructorService = Depends(InstructorService)
+):
+    await instructor_service.approve_instuctor(user_id)
+    return Response(status_code=200)

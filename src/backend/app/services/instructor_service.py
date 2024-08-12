@@ -1,7 +1,7 @@
 from fastapi import Depends
 from openai import OpenAI
 from app.repositories import InstructorRepository
-from ai.prompts import CreateInstructorProfilePrompt
+from ai.prompts import CreateInstructorProfilePrompt, AssertionPrompt
 from app.services.user_service import UserService
 from domain.dto.instructor.instructor import InstructorDto
 from common.storage import StoragePurpose, get_public_object_url, import_from_url
@@ -10,6 +10,10 @@ from config import get_openai_key
 class InstructorNotFoundError(Exception):
     def __repr__(self):
         return "No instructor found for user"
+    
+class InvalidInstructorError(Exception):
+    def __repr__(self):
+        return "User requested an invalid instructor character"
 
 class InstructorService:
     openai: OpenAI
@@ -35,18 +39,33 @@ class InstructorService:
             raise InstructorNotFoundError()
         
         return user.instructor
+    
+    async def approve_instuctor(self, user_id: str) -> None:
+        user = await self.user_service.get_user("id", user_id, ["instructor"])
+        
+        if user is None:
+            raise ValueError("User not found")
+        
+        if user.instructor is None:
+            raise InstructorNotFoundError()
+        
+        await self.instructor_repo.approve_instructor(user_id)
         
     async def generate_instructor(self, user_id: str, animal_name: str) -> InstructorDto:
         user = await self.user_service.get_user("id", user_id, ["instructor"])
         
         if user is None:
             raise ValueError("User not found")
+
+        assertion_prompt = AssertionPrompt()
+        is_animal_or_creature = assertion_prompt.get_assertion(f"{animal_name} is an animal or other creature, either real or fictional")
         
-        print(user)
+        if not is_animal_or_creature:
+            raise InvalidInstructorError()        
         
         response = self.openai.images.generate(
             model="dall-e-3",
-            prompt=f"Icon of a cute {animal_name} head in metallic rainbow iridescent material, 3D render isometric perspective rendered in Cinema 4D on dark background",
+            prompt=f"Icon of a cute {animal_name} head in metallic colorful iridescent material, 3D render frontal perspective rendered in Cinema 4D on dark background",
             size="1024x1024",
             quality="standard",
             n=1

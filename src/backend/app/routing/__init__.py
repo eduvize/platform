@@ -8,6 +8,7 @@ from .auth_router import router as auth_router
 from .autocomplete_router import router as autocomplete_router
 from .file_router import router as file_router
 from .instructor_router import router as instructor_router
+from .validation_router import router as validation_router
 
 api_router.include_router(auth_router)
 api_router.include_router(user_router)
@@ -15,3 +16,4 @@ api_router.include_router(onboarding_router)
 api_router.include_router(autocomplete_router)
 api_router.include_router(file_router)
 api_router.include_router(instructor_router)
+api_router.include_router(validation_router)

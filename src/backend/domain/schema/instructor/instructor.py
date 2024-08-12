@@ -4,6 +4,7 @@ import domain
 class InstructorBase(SQLModel):
     name: str           = Field(default=None)
     avatar_url: str     = Field(default=None)
+    is_approved: bool   = Field(default=False)
 
 class Instructor(InstructorBase, table=True):
     __tablename__ = "user_instructors"
