@@ -29,7 +29,8 @@ export const Proficiency = ({
     title,
     valueFetch,
 }: DisciplineProficiencyProps) => {
-    const val = valueFetch() || 0;
+    const currentValue = valueFetch();
+    const val = currentValue || 0;
 
     return (
         <Grid>
@@ -55,7 +56,7 @@ export const Proficiency = ({
                 </Flex>
             </Grid.Col>
 
-            {val < 4 && (
+            {val > 0 && val < 4 && (
                 <Grid.Col span={12}>
                     <Textarea
                         {...form.getInputProps(`${field}.notes`)}
