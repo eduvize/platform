@@ -23,7 +23,7 @@ export const Courses = () => {
         );
 
     return (
-        <Container size="md" ref={containerRef}>
+        <Container size="lg" ref={containerRef}>
             <Grid h="100%">
                 <Grid.Col span={8}>
                     <ChatProvider>
