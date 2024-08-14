@@ -1,4 +1,4 @@
-import { Container, Text, Button, Group, Space } from "@mantine/core";
+import { Container, Text, Button, Group, Space, Center } from "@mantine/core";
 import { GithubIcon } from "@mantinex/dev-icons";
 import classes from "./Hero.module.css";
 import logo from "../../logo.png";
@@ -17,9 +17,16 @@ export function Hero() {
     return (
         <div className={classes.wrapper}>
             <Container size={750} className={classes.inner}>
-                <img src={logo} alt="Eduvize Logo" className={classes.logo} />
+                <Center>
+                    <img
+                        src={logo}
+                        alt="Eduvize Logo"
+                        className={classes.logo}
+                        height="200px"
+                    />
+                </Center>
 
-                <Space h="lg" />
+                <Space h="xl" />
 
                 <h1 className={classes.title}>
                     <Text
@@ -55,7 +62,7 @@ export function Hero() {
                     projects that match <b>your</b> unique needs.
                 </Text>
 
-                <Group className={classes.controls}>
+                <Group className={classes.controls} justify="center">
                     <Link to="/auth">
                         <Button
                             size="xl"
