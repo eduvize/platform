@@ -51,7 +51,7 @@ class ChatService:
         user_id: str,
         payload: SendChatMessage
     ) -> AsyncGenerator[str, None]:
-        user = await self.user_service.get_user("id", user_id)
+        user = await self.user_service.get_user("id", user_id, ["profile.*", "instructor"])
         
         if not user:
             raise ValueError("User not found")
@@ -73,6 +73,7 @@ class ChatService:
         logger.info(f"Calling model for response generation")
         prompt = CoursePlanningPrompt()
         responses = prompt.get_response(
+            instructor_name=user.instructor.name,
             profile_text=user_profile_text,
             history=model_messages, 
             message=payload.message
