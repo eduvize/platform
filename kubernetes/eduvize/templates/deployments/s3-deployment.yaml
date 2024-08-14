@@ -2,10 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: "{{ include "eduvize.fullname" . }}-s3"
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "eduvize.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicas.s3 }}
+  replicas: {{ .Values.storage.replicas }}
   selector:
     matchLabels:
       app: "{{ include "eduvize.fullname" . }}-s3"
@@ -18,18 +19,18 @@ spec:
     spec:
       containers:
         - name: "{{ include "eduvize.fullname" . }}"
-          image: {{ .Values.image.s3 }}
+          image: {{ .Values.storage.image }}
           ports:
             - name: http
-              containerPort: {{ .Values.ports.s3.http }}
+              containerPort: {{ .Values.storage.ports.http }}
             - name: console
-              containerPort: {{ .Values.ports.s3.console }}
+              containerPort: {{ .Values.storage.ports.console }}
           env:
             - name: MINIO_DEFAULT_BUCKETS
               value: "{{ .Values.storage.bucketName }}:public"
             - name: MINIO_REGION
               value: {{ .Values.storage.region }}
-            {{- range .Values.secretEnvironmentBlock.s3 }}
+            {{- range .Values.storage.envSecretMap }}
             - name: {{ .name }}
               valueFrom:
                 secretKeyRef:

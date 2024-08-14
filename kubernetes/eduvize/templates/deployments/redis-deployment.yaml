@@ -2,10 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "eduvize.fullname" . }}-redis
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "eduvize.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicas.redis }}
+  replicas: {{ .Values.redis.replicas }}
   selector:
     matchLabels:
       app: "{{ include "eduvize.fullname" . }}-redis"
@@ -18,6 +19,6 @@ spec:
     spec:
       containers:
         - name: {{ include "eduvize.name" . }}-redis
-          image: {{ .Values.image.redis }}
+          image: {{ .Values.redis.image }}
           ports:
-            - containerPort: {{ .Values.ports.redis }}
+            - containerPort: {{ .Values.redis.port }}

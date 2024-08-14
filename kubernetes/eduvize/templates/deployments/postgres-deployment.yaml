@@ -2,10 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: "{{ include "eduvize.fullname" . }}-postgres"
+  namespace: {{ .Release.Namespace }}
   labels: 
     {{ include "eduvize.labels" . | nindent 4 }}
 spec:
-  replicas:  {{ .Values.replicas.postgres }}
+  replicas:  {{ .Values.database.replicas }}
   selector:
     matchLabels:
       app: "{{ include "eduvize.fullname" . }}-postgres"
@@ -16,15 +17,21 @@ spec:
         app: "{{ include "eduvize.fullname" . }}-postgres"
         {{- include "eduvize.labels" . | nindent 8 }}
     spec:
+      {{- if .Values.privateRegistry.enabled }}
+      imagePullSecrets:
+        - name: {{ .Values.privateRegistry.secretName }}
+      {{- end }}
       containers:
         - name: "{{ include "eduvize.fullname" . }}-postgres"
-          image: {{ .Values.image.postgres }}
+          image: {{ .Values.database.image }}
           ports:
-            - containerPort: {{ .Values.ports.postgres }}
+            - containerPort: {{ .Values.database.port }}
           env:
             - name: POSTGRES_DB
               value: {{ .Values.database.name }}
-            {{- range .Values.secretEnvironmentBlock.postgres }}
+            - name: POSTGRES_USER
+              value: {{ .Values.database.user }}
+            {{- range .Values.database.envSecretMap }}
             - name: {{ .name }}
               valueFrom:
                 secretKeyRef:

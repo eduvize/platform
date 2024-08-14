@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: "{{ include "eduvize.fullname" . }}-s3-service"
+  namespace: {{ .Release.Namespace }}
   labels: 
     {{- include "eduvize.labels" . | nindent 4 }}
 spec:
@@ -10,9 +11,9 @@ spec:
   ports:
     - protocol: TCP
       name: http
-      port: {{ .Values.ports.s3.http }}
-      targetPort: {{ .Values.ports.s3.http }}
+      port: {{ .Values.storage.ports.http }}
+      targetPort: {{ .Values.storage.ports.http }}
     - protocol: TCP
       name: console
-      port: {{ .Values.ports.s3.console }}
-      targetPort: {{ .Values.ports.s3.console }}
+      port: {{ .Values.storage.ports.console }}
+      targetPort: {{ .Values.storage.ports.console }}

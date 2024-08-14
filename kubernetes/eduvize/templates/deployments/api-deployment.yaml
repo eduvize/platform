@@ -2,10 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "eduvize.fullname" . }}-api
+  namespace: {{ .Release.Namespace }}
   labels: 
     {{ include "eduvize.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicas.api }}
+  replicas: {{ .Values.api.replicas }}
   selector:
     matchLabels:
       app: "{{ include "eduvize.fullname" . }}-api"
@@ -22,29 +23,36 @@ spec:
       {{- end }}
       containers:
         - name: "{{ include "eduvize.fullname" . }}-api"
-          image: {{ .Values.image.api }}
+          image: {{ .Values.api.image }}
           ports:
-            - containerPort: {{ .Values.ports.api }}
+            - containerPort: {{ .Values.api.port }}
           env:
             - name: S3_ENDPOINT
-              value: "http://{{ include "eduvize.fullname" . }}-s3-service"
+              value: "http://{{ include "eduvize.fullname" . }}-s3-service:9000"
             - name: S3_PUBLIC_ENDPOINT
-              value: "http://s3.{{ .Values.ingress.hostname }}"
+              value: "{{- if .Values.ingress.tls.enabled }}https://{{ else }}http://{{ end }}s3.{{ .Values.ingress.hostname }}"
             - name: S3_BUCKET
               value: {{ .Values.storage.bucketName }}
             - name: POSTGRES_HOST
-              value: "{{ include "eduvize.fullname" . }}-postgres-service:{{ .Values.ports.postgres }}"
+              value: "{{ include "eduvize.fullname" . }}-postgres-service:{{ .Values.database.port }}"
             - name: POSTGRES_DB
               value: {{ .Values.database.name }}
+            - name: POSTGRES_USER
+              value: {{ .Values.database.user }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: password
             - name: REDIS_HOST
-              value: "{{ include "eduvize.fullname" . }}-redis-service:{{ .Values.ports.redis }}"
+              value: "{{ include "eduvize.fullname" . }}-redis-service:{{ .Values.redis.port }}"
             - name: PORT
-              value: {{ .Values.ports.api | quote }}
-            {{- range .Values.environment.api }}
+              value: {{ .Values.api.port | quote }}
+            {{- range .Values.api.env }}
             - name: {{ .name }}
               value: {{ .value | quote }}
             {{- end }}
-            {{- range .Values.secretEnvironmentBlock.api }}
+            {{- range .Values.api.envSecretMap }}
             - name: {{ .name }}
               valueFrom:
                 secretKeyRef:

@@ -2,10 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "eduvize.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{ include "eduvize.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicas.app }}
+  replicas: {{ .Values.frontend.replicas }}
   selector:
     matchLabels: 
       app: {{ include "eduvize.fullname" . }}
@@ -22,9 +23,11 @@ spec:
       {{- end }}
       containers:
         - name: {{ include "eduvize.fullname" . }}
-          image: {{ .Values.image.app }}
+          image: {{ .Values.frontend.image }}
           ports:
-            - containerPort: {{ .Values.ports.app }}
+            - containerPort: {{ .Values.frontend.port }}
           env:
             - name: PORT
-              value: {{ .Values.ports.app | quote }}
+              value: {{ .Values.frontend.port | quote }}
+            - name: MODE
+              value: prod
