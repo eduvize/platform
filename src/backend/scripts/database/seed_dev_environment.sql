@@ -24,14 +24,6 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     last_updated_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
 
--- Create table for disciplines
-CREATE TABLE IF NOT EXISTS user_profiles_disciplines (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_profile_id UUID NOT NULL REFERENCES user_profiles(id),
-    discipline_type INT NOT NULL,
-    proficiency INT
-);
-
 -- Create table for skills
 CREATE TABLE IF NOT EXISTS user_profiles_skills (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -237,4 +229,12 @@ CREATE TABLE IF NOT EXISTS chat_tool_calls (
     tool_name TEXT NOT NULL,
     json_arguments TEXT NOT NULL,
     result TEXT NOT NULL
+);
+
+-- Create playground session table
+CREATE TABLE IF NOT EXISTS playground_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    type TEXT NOT NULL,
+    is_reserved BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
