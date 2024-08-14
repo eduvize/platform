@@ -67,11 +67,8 @@ def get_redis_host() -> str:
     return os.getenv("REDIS_HOST")
 
 # Email
-def get_email_configuration_set() -> str:
-    return os.getenv("SES_CONFIGURATION_SET")
-
-def get_email_region() -> str:
-    return os.getenv("SES_REGION")
+def get_mailgun_key() -> str:
+    return os.getenv("MAILGUN_API_KEY")
 
 def get_email_noreply_address() -> str:
     return os.getenv("NOREPLY_ADDRESS")

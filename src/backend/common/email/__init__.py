@@ -1,7 +1,8 @@
-import boto3
-from botocore.exceptions import ClientError
+import logging
+from config import get_mailgun_key, get_email_noreply_address
+import requests
 
-from config import get_aws_access_key, get_aws_secret_key, get_email_configuration_set, get_email_noreply_address, get_email_region
+logger = logging.getLogger(__name__)
 
 def send_email(
     to: str, 
@@ -17,42 +18,18 @@ def send_email(
         content (str): The email body content
     """
     
-    access_key = get_aws_access_key()
-    secret_key = get_aws_secret_key()
-    region = get_email_region()
+    access_key = get_mailgun_key()
     source_address = get_email_noreply_address()
-    configuration_set = get_email_configuration_set()
     
-    client = boto3.client(
-        'ses', 
-        region_name=region, 
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_key
+    response = requests.post(
+        "https://api.mailgun.net/v3/mail.eduvize.dev/messages",
+        auth=("api", access_key),
+        data={
+            "from": f"Eduvize <{source_address}>",
+            "to": [to],
+            "subject": subject,
+            "html": content
+        }
     )
     
-    try:
-        response = client.send_email(
-            Destination={
-                'ToAddresses': [
-                    to
-                ]
-            },
-            Message={
-                'Body': {
-                    'Html': {
-                        'Charset': 'UTF-8',
-                        'Data': content
-                    }
-                },
-                'Subject': {
-                    'Charset': 'UTF-8',
-                    'Data': subject
-                }
-            },
-            Source=source_address,
-            ConfigurationSetName=configuration_set
-        )
-    except ClientError as e:
-        raise e
-    
-    return response['MessageId']
+    logger.info(f"Email sent to {to} with status code {response.status_code}")
