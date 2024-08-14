@@ -33,12 +33,25 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     const [messages, setMessages] = useState<ChatMessageDto[]>([]);
 
     useEffect(() => {
-        if (!localUser) return;
+        if (!localUser || !instructor) return;
 
         ChatApi.getHistory().then((history) => {
-            setMessages(history);
+            setMessages([
+                {
+                    is_user: false,
+                    content: `Hello, ${localUser.profile.first_name}! Welcome to Eduvize - I'm ${instructor.name}, your instructor.
+Now that you've completed the onboarding process, let's get started with planning your first few courses!`,
+                    create_at_utc: new Date().toISOString(),
+                },
+                {
+                    is_user: false,
+                    content: `Is there anywhere you'd like to start, or would you like me to help identify a good starting point for you?`,
+                    create_at_utc: new Date().toISOString(),
+                },
+                ...history,
+            ]);
         });
-    }, [localUser]);
+    }, [localUser, instructor]);
 
     useEffect(() => {
         if (receiveBuffer === "") return;
