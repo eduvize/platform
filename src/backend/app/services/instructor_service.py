@@ -65,7 +65,7 @@ class InstructorService:
         
         response = self.openai.images.generate(
             model="dall-e-3",
-            prompt=f"Icon of a cute {animal_name} head in metallic colorful iridescent material, 3D render frontal perspective rendered in Cinema 4D on dark background",
+            prompt=f"Icon of a cute smiling {animal_name} head, mouth open, in colorful opalescent material, illustration, frontal perspective in Cinema 4D on dark background",
             size="1024x1024",
             quality="standard",
             n=1
