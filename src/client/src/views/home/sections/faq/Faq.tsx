@@ -2,14 +2,12 @@ import {
     Title,
     Container,
     Accordion,
-    ThemeIcon,
-    rem,
     Button,
     Center,
     Space,
     Divider,
+    Text,
 } from "@mantine/core";
-import { IconPlus } from "@tabler/icons-react";
 import classes from "./Faq.module.css";
 import { Link } from "react-router-dom";
 
@@ -17,74 +15,65 @@ const items = [
     {
         value: "get-started",
         title: "How do I get started?",
-        content: `
-Once you create an account, you'll be asked to fill out some information about yourself; this will help us tailor the experience to your needs.
-`,
+        content: `Creating an account is your first step toward personalized learning. Once you've signed up, we'll ask you to provide some details about your background, goals, and areas of interest. This information allows us to tailor the entire experience to meet your unique needs, ensuring that you get the most relevant and effective learning path right from the start. 
+        
+        Whether you're a beginner or looking to refine specific skills, we'll guide you on your journey to success.
+        `,
     },
     {
         value: "pricing",
         title: "How much does it cost?",
-        content: `
-The Eduvize platform as a service is free for your first few courses. After that, you'll need to subscribe to a plan that suits your needs. Don't want to pay us? No problem! The entire platform is open-source and, given your technical know-how, you can host it yourself.
-We're committed to making education accessible to everyone - even if it means giving it away for free.
+        content: `Eduvize offers a generous free tier that allows you to access your first few courses at no cost. After that, you can choose from a variety of subscription plans tailored to fit your needs. 
+        
+        Not interested in subscribing? That's okay! Our entire platform is open-source, so if you have the technical skills, you're welcome to host it yourself. We're dedicated to making education accessible to everyone—even if that means providing it for free.
 `,
     },
     {
         value: "open-source-why",
         title: "Why is Eduvize open-source?",
-        content: `
-We believe that learning new things is a fundamental right. By making Eduvize open-source, we're giving you the freedom to learn and grow without restriction. Now of course, there are some technical hurdles to overcome to host it on your own infrastructure, but we're comitted to giving you the pieces to get you started.
-By making Eduvize open-source, we're also able to get feedback from the community and improve the platform for everyone.
-Of course, we do still value those who choose to subscribe to the platform service - it helps us keep the lights on and continue to improve the platform.        
+        content: `We believe that the opportunity to learn and grow should be available to everyone, without barriers. By making Eduvize open-source, we empower you with the freedom to explore, modify, and use the platform on your own terms. While there may be some technical challenges in setting it up on your own infrastructure, we're committed to providing you with the tools and guidance to get started.
+
+Being open-source also means we can harness the power of community feedback to continuously improve the platform for everyone. We genuinely appreciate those who choose to subscribe to our hosted service—your support helps us maintain and enhance Eduvize, ensuring it remains a valuable resource for all.
 `,
     },
     {
         value: "open-source-licensing",
         title: "What license is Eduvize under?",
-        content: `
-We're happy to give the code away for free, but we do have some restrictions on how you can use it - mostly around attribution and not using it for commercial purposes. We're using the Creative Commons Attribution-NonCommercial 4.0 International License, which you can read more about [here](http://creativecommons.org/licenses/by-nc/4.0/).
-This means that you can use Eduvize for free, but you must give credit to the original authors and you can't use it to make money without our permission. Want to incorporate it into your own platform? Just ask us - we're happy to learn more!
+        content: `We're excited to offer Eduvize's code for free, but we do have a few restrictions to ensure it's used responsibly. Eduvize is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License, which you can learn more about [here](http://creativecommons.org/licenses/by-nc/4.0/).
+
+        This license allows you to use Eduvize for free, provided you credit the original authors and refrain from using it for commercial purposes without our permission. 
+
+If you're interested in incorporating Eduvize into your own platform or have other commercial intentions, just reach out to us—we're open to exploring possibilities!
 `,
     },
 ];
 
 export function Faq() {
-    const parseMarkdownUrls = (content: string) => {
-        return content.replace(
-            /\[(.*?)\]\((.*?)\)/g,
-            '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
-        );
+    const parseMarkdown = (content: string) => {
+        return content
+            .replace(/\n/g, "<br />")
+            .replace(
+                /\[(.*?)\]\((.*?)\)/g,
+                '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+            );
     };
 
     return (
         <div className={classes.wrapper}>
-            <Container size="md">
-                <Title ta="center" className={classes.title}>
+            <Container size="sm">
+                <Title ta="center" className={classes.title} mb="xl">
                     Frequently Asked Questions
                 </Title>
 
                 <Accordion
                     chevronPosition="right"
-                    defaultValue="reset-password"
                     chevronSize={26}
                     variant="separated"
-                    disableChevronRotation
                     styles={{
                         label: { color: "var(--mantine-color-black)" },
                         item: { border: 0 },
+                        chevron: { color: "var(--mantine-color-black)" },
                     }}
-                    chevron={
-                        <ThemeIcon
-                            radius="xl"
-                            className={classes.gradient}
-                            size={26}
-                        >
-                            <IconPlus
-                                style={{ width: rem(18), height: rem(18) }}
-                                stroke={1.5}
-                            />
-                        </ThemeIcon>
-                    }
                 >
                     {items.map((itm) => (
                         <Accordion.Item
@@ -97,7 +86,7 @@ export function Faq() {
                             <Accordion.Panel>
                                 <div
                                     dangerouslySetInnerHTML={{
-                                        __html: parseMarkdownUrls(itm.content),
+                                        __html: parseMarkdown(itm.content),
                                     }}
                                 />
                             </Accordion.Panel>
@@ -108,16 +97,21 @@ export function Faq() {
                 <Space h="xl" />
                 <Space h="xl" />
 
-                <Divider label="What are you waiting for?" />
+                <Divider
+                    label={<Text size="lg">What are you waiting for?</Text>}
+                    size="md"
+                />
 
                 <Space h="xl" />
 
                 <Center>
                     <Link to="/auth">
-                        <Button size="xl">Start your journey</Button>
+                        <Button size="xl">Start for free</Button>
                     </Link>
                 </Center>
             </Container>
+
+            <Space h="10em" />
         </div>
     );
 }

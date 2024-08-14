@@ -7,6 +7,7 @@ export function Home() {
             <Hero />
             <Features />
             <Faq />
+
             <Footer />
         </>
     );

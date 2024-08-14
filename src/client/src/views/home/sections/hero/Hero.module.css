@@ -50,15 +50,56 @@
     }
 }
 
-.control {
-    height: rem(54px);
-    padding-left: rem(38px);
-    padding-right: rem(38px);
+.glowing {
+    color: #ffffff;
+    animation: glow 1.5s infinite alternate;
+}
 
-    @media (max-width: $mantine-breakpoint-sm) {
-        height: rem(54px);
-        padding-left: rem(18px);
-        padding-right: rem(18px);
-        flex: 1;
+@keyframes glow {
+    from {
+        text-shadow: 0 0 3px #63aae46e, 0 0 5px #4691ce3f, 0 0 10px #4691ce3f;
     }
+    to {
+        text-shadow: 0 0px 10px #4691ce3f, 0 0px 20px #2872af41,
+            0 0px 30px #2872af44;
+    }
+}
+
+.button {
+    background-color: #ff5733;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.button:hover {
+    background-color: #c70039;
+    transform: scale(1.05);
+}
+
+.underline {
+    display: inline-block;
+    position: relative;
+    color: #ffffff;
+}
+
+.underline::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    transform: scaleX(0);
+    height: 2px;
+    bottom: 0;
+    left: 0;
+    background-color: #e1382b;
+    transform-origin: bottom right;
+    transition: transform 0.75s ease-out;
+}
+
+.underlineAnimated::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
 }

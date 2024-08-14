@@ -5,7 +5,7 @@ import logo from "./logo.png";
 const links = [
     { link: "#", label: "About" },
     { link: "#", label: "Privacy" },
-    { link: "#", label: "GitHub" },
+    { link: "https://github.com/cameron5906/eduvize-ai", label: "GitHub" },
     { link: "#", label: "Pricing" },
 ];
 

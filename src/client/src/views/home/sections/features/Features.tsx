@@ -9,6 +9,7 @@ import {
     rem,
     useMantineTheme,
     Center,
+    Space,
 } from "@mantine/core";
 import {
     IconUser,
@@ -24,53 +25,53 @@ const mockdata = [
     {
         title: "Tailored to you",
         description: `
-Everything you do on this site is entirely based around you and your needs. 
-It's like having a personal tutor, but without the cost or anxiety!
-Your AI tutor will get to know you and will be able to leverage concepts you already know to help you learn new ones
+Once you fill out your comprehensive profile, we'll be able to generate your own personal tutor that will help design and guide you through courses that are tailored to your exact needs. There's no cookie-cutter approach here.
 `,
         icon: IconUser,
     },
     {
-        title: "More than reading",
+        title: "Beyond Theory",
         description: `
-Scouring the Internet for tutorials and reading books can get you so far, but it's not the most effective way to learn.
-We'll help you learn by doing, with hands-on exercises and projects that will help you retain the information better.
+Learning through tutorials and books is a good start, but true mastery comes from hands-on experience.
+We provide practical exercises and real-world projects that reinforce your understanding and help you apply what you've learned.
 `,
         icon: IconBooks,
     },
     {
-        title: "More than just languages",
+        title: "More Than Just Code",
         description: `
-There's a lot more to being a developer than just knowing how to code.
-The industry is filled with different frameworks, tools, and methodologies that you need to know to be successful.
-Our platform will help you marry these concepts together to ensure you're well-rounded
-`,
+    Being a developer is about more than writing code. 
+    Success in the industry requires mastering a variety of frameworks, tools, and methodologies.
+    Our platform helps you integrate these concepts, ensuring you become a well-rounded professional.
+    `,
         icon: IconDirections,
     },
     {
-        title: 'No more "what do I learn next?"',
+        title: "Personalized Learning Path",
         description: `
-One of the most challenging parts of learning to code is figuring out what to learn next.
-Eduvize will help take care of that for you by recommending follow-up topics based on what you've already learned.
-Did you just learn more about React? We'll suggest learning Redux next!
-`,
+    Navigating the journey of learning to code can be daunting, especially when deciding what to tackle next.
+    Eduvize simplifies this process by recommending the next steps based on your progress.
+    Just mastered React? We'll guide you towards Redux to build on your skills!
+    `,
         icon: IconMapQuestion,
     },
     {
-        title: "Hands-on Learning",
+        title: "Hands-On Practice",
         description: `
-The best way to learn is by doing. We'll set you up with a web-based environment where you can practice all of these concepts in real-time with your AI tutor by your side.
-Whether its writing and testing code, learning how to design a webpage, or even setting up a server - we've got you covered
-`,
+    The most effective way to learn is through action. 
+    We'll provide you with a web-based environment where you can apply concepts in real-time, guided by your AI tutor.
+    Whether you're writing and testing code, designing a webpage, or setting up a server, we've got you covered.
+    `,
         icon: IconCloudComputing,
     },
     {
-        title: "Get that next job",
+        title: "Boost Your Job Prospects",
         description: `
-We know that a lot of people use our platform to help them get that next job.
-We'll help you by building a portfolio of projects that you can show off to potential employers, and even generate a curriculum based on jobs you're interested in.
-Give us the posting, and we'll help you get there
-`,
+    We understand that many use our platform to land their next job.
+    We'll support you by helping you build a portfolio of impressive projects to showcase to potential employers.
+    Plus, we can generate a tailored curriculum based on the jobs you're targeting.
+    Share the job posting with us, and we'll guide you toward success.
+    `,
         icon: IconMoodDollar,
     },
 ];
@@ -101,14 +102,18 @@ export function Features() {
 
     return (
         <Container size="lg" py="xl">
+            <Space h="xl" />
+
             <Group justify="center">
                 <Badge variant="filled" size="lg">
-                    Everything is tailored to you
+                    Your journey starts here
                 </Badge>
             </Group>
 
-            <Title order={2} className={classes.title} ta="center" mt="sm">
-                Learn more about what Eduvize has to offer
+            <Space h="lg" />
+
+            <Title order={2} ta="center" mt="sm" size={32}>
+                Discover the Power of Eduvize
             </Title>
 
             <Center>
@@ -117,9 +122,12 @@ export function Features() {
                     className={classes.description}
                     ta="center"
                     mt="md"
+                    size="sm"
                 >
-                    Our suite of tools is designed to make leveling up your
-                    development abilities without having to go anywhere else.
+                    Our suite of tailored tools is designed to elevate your
+                    development skills, all in one place. Whether you're looking
+                    to advance your career or land a new job, Eduvize has you
+                    covered.
                 </Text>
             </Center>
 

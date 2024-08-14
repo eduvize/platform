@@ -3,11 +3,20 @@ import { GithubIcon } from "@mantinex/dev-icons";
 import classes from "./Hero.module.css";
 import logo from "../../logo.png";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 export function Hero() {
+    const [underline, setUnderline] = useState(false);
+
+    useEffect(() => {
+        setTimeout(() => {
+            setUnderline(true);
+        }, 700);
+    }, []);
+
     return (
         <div className={classes.wrapper}>
-            <Container size={700} className={classes.inner}>
+            <Container size={750} className={classes.inner}>
                 <img src={logo} alt="Eduvize Logo" className={classes.logo} />
 
                 <Space h="lg" />
@@ -18,6 +27,7 @@ export function Hero() {
                         variant="gradient"
                         gradient={{ from: "blue", to: "cyan" }}
                         inherit
+                        className={classes.glowing}
                     >
                         Supercharge
                     </Text>{" "}
@@ -27,32 +37,29 @@ export function Hero() {
                         variant="gradient"
                         gradient={{ from: "orange", to: "red" }}
                         inherit
+                        className={`${classes.underline}${
+                            underline ? ` ${classes.underlineAnimated}` : ""
+                        }`}
                     >
-                        AI curriculums
+                        A Personal AI Tutor
                     </Text>
                 </h1>
 
                 <Space h="lg" />
 
                 <Text className={classes.description} color="dimmed">
-                    Learning new software development skills can be challenging
-                    and time-consuming, let alone keeping up with the latest
-                    trends once you're already a professional.
-                </Text>
-
-                <Space h="sm" />
-
-                <Text className={classes.description} color="dimmed">
-                    Using the latest in AI technology, Eduvize can help you
-                    learn new skills by generating courses, exercises, and
-                    projects tailored to <b>your</b> exact needs.
+                    Learning new software development skills can be challenging,
+                    but staying ahead is crucial. With Eduvize, powered by
+                    cutting-edge AI, you can quickly master the latest
+                    technologies through tailored courses, exercises, and
+                    projects that match <b>your</b> unique needs.
                 </Text>
 
                 <Group className={classes.controls}>
                     <Link to="/auth">
                         <Button
                             size="xl"
-                            className={classes.control}
+                            className={classes.button}
                             variant="gradient"
                             gradient={{ from: "blue", to: "cyan" }}
                         >
@@ -62,10 +69,10 @@ export function Hero() {
 
                     <Button
                         component="a"
-                        href="https://github.com/mantinedev/mantine"
+                        href="https://github.com/cameron5906/eduvize-ai"
                         size="xl"
                         variant="default"
-                        className={classes.control}
+                        className={classes.button}
                         leftSection={<GithubIcon size={20} />}
                     >
                         Contribute
