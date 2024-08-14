@@ -3,6 +3,7 @@ FROM node:22 AS builder
 
 # Set working directory
 WORKDIR /app
+ARG MODE=local
 
 # Install dependencies
 COPY package*.json ./
@@ -12,7 +13,7 @@ RUN npm install
 COPY . .
 
 # Build the React Vite app
-RUN npm run build
+RUN npm run build:${MODE}
 
 # Stage 2: Serve the app with Nginx
 FROM nginx:stable-alpine AS production

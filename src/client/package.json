@@ -37,6 +37,8 @@
     "scripts": {
         "start": "vite",
         "build": "vite build",
+        "build:local": "vite build",
+        "build:prod": "vite build --mode prod",
         "serve": "vite preview"
     },
     "eslintConfig": {
