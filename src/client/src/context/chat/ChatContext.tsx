@@ -1,7 +1,8 @@
 import { ChatApi } from "@api";
 import { useCurrentUser, useInstructor } from "@context/user/hooks";
+import { Center, Loader } from "@mantine/core";
 import { ChatMessageDto } from "@models/dto";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { createContext } from "use-context-selector";
 
 type Context = {
@@ -25,16 +26,8 @@ interface ChatProviderProps {
 }
 
 export const ChatProvider = ({ children }: ChatProviderProps) => {
-    const displayedFirstMessageRef = useRef(false);
     const [localUser] = useCurrentUser();
 
-    const [remotePartyAvatarUrl, setRemotePartyAvatarUrl] = useState<string>(
-        "http://localhost:9000/eduvize/instructor-assets/6a8bce5d48a34c7cac0e02099a5bc867.png"
-    );
-
-    const [localPartyAvatarUrl, setLocalPartyAvatarUrl] = useState<
-        string | null
-    >(null);
     const [instructor] = useInstructor();
     const [receiveBuffer, setReceiveBuffer] = useState<string>("");
     const [messages, setMessages] = useState<ChatMessageDto[]>([]);
@@ -46,12 +39,6 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             setMessages(history);
         });
     }, [localUser]);
-
-    useEffect(() => {
-        if (localUser?.profile.avatar_url) {
-            setLocalPartyAvatarUrl(localUser.profile.avatar_url);
-        }
-    }, [localUser?.profile.avatar_url]);
 
     useEffect(() => {
         if (receiveBuffer === "") return;
@@ -98,11 +85,19 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         });
     };
 
+    if (!instructor || !localUser) {
+        return (
+            <Center>
+                <Loader size="lg" type="dots" />
+            </Center>
+        );
+    }
+
     return (
         <ChatContext.Provider
             value={{
-                remotePartyAvatarUrl,
-                localPartyAvatarUrl,
+                remotePartyAvatarUrl: instructor.avatar_url,
+                localPartyAvatarUrl: localUser.profile?.avatar_url,
                 messages,
                 sendMessage: handleSendMessage,
             }}

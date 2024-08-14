@@ -5,6 +5,7 @@ import { useCurrentUserId } from "@context/auth/hooks";
 import { UserDto, UserOnboardingStatusDto } from "@models/dto";
 import { notifications } from "@mantine/notifications";
 import { IconCheck } from "@tabler/icons-react";
+import { Center, Loader } from "@mantine/core";
 
 type Context = {
     userDetails: UserDto | null;
@@ -62,6 +63,14 @@ export const UserProvider = ({ children }: UserProviderProps) => {
                 setOnboardingStatus(null);
             });
     }, [id]);
+
+    if (!userDetails || !onboardingStatus) {
+        return (
+            <Center>
+                <Loader size="lg" type="dots" />
+            </Center>
+        );
+    }
 
     return (
         <UserContext.Provider
