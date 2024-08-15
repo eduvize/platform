@@ -66,7 +66,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
     if (!userDetails || !onboardingStatus) {
         return (
-            <Center>
+            <Center h="100%">
                 <Loader size="lg" type="dots" />
             </Center>
         );
