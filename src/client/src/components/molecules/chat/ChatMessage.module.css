@@ -1,0 +1,62 @@
+.message h1,
+.message h2,
+.message h3,
+.message h4,
+.message h5,
+.message h6 {
+    text-transform: none !important;
+    margin: 0 !important;
+}
+
+.message ul,
+.message ol {
+    padding: 0 !important;
+    margin: 0 !important;
+    padding-left: 18px !important;
+}
+
+.message h1 {
+    font-size: 32px;
+}
+
+.message h2 {
+    font-size: 28px;
+}
+
+.message h3 {
+    font-size: 24px;
+}
+
+.message h4 {
+    font-size: 18px;
+}
+
+.message h5 {
+    font-size: 16px;
+}
+
+.message h6 {
+    font-size: 14px;
+}
+
+.message p {
+    font-size: 12px;
+}
+
+.message code {
+    background-color: var(--mantine-color-gray-7) !important;
+    color: #fff !important;
+}
+
+.message hr {
+    border: 0 !important;
+    border-top: 1px solid var(--mantine-color-gray-7) !important;
+    width: 70% !important;
+}
+
+.message blockquote {
+    background-color: var(--mantine-color-gray-7) !important;
+    padding: 10px !important;
+    border-left: 4px solid var(--mantine-color-primary) !important;
+    margin: 0 !important;
+}

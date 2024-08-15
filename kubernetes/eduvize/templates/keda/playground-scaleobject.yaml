@@ -1,0 +1,21 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: playground-scaler
+  namespace: {{ .Release.Namespace}}
+  annotations:
+    scaledobject.keda.sh/transfer-hpa-ownership: "true"
+    validations.keda.sh/hpa-ownership: "true"
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    name: playground
+    envSourceContainerName: playground-controller
+  pollingInterval: 5
+  triggers:
+    - type: postgresql
+      name: playground-scaling-trigger
+      metadata:
+        connectionFromEnv: POSTGRES_CONNECTION_STRING
+        query: "SELECT COUNT(*) FROM public.playground_sessions WHERE is_reserved = false"
+        targetQueryValue: "1"

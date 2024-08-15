@@ -1,0 +1,110 @@
+.wrapper {
+    position: relative;
+    box-sizing: border-box;
+    background-color: light-dark(
+        var(--mantine-color-white),
+        var(--mantine-color-dark-8)
+    );
+}
+
+.logo {
+    max-width: 80%;
+    height: auto;
+}
+
+.inner {
+    position: relative;
+    padding-top: rem(200px);
+    padding-bottom: rem(120px);
+
+    @media (max-width: $mantine-breakpoint-sm) {
+        padding-bottom: rem(80px);
+        padding-top: rem(80px);
+    }
+}
+
+.title {
+    font-family: Greycliff CF, var(--mantine-font-family);
+    font-size: rem(42px);
+    font-weight: 900;
+    line-height: 1.1;
+    margin: 0;
+    padding: 0;
+    color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
+
+    @media (max-width: $mantine-breakpoint-sm) {
+        font-size: rem(42px);
+        line-height: 1.2;
+    }
+}
+
+.description {
+    margin-top: var(--mantine-spacing-xl);
+    font-size: rem(24px);
+
+    @media (max-width: $mantine-breakpoint-sm) {
+        font-size: rem(18px);
+    }
+}
+
+.controls {
+    margin-top: calc(var(--mantine-spacing-lg) * 2);
+
+    @media (max-width: $mantine-breakpoint-sm) {
+        margin-top: var(--mantine-spacing-xl);
+    }
+}
+
+.glowing {
+    color: #ffffff;
+    animation: glow 1.5s infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 0 0 3px #63aae46e, 0 0 5px #4691ce3f, 0 0 10px #4691ce3f;
+    }
+    to {
+        text-shadow: 0 0px 10px #4691ce3f, 0 0px 20px #2872af41,
+            0 0px 30px #2872af44;
+    }
+}
+
+.button {
+    background-color: #ff5733;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.button:hover {
+    background-color: #c70039;
+    transform: scale(1.05);
+}
+
+.underline {
+    display: inline-block;
+    position: relative;
+    color: #ffffff;
+}
+
+.underline::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    transform: scaleX(0);
+    height: 2px;
+    bottom: 0;
+    left: 0;
+    background-color: #e1382b;
+    transform-origin: bottom right;
+    transition: transform 0.75s ease-out;
+}
+
+.underlineAnimated::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+}

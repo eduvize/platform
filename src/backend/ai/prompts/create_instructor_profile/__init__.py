@@ -1,0 +1,1 @@
+from .create_instructor_profile_prompt import CreateInstructorProfilePrompt

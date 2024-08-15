@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "eduvize.fullname" . }}-api
+  namespace: {{ .Release.Namespace }}
+  labels: 
+    {{ include "eduvize.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.api.replicas }}
+  selector:
+    matchLabels:
+      app: "{{ include "eduvize.fullname" . }}-api"
+      {{- include "eduvize.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: 
+        app: "{{ include "eduvize.fullname" . }}-api"
+        {{- include "eduvize.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if .Values.privateRegistry.enabled }}
+      imagePullSecrets:
+        - name: {{ .Values.privateRegistry.secretName }}
+      {{- end }}
+      containers:
+        - name: "{{ include "eduvize.fullname" . }}-api"
+          image: {{ .Values.api.image }}
+          ports:
+            - containerPort: {{ .Values.api.port }}
+          env:
+            - name: S3_ENDPOINT
+              value: "http://{{ include "eduvize.fullname" . }}-s3-service:9000"
+            - name: S3_PUBLIC_ENDPOINT
+              value: "{{- if .Values.ingress.tls.enabled }}https://{{ else }}http://{{ end }}s3.{{ .Values.ingress.hostname }}"
+            - name: S3_BUCKET
+              value: {{ .Values.storage.bucketName }}
+            - name: POSTGRES_HOST
+              value: "{{ include "eduvize.fullname" . }}-postgres-service:{{ .Values.database.port }}"
+            - name: POSTGRES_DB
+              value: {{ .Values.database.name }}
+            - name: POSTGRES_USER
+              value: {{ .Values.database.user }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: password
+            - name: REDIS_HOST
+              value: "{{ include "eduvize.fullname" . }}-redis-service:{{ .Values.redis.port }}"
+            - name: PORT
+              value: {{ .Values.api.port | quote }}
+            {{- range .Values.api.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+            {{- range .Values.api.envSecretMap }}
+            - name: {{ .name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .secret }}
+                  key: {{ .key }}
+            {{- end}}

@@ -1,0 +1,1 @@
+from .resume_scanner_prompt import ResumeScannerPrompt

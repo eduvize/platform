@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: playground
+  namespace: eduvize
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: playground
+  template:
+    metadata:
+      labels:
+        app: playground
+    spec:
+      {{- if .Values.privateRegistry.enabled }}
+      imagePullSecrets:
+        - name: {{ .Values.privateRegistry.secretName }}
+      {{- end }}
+      containers:
+        - name: ubuntu
+          image: {{ .Values.playground.environmentImage }}
+          command: ["sleep", "infinity"]
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+          automountServiceAccountToken: false
+          volumeMounts:
+            - name: playground-volume
+              mountPath: /userland
+            - name: playground-hidden
+              mountPath: /playground
+              readOnly: true
+        - name: playground-controller
+          image: {{ .Values.playground.image }}
+          env:
+            - name: POSTGRES_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: connection-string
+            - name: PORT
+              value: {{ .Values.playground.port | quote }}
+          ports:
+            - containerPort: {{ .Values.playground.port }}
+          volumeMounts:
+            - name: playground-volume
+              mountPath: /userland
+            - name: playground-hidden
+              mountPath: /playground
+      volumes:
+        - name: playground-volume
+          emptyDir: {}
+        - name: playground-hidden
+          emptyDir: {}
