@@ -112,6 +112,16 @@ abstract class BaseApi {
         ).then((r) => r.json());
     }
 
+    protected deleteWithPayload(url: string, data: any): Promise<void> {
+        return this.wrapAuthorization(() =>
+            fetch(`${apiEndpoint}/${this.prefix}/${url}`, {
+                method: "DELETE",
+                headers: this.get_headers(),
+                body: JSON.stringify(data),
+            })
+        ).then(() => {});
+    }
+
     protected deleteWithoutResponse(url: string): Promise<void> {
         return this.wrapAuthorization(() =>
             fetch(`${apiEndpoint}/${this.prefix}/${url}`, {

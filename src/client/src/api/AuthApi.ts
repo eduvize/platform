@@ -13,6 +13,12 @@ class AuthApi extends BaseApi {
     ): Promise<TokenResponse> {
         return this.post("register", { email, username, password });
     }
+
+    logout(): Promise<void> {
+        return this.deleteWithPayload("", {
+            refresh_token: localStorage.getItem("refreshToken"),
+        });
+    }
 }
 
 export default new AuthApi("auth");

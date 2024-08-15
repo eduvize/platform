@@ -4,6 +4,7 @@ import { Menu, Group, Center, Burger } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconChevronDown } from "@tabler/icons-react";
 import classes from "./Header.module.css";
+import { useLogout } from "@context/auth";
 
 const links = [
     { link: "/dashboard/courses", label: "Courses" },
@@ -20,17 +21,30 @@ const links = [
         label: "Account",
         links: [
             { link: "/dashboard/account/billing", label: "Billing" },
-            { link: "#", label: "Sign out" },
+            { key: "logout", link: "#", label: "Sign out" },
         ],
     },
 ];
 
 export function Header() {
+    const logout = useLogout();
     const [opened, { toggle }] = useDisclosure(false);
+
+    const getClickAction = (key?: string) => {
+        if (!key) return () => {};
+
+        if (key === "logout") {
+            return logout;
+        }
+
+        return () => {};
+    };
 
     const items = links.map((link) => {
         const menuItems = link.links?.map((item) => (
-            <Menu.Item key={item.link}>{item.label}</Menu.Item>
+            <Menu.Item key={item.link} onClick={getClickAction(item.key)}>
+                {item.label}
+            </Menu.Item>
         ));
 
         if (menuItems) {

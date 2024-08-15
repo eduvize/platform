@@ -11,6 +11,7 @@ type Context = {
         username: string,
         password: string
     ) => Promise<void>;
+    logout: () => void;
     isAuthenticated: boolean;
     userId: string | null;
 };
@@ -18,6 +19,7 @@ type Context = {
 const defaultValue: Context = {
     login: () => Promise.resolve(),
     register: () => Promise.resolve(),
+    logout: () => {},
     isAuthenticated: false,
     userId: null,
 };
@@ -147,6 +149,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         );
     };
 
+    const handleLogout = () => {
+        AuthApi.logout().finally(() => {
+            localStorage.removeItem("token");
+            localStorage.removeItem("refreshToken");
+            setIsAuthenticated(false);
+        });
+    };
+
     if (isAuthenticated === null) {
         return (
             <Center h="100vh">
@@ -160,6 +170,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             value={{
                 login: handleLogin,
                 register: handleRegister,
+                logout: handleLogout,
                 isAuthenticated,
                 userId,
             }}
