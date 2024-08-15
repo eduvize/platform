@@ -10,4 +10,5 @@ class AuthenticationPayload(BaseModel):
     password: str
     
 class TokenResponse(BaseModel):
-    token: str
+    access_token: str
+    refresh_token: str
