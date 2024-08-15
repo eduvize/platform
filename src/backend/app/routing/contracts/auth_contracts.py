@@ -10,4 +10,9 @@ class AuthenticationPayload(BaseModel):
     password: str
     
 class TokenResponse(BaseModel):
-    token: str
+    access_token: str
+    refresh_token: str
+    expires_in: int
+    
+class TokenRefreshPayload(BaseModel):
+    refresh_token: str

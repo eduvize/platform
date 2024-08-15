@@ -100,7 +100,7 @@ Now that you've completed the onboarding process, let's get started with plannin
 
     if (!instructor || !localUser) {
         return (
-            <Center>
+            <Center h="100%">
                 <Loader size="lg" type="dots" />
             </Center>
         );

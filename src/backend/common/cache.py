@@ -1,6 +1,7 @@
 from typing import List, Optional, Union
 import redis
 from config import get_redis_host
+from time import time
 
 redis_host = get_redis_host()
 if ":" in redis_host:
@@ -29,7 +30,7 @@ def set_key(
     
     client = _get_client()
     
-    client.set(key, value, ex=expiration)
+    client.set(key, value, ex=time() + expiration)
     
 def get_key(key: str) -> Optional[str]:
     """
@@ -65,6 +66,29 @@ def add_to_set(
             client.sadd(key, v)
     else:
         client.sadd(key, value)
+        
+def add_to_set_with_expiration(
+    key: str, 
+    value: Union[str, List[str]], 
+    expiration: int
+):
+    """
+    Adds a value to a sorted set in the Redis cache with an expiration time.
+    When reading the set, expired values will not be returned and will be removed.
+    
+    Args:
+        key (str): The key of the set
+        value (str): The value to add
+        expiration (int): The expiration time in seconds
+    """
+    
+    client = _get_client()
+    
+    if isinstance(value, list):
+        for v in value:
+            client.zadd(key, {v: int(time() + expiration)})
+    else:
+        client.zadd(key, {value: int(time() + expiration)})
     
 def remove_from_set(
     key: str, 
@@ -85,6 +109,68 @@ def remove_from_set(
             client.srem(key, v)
     else:
         client.srem(key, value)
+        
+def remove_from_set_with_expiration(
+    key: str, 
+    value: Union[str, List[str]]
+):
+    """
+    Removes a value from a sorted set in the Redis cache with an expiration time.
+    When reading the set, expired values will not be returned and will be removed.
+    
+    Args:
+        key (str): The key of the set
+        value (str): The value to remove
+    """
+    
+    client = _get_client()
+    
+    if isinstance(value, list):
+        for v in value:
+            client.zrem(key, v)
+    else:
+        client.zrem(key, value)
+        
+def is_in_set(
+    key: str, 
+    value: str
+) -> bool:
+    """
+    Checks if a value is in a set in the Redis cache
+
+    Args:
+        key (str): The key of the set
+        value (str): The value to check
+
+    Returns:
+        bool: True if the value is in the set, False otherwise
+    """
+    
+    client = _get_client()
+    
+    return client.sismember(key, value)
+
+def is_in_set_with_expiration(
+    key: str, 
+    value: str
+) -> bool:
+    """
+    Checks if a value is in a sorted set in the Redis cache with an expiration time.
+    This method removes expired values from the set before checking for the value.
+
+    Args:
+        key (str): The key of the set
+        value (str): The value to check
+
+    Returns:
+        bool: True if the value is in the set, False otherwise
+    """
+    
+    client = _get_client()
+    
+    client.zremrangebyscore(key, 0, int(time()))
+    
+    return client.zrank(key, value) is not None
     
 def get_set(key: str) -> List[str]:
     """
@@ -100,3 +186,21 @@ def get_set(key: str) -> List[str]:
     client = _get_client()
     
     return client.smembers(key)
+
+def get_set_with_expiration(key: str) -> List[str]:
+    """
+    Gets all values in a sorted set from the Redis cache with an expiration time.
+    This method removes expired values from the set before returning valid values.
+
+    Args:
+        key (str): The key of the set
+
+    Returns:
+        List[str]: The values in the set
+    """
+    
+    client = _get_client()
+    
+    client.zremrangebyscore(key, 0, int(time()))
+    
+    return client.zrange(key, 0, -1)

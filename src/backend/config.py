@@ -40,8 +40,11 @@ def get_database_connection_string(driver: Optional[str] = None) -> str:
     return f"{DRIVER}://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
 
 # Access tokens
-def get_token_expiration() -> int:
-    return int(os.getenv("TOKEN_EXPIRATION", "15"))
+def get_token_expiration_minutes() -> int:
+    return int(os.getenv("TOKEN_EXPIRATION_MINUTES", "10"))
+
+def get_refresh_token_expiration_days() -> int:
+    return int(os.getenv("REFRESH_TOKEN_EXPIRATION_DAYS", "7"))
 
 def get_token_secret() -> str:
     return os.getenv("TOKEN_SECRET", "secret")
