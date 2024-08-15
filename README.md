@@ -55,7 +55,7 @@ Eduvize is more than a project—it's a mission to democratize learning and make
 
 ## License
 
-Eduvize is licensed under the Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0). See the [LICENSE](LICENSE.md) file for details.
+Eduvize is licensed under the Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0). See the [LICENSE](LICENSE) file for details.
 
 ## Contributing
 
