@@ -7,6 +7,11 @@
     );
 }
 
+.logo {
+    max-width: 80%;
+    height: auto;
+}
+
 .inner {
     position: relative;
     padding-top: rem(200px);

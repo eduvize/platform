@@ -22,7 +22,6 @@ export function Hero() {
                         src={logo}
                         alt="Eduvize Logo"
                         className={classes.logo}
-                        height="200px"
                     />
                 </Center>
 
@@ -38,7 +37,7 @@ export function Hero() {
                     >
                         Supercharge
                     </Text>{" "}
-                    your dev skills using{" "}
+                    your dev skills using A{" "}
                     <Text
                         component="span"
                         variant="gradient"
@@ -48,7 +47,7 @@ export function Hero() {
                             underline ? ` ${classes.underlineAnimated}` : ""
                         }`}
                     >
-                        A Personal AI Tutor
+                        Personal AI Tutor
                     </Text>
                 </h1>
 
