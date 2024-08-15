@@ -2,14 +2,14 @@ import asyncio
 import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
-from app.routing.middleware import token_extractor, user_id_extractor
+from app.routing.middleware import token_validator, user_id_extractor
 from app.services import ChatService
 from .contracts.chat_contracts import ChatSessionReference, SendChatMessage
 
 router = APIRouter(
     prefix="/chat",
     dependencies=[
-        Depends(token_extractor),
+        Depends(token_validator),
         Depends(user_id_extractor)
     ]
 )

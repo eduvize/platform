@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends
 from app.services import AutocompleteService
-from app.routing.middleware import token_extractor
+from app.routing.middleware import token_validator
 
 router = APIRouter(
     prefix="/autocomplete",
     dependencies=[
-        Depends(token_extractor),
+        Depends(token_validator),
     ]
 )
 

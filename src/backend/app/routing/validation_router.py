@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends
-from app.routing.middleware import token_extractor, user_id_extractor
+from app.routing.middleware import token_validator, user_id_extractor
 from app.services import ValidationService
 from .contracts import AssertionResult
 
 router = APIRouter(
     prefix="/validation",
     dependencies=[
-        Depends(token_extractor),
+        Depends(token_validator),
         Depends(user_id_extractor)
     ]
 )

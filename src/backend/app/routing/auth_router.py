@@ -1,9 +1,13 @@
-from fastapi import APIRouter, Depends
+from typing import Optional
+from fastapi import APIRouter, Depends, Response
 from app.services import AuthService
+from .middleware.token_middleware import get_access_token
 
-from .contracts.auth_contracts import AuthenticationPayload, RegistrationPayload, TokenResponse, TokenRefreshPayload
+from .contracts.auth_contracts import AuthenticationPayload, RegistrationPayload, TokenResponse, RefreshTokenPayload
 
-router = APIRouter(prefix="/auth")
+router = APIRouter(
+    prefix="/auth"
+)
 
 @router.post("/login")
 async def login(
@@ -31,7 +35,7 @@ async def register(
 
 @router.post("/refresh")
 async def refresh(
-    payload: TokenRefreshPayload, 
+    payload: RefreshTokenPayload, 
     auth_service: AuthService = Depends(AuthService)
 ):
     access, refresh, expires_in = await auth_service.refresh_access(payload.refresh_token)
@@ -40,3 +44,16 @@ async def refresh(
         refresh_token=refresh,
         expires_in=expires_in
     )
+    
+@router.delete("/")
+async def logout(
+    payload: RefreshTokenPayload,
+    access_token: Optional[str] = Depends(get_access_token),
+    auth_service: AuthService = Depends(AuthService),
+):
+    auth_service.logout(
+        access_token=access_token, 
+        refresh_token=payload.refresh_token
+    )
+    
+    return Response(status_code=200)

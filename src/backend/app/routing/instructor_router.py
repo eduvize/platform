@@ -3,11 +3,11 @@ from fastapi.responses import RedirectResponse
 from app.services.instructor_service import InstructorNotFoundError
 from domain.dto.instructor.instructor import InstructorDto
 from app.services import InstructorService
-from .middleware import token_extractor, user_id_extractor
+from .middleware import token_validator, user_id_extractor
 
 router = APIRouter(
     prefix="/instructor",
-    dependencies=[Depends(token_extractor), Depends(user_id_extractor)]
+    dependencies=[Depends(token_validator), Depends(user_id_extractor)]
 )
 
 @router.get("/", response_model=InstructorDto)
