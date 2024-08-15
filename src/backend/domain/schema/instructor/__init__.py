@@ -1,1 +1,1 @@
-from .instructor import InstructorBase
+from .instructor import InstructorBase, Instructor
