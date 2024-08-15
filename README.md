@@ -35,6 +35,7 @@ To get involved with Eduvize, follow these steps:
    - `scripts/`: Utilities for deployment and other administrative tasks.
    - `assets/`: Contains extra content used throughout the system
      - `assets/email/`: Email templates (MJML)
+   - `kubernetes/`: Kubernetes resources and the Eduvize Helm Chart
 
 4. **Start Contributing**: Check out the `issues` section for tasks that need attention. Whether you're interested in squashing bugs, adding new features, or improving documentation, there's plenty to do.
 
