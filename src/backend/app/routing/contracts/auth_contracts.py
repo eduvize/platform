@@ -12,3 +12,7 @@ class AuthenticationPayload(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
+    expires_in: int
+    
+class TokenRefreshPayload(BaseModel):
+    refresh_token: str
