@@ -1,3 +1,62 @@
-![eduvize](https://github.com/user-attachments/assets/051ed1fc-964e-4f24-8b9e-3b8e883c7b2f)
-# Introduction
-Eduvize is a platform that enables anyone to learn a new skill without having to worry about imposter syndrome or falling behind on a proctored curriculum. With chat-based generative artificial intelligence becoming more and more popular and available, the tools are now in place to be able to build a platform that creates truly tailored learning plans and collaborative exercises for people to learn the way their minds want them to.
+![Eduvize Logo](https://github.com/user-attachments/assets/30ac9425-b080-42ce-8c98-ef0a0eed8b3b)
+## Introduction
+**Eduvize** is an open-source platform built to enhance developers' skills using AI-driven personalized learning. By contributing to Eduvize, you'll be helping to create a tool that empowers users to stay ahead in the rapidly evolving tech landscape through a tailored, interactive experience.
+
+## Project Overview
+
+Eduvize is more than just a learning platform—it's a developer's companion designed to provide a hands-on, practical approach to mastering modern software development skills. The platform leverages AI to generate personalized content, allowing users to focus on what they need to grow, whether that's understanding new frameworks, improving coding proficiency, or exploring advanced concepts in software engineering.
+
+### Core  Concepts
+
+- **User Profiles**: When users first join Eduvize, they start by creating a detailed profile that captures their hobbies, education, professional experience, and technical background. This includes information on the technologies they've worked with, self-assessed proficiency levels, and areas where they feel they need improvement. This comprehensive profile enables Eduvize to tailor learning paths and recommendations, providing a clear, personalized roadmap for skill development.
+- **Personal AI Tutors**: Eduvize harnesses the power of generative AI to analyze user profiles and recommend personalized learning paths. Once a user completes their profile, the AI processes the data to identify potential learning opportunities tailored to their unique needs. This information is then used to create a personal AI tutor that guides the user through customized courses and exercises, ensuring a targeted and effective learning experience.
+- **Interactive Code Challenges**: A key aspect of the Eduvize experience is its capability to generate and evaluate code challenges in real-time. To achieve this, the platform relies on robust, scalable systems that support live code execution and provide meaningful feedback. Sandbox environments are integrated into the backend, allowing users to write and run code during exercises and projects. Throughout this process, the personal AI tutor is embedded to offer guidance, making the coding experience interactive and supportive.
+- **Open-Source Ethos**: By contributing to Eduvize, you're not just improving a product—you're participating in a community-driven project that values transparency, collaboration, and continuous learning. The open-source nature of Eduvize allows for rapid iteration and improvement, driven by feedback and contributions from developers around the world.
+
+### Getting Started
+
+To get involved with Eduvize, follow these steps:
+
+1. **Clone the Repository**: Start by cloning the repository to your local development environment.
+
+   ```
+   git clone https://github.com/cameron5906/eduvize-ai.git
+   cd eduvize-ai
+   ```
+
+2. **Set Up the Environment**: Eduvize requires several dependencies, including Python, Node.js, and Docker. Refer to the `SETUP.md` file for detailed installation instructions.
+
+3. **Explore the Codebase**: Familiarize yourself with the project structure. Key directories include:
+
+   - `src/`: Contains the core application code for frontend, backend, and playground systems
+     - `src/client/`: Houses the React-based frontend
+     - `src/backend/`: Contains the Python API and related packages
+     - `src/playground/`: Contains the code for the interactive development environment
+   - `scripts/`: Utilities for deployment and other administrative tasks.
+   - `assets/`: Contains extra content used throughout the system
+     - `assets/email/`: Email templates (MJML)
+
+4. **Start Contributing**: Check out the `issues` section for tasks that need attention. Whether you're interested in squashing bugs, adding new features, or improving documentation, there's plenty to do.
+
+### Technical Details
+
+- **Backend**: Built with Python (FastAPI & Socket.IO), the backend is responsible for managing user and course data, executing AI tasks, and integrating with other external APIs. The AI components leverage OpenAI GPT models.
+- **Frontend**: The frontend is developed using React and TypeScript, it communicates with the backend using RESTful APIs.
+- **Database**: Eduvize uses PostgreSQL for persistent data storage, with SQLAlchemy as the ORM layer. Redis is employed for caching and real-time processing needs.
+- **Deployment**: The platform is designed to be deployed on Kubernetes, with Helm charts provided for effortless installation.
+
+### Why  Contribute?
+
+Eduvize is more than a project—it's a mission to democratize learning and make advanced software development skills accessible to all. By contributing, you'll have the opportunity to:
+
+- **Shape the Future of Developer Education**: Your work will directly impact how developers learn and grow, helping them stay competitive in an ever-changing industry.
+- **Collaborate with a Global Community**: Engage with other passionate developers, share knowledge, and learn from each other.
+- **Build Your Portfolio**: Showcase your skills by contributing to a project that's making a real difference.
+
+## License
+
+Eduvize is licensed under the Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0). See the [LICENSE](LICENSE.md) file for details.
+
+## Contributing
+
+We welcome all kinds of contributions. Check out our [Contributing Guidelines](CONTRIBUTING.md) to get started.
