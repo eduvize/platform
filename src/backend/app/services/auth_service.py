@@ -1,8 +1,16 @@
+from time import time
+from typing import Tuple
 from fastapi import Depends
 from passlib.context import CryptContext
-from config import get_token_expiration, get_token_secret
+from config import get_refresh_token_expiration_days, get_token_expiration_minutes, get_token_secret
+from common.cache import add_to_set_with_expiration, is_in_set_with_expiration
+from app.utilities.jwt import decode_token
 from ..services.user_service import UserService
 from ..utilities.jwt import create_token
+
+TOKEN_BLACKLIST_SET = "stale_refresh_tokens"
+DAYS_TO_MINUTES = 1440
+MINUTES_TO_SECONDS = 60
 
 class AuthService:
     """
@@ -25,7 +33,7 @@ class AuthService:
         self, 
         email: str, 
         password: str
-    ) -> str:
+    ) -> Tuple[str, str, int]:
         """
         Handles authenticating a user and generating an access token
 
@@ -37,21 +45,21 @@ class AuthService:
             ValueError: Invalid password
 
         Returns:
-            str: The generated access token
+            Tuple[str, str, int]: The generated access token, refresh token, and expiration time
         """
         user = await self.user_service.get_user("email", email)
         
         if not self._verify_password(password, user.password_hash):
             raise ValueError("Invalid password")
         
-        return self._generate_token(str(user.id))
+        return self._generate_tokens(str(user.id))
     
     async def register(
         self, 
         email: str, 
         username: str, 
         password: str
-    ) -> str:
+    ) -> Tuple[str, str, int]:
         """
         Handles the registration of a new user and generating an access token after successful registration
 
@@ -61,18 +69,54 @@ class AuthService:
             password (str): The password of the user
 
         Returns:
-            str: The generated access token
+            Tuple[str, str, int]: The generated access token, refresh token and expiration time
         """
         hashed_password = self._get_password_hash(password)
         
         user = await self.user_service.create_user(email, username, hashed_password)
         
-        return self._generate_token(str(user.id))
+        return self._generate_tokens(str(user.id))
     
-    def _generate_token(
+    async def refresh_access(
+        self,
+        refresh_token: str
+    ) -> Tuple[str, str, int]:
+        """
+        Refreshes a user's access token using a valid refresh token
+
+        Args:
+            refresh_token (str): The refresh token to use for generating a new access token
+
+        Returns:
+            Tuple[str, str, int]: The generated access token, refresh token and expiration time
+        """
+        
+        if is_in_set_with_expiration(TOKEN_BLACKLIST_SET, refresh_token):
+            raise ValueError("Invalid refresh token")
+        
+        payload = decode_token(refresh_token, get_token_secret())
+        user_id = payload["id"]
+        user = await self.user_service.get_user("id", user_id)
+        
+        if not user:
+            raise ValueError("Invalid user")
+        
+        decoded_token = decode_token(refresh_token, get_token_secret())
+        expires_at = int(decoded_token["exp"])
+        remaining_seconds = expires_at - int(time())
+        
+        add_to_set_with_expiration(
+            key=TOKEN_BLACKLIST_SET, 
+            value=refresh_token, 
+            expiration=remaining_seconds
+        )
+        
+        return self._generate_tokens(str(user.id))
+    
+    def _generate_tokens(
         self, 
         user_id: str
-    ) -> str:
+    ) -> Tuple[str, str, int]:
         """
         Generates a new user access token using configuration values for signing key and expiration
 
@@ -80,12 +124,16 @@ class AuthService:
             user_id (str): The user's unique identifier
 
         Returns:
-            str: The generated access token
+            Tuple[str, str, int]: The generated access token, refresh token and expiration time
         """
         signing_key = get_token_secret()
-        token_expiration_minutes = get_token_expiration()
+        token_expiration_minutes = get_token_expiration_minutes()
+        refresh_token_expiration_days = get_refresh_token_expiration_days()
         
-        return create_token({"id": user_id}, signing_key, token_expiration_minutes)
+        access_token = create_token({"id": user_id}, signing_key, token_expiration_minutes)
+        refresh_token = create_token({"id": user_id}, signing_key, refresh_token_expiration_days * DAYS_TO_MINUTES)
+    
+        return access_token, refresh_token, token_expiration_minutes * MINUTES_TO_SECONDS
     
     def _verify_password(
         self, 
