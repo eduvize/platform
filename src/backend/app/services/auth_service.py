@@ -8,7 +8,7 @@ from app.utilities.jwt import decode_token
 from ..services.user_service import UserService
 from ..utilities.jwt import create_token
 
-TOKEN_BLACKLIST_SET = "stale_refresh_tokens"
+TOKEN_BLACKLIST_SET = "stale_tokens"
 DAYS_TO_MINUTES = 1440
 MINUTES_TO_SECONDS = 60
 
@@ -76,6 +76,36 @@ class AuthService:
         user = await self.user_service.create_user(email, username, hashed_password)
         
         return self._generate_tokens(str(user.id))
+    
+    def logout(self, access_token: str, refresh_token: str):
+        """
+        Logs out a user by invalidating their access and refresh tokens
+
+        Args:
+            access_token (str): The user's access token
+            refresh_token (str): The user's refresh token
+        """
+        
+        decoded_token = decode_token(access_token, get_token_secret())
+        decoded_refresh = decode_token(refresh_token, get_token_secret())
+        
+        exp_token = int(decoded_token["exp"])
+        exp_refresh = int(decoded_refresh["exp"])
+        
+        remaining_token_seconds = exp_token - int(time())
+        remaining_refresh_seconds = exp_refresh - int(time())
+        
+        add_to_set_with_expiration(
+            key=TOKEN_BLACKLIST_SET, 
+            value=access_token, 
+            expiration=remaining_token_seconds
+        )
+        
+        add_to_set_with_expiration(
+            key=TOKEN_BLACKLIST_SET, 
+            value=refresh_token, 
+            expiration=remaining_refresh_seconds
+        )
     
     async def refresh_access(
         self,
