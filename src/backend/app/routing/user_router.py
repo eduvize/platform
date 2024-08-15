@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, File, Response, UploadFile
-from .middleware import token_extractor, user_id_extractor
+from .middleware import token_validator, user_id_extractor
 from app.services import UserService, UserOnboardingService
 
 from app.utilities.profile import get_user_profile_text
@@ -8,7 +8,7 @@ from domain.dto.user import UserDto
 
 router = APIRouter(
     prefix="/users",
-    dependencies=[Depends(token_extractor), Depends(user_id_extractor)]
+    dependencies=[Depends(token_validator), Depends(user_id_extractor)]
 )
 
 @router.get("/me", response_model=UserDto)

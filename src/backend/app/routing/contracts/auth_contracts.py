@@ -14,5 +14,5 @@ class TokenResponse(BaseModel):
     refresh_token: str
     expires_in: int
     
-class TokenRefreshPayload(BaseModel):
+class RefreshTokenPayload(BaseModel):
     refresh_token: str
