@@ -1,14 +1,35 @@
 -- Create table for Users
-CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    username TEXT NOT NULL UNIQUE,
-    email TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
+CREATE TABLE IF NOT EXISTS users
+(
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    username TEXT NOT NULL,
+    email TEXT NOT NULL,
+    password_hash TEXT,
     pending_verification BOOLEAN NOT NULL DEFAULT FALSE,
     verification_code TEXT,
-    verification_sent_at_utc TIMESTAMP,
-    created_at_utc TIMESTAMP NOT NULL DEFAULT now(),
-    last_login_at_utc TIMESTAMP
+    verification_sent_at_utc TIMESTAMP WITHOUT TIME ZONE,
+    created_at_utc TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    last_login_at_utc TIMESTAMP WITHOUT TIME ZONE,
+    CONSTRAINT users_pkey PRIMARY KEY (id),
+    CONSTRAINT users_email_key UNIQUE (email),
+    CONSTRAINT users_username_key UNIQUE (username)
+);
+
+-- Create table for Facebook auth
+CREATE TABLE IF NOT EXISTS users_external_auth (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    provider_id TEXT NOT NULL,
+    external_id TEXT NOT NULL UNIQUE,
+    created_at_utc TIMESTAMP NOT NULL DEFAULT now()
+);
+
+-- Create table for Google auth
+CREATE TABLE IF NOT EXISTS users_google_auth (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    google_id TEXT NOT NULL UNIQUE,
+    created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
 
 -- Create table for User Profiles

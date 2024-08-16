@@ -20,17 +20,29 @@ class User(UserBase, table=True):
     __tablename__ = "users"
     
     id: uuid.UUID                       = Field(default_factory=uuid.uuid4, primary_key=True)
-    password_hash: str                  = Field(nullable=False)
+    password_hash: str                  = Field(nullable=True)
     verification_code: Optional[str]    = Field()
     verification_sent_at_utc: datetime  = Field(default_factory=datetime.utcnow)
     
     last_login_at_utc: datetime         = Field(default_factory=datetime.utcnow)
     
     profile: "UserProfile"                                              = Relationship(back_populates="user")
+    external_auth: Optional["UserExternalAuth"]                         = Relationship(back_populates="user")
     instructor: Optional["instructor.Instructor"]                       = Relationship(back_populates="user")
     curriculums: list["UserCurriculum"]                                 = Relationship(back_populates="user")
     curriculum_reviews: list["curriculum.CurriculumReview"]             = Relationship(back_populates="user")
     curriculum_enrollments: list["curriculum.CurriculumEnrollment"]     = Relationship(back_populates="user")
+    
+class UserExternalAuth(SQLModel, table=True):
+    __tablename__ = "users_external_auth"
+    
+    id: uuid.UUID                       = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID                  = Field(default=None, foreign_key="users.id")
+    provider_id: str                    = Field(nullable=False)
+    external_id: str                    = Field(nullable=False)
+    created_at_utc: datetime            = Field(default_factory=datetime.utcnow)
+    
+    user: User                          = Relationship(back_populates="external_auth")
 
 class UserProfileBase(SQLModel):
     first_name: Optional[str]                           = Field()
