@@ -5,3 +5,4 @@ from .user_onboarding_service import UserOnboardingService
 from .user_service import UserService
 from .validation_service import ValidationService
 from .chat_service import ChatService
+from .playground_service import PlaygroundService
