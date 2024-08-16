@@ -1,8 +1,13 @@
 import { useEffect, useLayoutEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuthenticated, useLogin, useRegistration } from "@context/auth";
+import { Link, useLocation, useMatch, useNavigate } from "react-router-dom";
+import {
+    useAuthenticated,
+    useLogin,
+    useOAuth,
+    useRegistration,
+} from "@context/auth";
 import { AuthenticationPayload } from "@contracts";
-import { FacebookButton, GoogleButton } from "@atoms";
+import { GithubButton, GoogleButton } from "@atoms";
 import { useToggle, upperFirst } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
 import {
@@ -20,9 +25,13 @@ import {
     Center,
     Space,
 } from "@mantine/core";
+import { OAuthProvider } from "@models/enums";
 
 export const Authentication = (props: PaperProps) => {
+    const isOnAuthRoute = useMatch("/auth");
     const isAuthenticated = useAuthenticated();
+    const oauth = useOAuth();
+    const location = useLocation();
     const navigate = useNavigate();
     const [login, loginFailed, resetLogin] = useLogin();
     const [register, registerFailed, resetRegister] = useRegistration();
@@ -48,6 +57,20 @@ export const Authentication = (props: PaperProps) => {
             navigate("/dashboard");
         }
     });
+
+    useEffect(() => {
+        if (!isOnAuthRoute) {
+            navigate("/auth");
+        }
+    }, [isOnAuthRoute]);
+
+    useEffect(() => {
+        const oauthCode = new URLSearchParams(location.search).get("code");
+
+        if (!oauthCode) return;
+
+        oauth.exchange(oauthCode);
+    }, [location.search]);
 
     useEffect(() => {
         resetLogin();
@@ -90,8 +113,18 @@ export const Authentication = (props: PaperProps) => {
                     </Text>
 
                     <Group grow mb="md" mt="md">
-                        <GoogleButton radius="xl">Google</GoogleButton>
-                        <FacebookButton radius="xl">Facebook</FacebookButton>
+                        <GoogleButton
+                            radius="xl"
+                            onClick={() => oauth.redirect(OAuthProvider.Google)}
+                        >
+                            Google
+                        </GoogleButton>
+                        <GithubButton
+                            radius="xl"
+                            onClick={() => oauth.redirect(OAuthProvider.Github)}
+                        >
+                            Github
+                        </GithubButton>
                     </Group>
 
                     <Divider

@@ -16,3 +16,6 @@ class TokenResponse(BaseModel):
     
 class RefreshTokenPayload(BaseModel):
     refresh_token: str
+    
+class OAuthPayload(BaseModel):
+    code: str

@@ -1,10 +1,14 @@
+import json
 from time import time
-from typing import Tuple
+from typing import Optional, Tuple
 from fastapi import Depends
 from passlib.context import CryptContext
+from domain.schema.user import User
 from config import get_refresh_token_expiration_days, get_token_expiration_minutes, get_token_secret
 from common.cache import add_to_set_with_expiration, is_in_set_with_expiration
+from app.utilities.oauth import exchange_github_code_for_token, get_github_user_info, exchange_google_code_for_token, get_google_user_info
 from app.utilities.jwt import decode_token
+from domain.enums.auth import OAuthProvider
 from ..services.user_service import UserService
 from ..utilities.jwt import create_token
 
@@ -141,6 +145,49 @@ class AuthService:
             expiration=remaining_seconds
         )
         
+        return self._generate_tokens(str(user.id))
+    
+    async def complete_oauth_code_flow(
+        self,
+        provider: OAuthProvider,
+        code: str
+    ) -> Tuple[str, str, int]:
+        """
+        Provided an OAuth provider and code, completes the OAuth flow to authenticate a user and generate tokens
+
+        Args:
+            code (str): The OAuth code provided by the provider
+        """
+
+        user: Optional[User] = None
+
+        if provider == OAuthProvider.GITHUB:
+            access_token = exchange_github_code_for_token(code)
+            github_user = get_github_user_info(access_token)
+            
+            try:
+                user = await self.user_service.get_user("email", github_user.email_address)
+            except ValueError:
+                user = await self.user_service.create_external_user(
+                    provider=provider,
+                    user_id=github_user.username,
+                    email_address=github_user.email_address,
+                    avatar_url=github_user.avatar_url
+                )
+        elif provider == OAuthProvider.GOOGLE:
+            access_token = exchange_google_code_for_token(code)
+            google_user = get_google_user_info(access_token)
+            
+            try:
+                user = await self.user_service.get_user("email", google_user.email_address)
+            except ValueError:
+                user = await self.user_service.create_external_user(
+                    provider=provider,
+                    user_id=google_user.username,
+                    email_address=google_user.email_address,
+                    avatar_url=google_user.avatar_url
+                )
+    
         return self._generate_tokens(str(user.id))
     
     def _generate_tokens(

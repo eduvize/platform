@@ -54,6 +54,8 @@ api:
       value: dashboard
     - name: NOREPLY_ADDRESS
       value: no-reply@mail.eduvize.dev
+    - name: AUTH_REDIRECT_URL
+      value: https://eduvize.dev/auth
   envSecretMap:
     - name: AWS_ACCESS_KEY
       secret: aws
@@ -73,6 +75,18 @@ api:
     - name: MAILGUN_API_KEY
       secret: mailgun
       key: api-key
+    - name: GITHUB_CLIENT_ID
+      secret: github-oauth
+      key: client-id
+    - name: GITHUB_CLIENT_SECRET
+      secret: github-oauth
+      key: client-secret
+    - name: GOOGLE_CLIENT_ID
+      secret: google-oauth
+      key: client-id
+    - name: GOOGLE_CLIENT_SECRET
+      secret: google-oauth
+      key: client-secret
 
 playground:
   image: registry.crosswinds.cloud/eduvize/playground:latest

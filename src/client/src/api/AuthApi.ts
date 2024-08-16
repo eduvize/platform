@@ -1,3 +1,4 @@
+import { OAuthProvider } from "@models/enums";
 import BaseApi from "./BaseApi";
 import { TokenResponse } from "@contracts";
 
@@ -12,6 +13,13 @@ class AuthApi extends BaseApi {
         password: string
     ): Promise<TokenResponse> {
         return this.post("register", { email, username, password });
+    }
+
+    exchangeOAuthCode(
+        provider: OAuthProvider,
+        code: string
+    ): Promise<TokenResponse> {
+        return this.post(`oauth/${provider}`, { code });
     }
 
     logout(): Promise<void> {

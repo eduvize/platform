@@ -79,3 +79,20 @@ def get_email_noreply_address() -> str:
 # OpenAI
 def get_openai_key() -> str:
     return os.getenv("OPENAI_KEY")
+
+# GitHub
+def get_github_client_id() -> str:
+    return os.getenv("GITHUB_CLIENT_ID")
+
+def get_github_client_secret() -> str:
+    return os.getenv("GITHUB_CLIENT_SECRET")
+
+# Google
+def get_google_client_id() -> str:
+    return os.getenv("GOOGLE_CLIENT_ID")
+
+def get_google_client_secret() -> str:
+    return os.getenv("GOOGLE_CLIENT_SECRET")
+
+def get_auth_redirect_url() -> str:
+    return os.getenv("AUTH_REDIRECT_URL")
