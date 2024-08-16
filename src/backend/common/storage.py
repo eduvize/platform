@@ -54,7 +54,7 @@ async def import_from_url(
         purpose (StoragePurpose): The purpose of the bucket to upload the file to
 
     Returns:
-        bytes: The object ID of the uploaded file in the storage bucket
+        str: The object ID of the uploaded file in the storage bucket
     """
     response = requests.get(url)
     response.raise_for_status()

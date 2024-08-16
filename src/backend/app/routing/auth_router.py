@@ -1,9 +1,10 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, Response
 from app.services import AuthService
+from domain.enums.auth import OAuthProvider
 from .middleware.token_middleware import get_access_token
 
-from .contracts.auth_contracts import AuthenticationPayload, RegistrationPayload, TokenResponse, RefreshTokenPayload
+from .contracts.auth_contracts import AuthenticationPayload, OAuthPayload, RegistrationPayload, TokenResponse, RefreshTokenPayload
 
 router = APIRouter(
     prefix="/auth"
@@ -27,6 +28,20 @@ async def register(
     auth_service: AuthService = Depends(AuthService)
 ):
     access, refresh, expires_in = await auth_service.register(payload.email, payload.username, payload.password)
+    return TokenResponse.model_construct(
+        access_token=access, 
+        refresh_token=refresh,
+        expires_in=expires_in
+    )
+    
+@router.post("/oauth/{provider}")
+async def oauth_login(
+    provider: OAuthProvider,
+    payload: OAuthPayload,
+    auth_service: AuthService = Depends(AuthService)
+):
+    access, refresh, expires_in = await auth_service.complete_oauth_code_flow(provider, payload.code)
+
     return TokenResponse.model_construct(
         access_token=access, 
         refresh_token=refresh,

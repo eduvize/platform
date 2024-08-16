@@ -14,7 +14,7 @@ from domain.mapping import (
     map_skill_data, 
     map_discipline_data
 )
-from domain.schema.user import User, UserIdentifiers, UserProfile
+from domain.schema.user import User, UserExternalAuth, UserIdentifiers, UserProfile
 from common.database import engine
 from app.utilities.database import recursive_load_options, set_none_for_unavailable_relationships
 
@@ -22,7 +22,7 @@ class UserRepository:
     """
     Handles all primary data access for user records in the database
     """
-    async def create_user(self, email_address: str, username: str, password_hash: str) -> User:
+    async def create_user(self, email_address: str, username: str, password_hash: Optional[str]) -> User:
         """
         Creates a new ueer record in the database
 
@@ -34,7 +34,11 @@ class UserRepository:
         Returns:
             User: The newly created user record
         """
-        user = User(email=email_address, username=username, password_hash=password_hash)
+        user = User(
+            email=email_address, 
+            username=username, 
+            password_hash=password_hash
+        )
         user.profile = UserProfile()
         
         with Session(engine) as session:
@@ -43,6 +47,30 @@ class UserRepository:
             session.refresh(user)
         
         return user
+    
+    async def create_external_auth(self, user_id: UUID, provider: str, external_id: str):
+        """
+        Creates a new external authentication record for a user
+
+        Args:
+            user_id (UUID): The ID of the user to associate the external auth with
+            provider (str): The provider of the external authentication
+            external_id (str): The ID of the user on the external provider
+        """
+        with Session(engine) as session:
+            user_query = select(User).where(User.id == user_id)
+            resultset = session.exec(user_query)
+            
+            user = resultset.first()
+            if user is None:
+                return None
+            
+            user.external_auth = UserExternalAuth(
+                provider_id=provider, 
+                external_id=external_id
+            )
+            
+            session.commit()
     
     async def upsert_profile(self, user_id: UUID, profile: UserProfileDto):
         """
@@ -140,11 +168,14 @@ class UserRepository:
             if include:
                 for field in include:
                     query = query.options(*recursive_load_options(User, field))
+                    
+            query = query.options(joinedload(User.external_auth))
         
             resultset = session.exec(query)
             record = resultset.first()
             
-            set_none_for_unavailable_relationships(record, include)
+            if record:
+                set_none_for_unavailable_relationships(record, include)
             
             return record
         

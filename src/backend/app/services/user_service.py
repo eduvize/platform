@@ -7,9 +7,11 @@ from fastapi import Depends, UploadFile
 from mimetypes import guess_extension, guess_type
 
 from app.services.user_onboarding_service import UserOnboardingService
+from domain.enums.auth import OAuthProvider
 from domain.dto.profile import UserProfileDto
-from common.storage import StoragePurpose, get_public_object_url, upload_object
+from common.storage import StoragePurpose, get_public_object_url, upload_object, import_from_url
 from domain.schema.user import User, UserIdentifiers, UserIncludes
+from app.utilities.string_generation import generate_random_string
 from app.repositories import UserRepository
 
 class UserCreationError(Exception):
@@ -58,10 +60,66 @@ class UserService:
             raise UserCreationError("Username already in use")
         
         # Create the user record
-        user = await self.user_repo.create_user(email_address, username, password_hash)
+        user = await self.user_repo.create_user(
+            email_address=email_address, 
+            username=username, 
+            password_hash=password_hash
+        )
         
         # Begin onboarding with verification
         await self.onboarding_service.send_verification_email(user.id)
+        
+        return user
+    
+    async def create_external_user(
+        self,
+        provider: OAuthProvider,
+        user_id: str,
+        email_address: str,
+        avatar_url: str
+    ) -> User:
+        """
+        Creates a new user with optional profile data from an external OAuth provider.
+
+        Args:
+            provider (OAuthProvider): The provider the user authenticated with
+            user_id (str): The external user ID
+            email_address (str): The user's email address
+            avatar_url (str): The URL to the user's avatar
+
+        Returns:
+            User: The newly created user
+        """
+        
+        existing_email = await self.user_repo.get_user("email", email_address)
+        
+        if existing_email:
+            raise UserCreationError("Email already in use")
+        
+        username = f"{provider}_{generate_random_string(12)}"
+        
+        avatar_object_id = await import_from_url(avatar_url, StoragePurpose.AVATAR)
+        avatar_url = get_public_object_url(StoragePurpose.AVATAR, avatar_object_id)
+           
+        user = await self.user_repo.create_user(
+            email_address=email_address,
+            username=username,
+            password_hash=None
+        )
+        
+        await self.user_repo.create_external_auth(
+            user_id=user.id,
+            provider=provider.value,
+            external_id=user_id
+        )
+        
+        await self.user_repo.set_avatar_url(
+            user_id=user.id,
+            avatar_url=avatar_url
+        )
+        
+        # Verify the user since they authenticated with an external provider
+        await self.user_repo.mark_verified(user.id)
         
         return user
     
@@ -86,6 +144,10 @@ class UserService:
         if user is None:
             raise ValueError("User not found")
         
+        if user.external_auth:
+            if user.external_auth.provider_id == OAuthProvider.GITHUB.value:
+                user.username = user.external_auth.external_id
+            
         return user
     
     async def update_profile(self, user_id: str, profile_dto: UserProfileDto):
