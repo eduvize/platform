@@ -3,9 +3,14 @@ import { jwtDecode } from "jwt-decode";
 import { createContext } from "use-context-selector";
 import { AuthApi } from "@api";
 import { Center, Loader } from "@mantine/core";
+import { OAuthProvider } from "@models/enums";
+const githubClientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 type Context = {
     login: (email: string, password: string) => Promise<void>;
+    oauthRedirect: (provider: OAuthProvider) => void;
+    oauthExchange: (code: string) => void;
     register: (
         email: string,
         username: string,
@@ -18,6 +23,8 @@ type Context = {
 
 const defaultValue: Context = {
     login: () => Promise.resolve(),
+    oauthRedirect: () => {},
+    oauthExchange: () => {},
     register: () => Promise.resolve(),
     logout: () => {},
     isAuthenticated: false,
@@ -135,6 +142,44 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             });
     };
 
+    const handleOAuthRedirect = (provider: OAuthProvider) => {
+        localStorage.setItem("oauth_provider", provider);
+
+        const redirectUrl = window.location.href.split("?")[0];
+
+        switch (provider) {
+            case OAuthProvider.Github: {
+                window.location.href = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&scope=user:email`;
+                break;
+            }
+
+            case OAuthProvider.Google: {
+                window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUrl}&response_type=code&scope=email%20profile`;
+            }
+        }
+    };
+
+    const handleOAuthCodeExchange = (code: string) => {
+        const provider = localStorage.getItem("oauth_provider");
+
+        if (!provider) return;
+
+        AuthApi.exchangeOAuthCode(provider as OAuthProvider, code).then(
+            ({ access_token, refresh_token, expires_in }) => {
+                handleSetTokens(access_token, refresh_token);
+                handleSetRefreshTimeout(expires_in);
+                setIsAuthenticated(true);
+
+                const currentUrlWithoutQs = window.location.href.split("?")[0];
+                window.history.replaceState(
+                    {},
+                    document.title,
+                    currentUrlWithoutQs
+                );
+            }
+        );
+    };
+
     const handleRegister = async (
         email: string,
         username: string,
@@ -169,6 +214,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         <AuthContext.Provider
             value={{
                 login: handleLogin,
+                oauthRedirect: handleOAuthRedirect,
+                oauthExchange: handleOAuthCodeExchange,
                 register: handleRegister,
                 logout: handleLogout,
                 isAuthenticated,
