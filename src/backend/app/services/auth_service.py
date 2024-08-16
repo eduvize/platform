@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 from domain.schema.user import User
 from config import get_refresh_token_expiration_days, get_token_expiration_minutes, get_token_secret
 from common.cache import add_to_set_with_expiration, is_in_set_with_expiration
-from app.utilities.oauth import exchange_github_code_for_token, get_github_user_info
+from app.utilities.oauth import exchange_github_code_for_token, get_github_user_info, exchange_google_code_for_token, get_google_user_info
 from app.utilities.jwt import decode_token
 from domain.enums.auth import OAuthProvider
 from ..services.user_service import UserService
@@ -175,10 +175,18 @@ class AuthService:
                     avatar_url=github_user.avatar_url
                 )
         elif provider == OAuthProvider.GOOGLE:
-            pass
-        
-        if not user:
-            raise ValueError("Invalid user")
+            access_token = exchange_google_code_for_token(code)
+            google_user = get_google_user_info(access_token)
+            
+            try:
+                user = await self.user_service.get_user("email", google_user.email_address)
+            except ValueError:
+                user = await self.user_service.create_external_user(
+                    provider=provider,
+                    user_id=google_user.username,
+                    email_address=google_user.email_address,
+                    avatar_url=google_user.avatar_url
+                )
     
         return self._generate_tokens(str(user.id))
     
