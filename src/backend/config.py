@@ -93,3 +93,6 @@ def get_google_client_id() -> str:
 
 def get_google_client_secret() -> str:
     return os.getenv("GOOGLE_CLIENT_SECRET")
+
+def get_auth_redirect_url() -> str:
+    return os.getenv("AUTH_REDIRECT_URL")
