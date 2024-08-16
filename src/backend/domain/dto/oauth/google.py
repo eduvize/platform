@@ -2,7 +2,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class GitHubUser(BaseModel):
+class GoogleUser(BaseModel):
     name: Optional[str] = None
     username: str
     email_address: str
