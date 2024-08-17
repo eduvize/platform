@@ -17,6 +17,7 @@ spec:
       imagePullSecrets:
         - name: {{ .Values.privateRegistry.secretName }}
       {{- end }}
+      terminationGracePeriodSeconds: 5
       containers:
         - name: ubuntu
           image: {{ .Values.playground.environmentImage }}
@@ -27,7 +28,6 @@ spec:
             runAsUser: 1000
             runAsGroup: 1000
             runAsNonRoot: true
-          automountServiceAccountToken: false
           volumeMounts:
             - name: playground-volume
               mountPath: /userland
@@ -44,6 +44,18 @@ spec:
                   key: connection-string
             - name: PORT
               value: {{ .Values.playground.port | quote }}
+            - name: BASIC_AUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.basicAuth.username.secret }}
+                  key: {{ .Values.basicAuth.username.key }}
+            - name: BASIC_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.basicAuth.password.secret }}
+                  key: {{ .Values.basicAuth.password.key }}
+            - name: BASE_API_URL
+              value: "http://{{ include "eduvize.fullname" . }}-api-service:{{ .Values.api.port }}/api"
           ports:
             - containerPort: {{ .Values.playground.port }}
           volumeMounts:
