@@ -1,0 +1,4 @@
+sqlmodel
+kubernetes
+requests
+psycopg2-binary
