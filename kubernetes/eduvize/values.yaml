@@ -89,8 +89,9 @@ api:
       key: client-secret
 
 playground:
-  image: registry.crosswinds.cloud/eduvize/playground:latest
+  image: registry.crosswinds.cloud/eduvize/playground-controller:latest
   environmentImage: registry.crosswinds.cloud/eduvize/playground-environment:latest
+  orchestratorImage: registry.crosswinds.cloud/eduvize/playground-orchestrator:latest
   port: 8100
 
 redis:
@@ -100,6 +101,14 @@ redis:
 
 persistence:
   storageClass: microk8s-hostpath
+
+basicAuth:
+  username:
+    secret: basic-auth
+    key: username
+  password:
+    secret: basic-auth
+    key: password
 
 privateRegistry:
   enabled: true

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ include "eduvize.fullname" . }}-playground-orchestrator"
+  namespace: eduvize
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "{{ include "eduvize.fullname" . }}-playground-orchestrator"
+  template:
+    metadata:
+      labels:
+        app: "{{ include "eduvize.fullname" . }}-playground-orchestrator"
+    spec:
+      serviceAccountName: playground-orchestrator-sa
+      {{- if .Values.privateRegistry.enabled }}
+      imagePullSecrets:
+        - name: {{ .Values.privateRegistry.secretName }}
+      {{- end }}
+      containers:
+      - name: "{{ include "eduvize.fullname" . }}-playground-orchestrator"
+        image: {{ .Values.playground.orchestratorImage }}
+        env:
+        - name: POSTGRES_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: postgres
+              key: connection-string
+        - name: API_BASE_URL
+          value: "http://{{ include "eduvize.fullname" . }}-api-service:{{ .Values.api.port }}/api"
+        - name: BASIC_AUTH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.basicAuth.username.secret }}
+              key: {{ .Values.basicAuth.username.key }}
+        - name: BASIC_AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.basicAuth.password.secret }}
+              key: {{ .Values.basicAuth.password.key }}
