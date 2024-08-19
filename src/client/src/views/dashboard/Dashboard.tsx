@@ -1,12 +1,13 @@
 import { Route, Routes, useMatch } from "react-router-dom";
-import { SocketProvider } from "@context/socket";
 import { UserProvider } from "@context/user";
 import { useOnboarding } from "@context/user/hooks";
 import { Profile } from "@views/profile";
 import { Courses } from "@views/courses";
-import { Container } from "@mantine/core";
+import { Card, Container } from "@mantine/core";
 import { Header } from "./sections";
 import { SetupCta, VerificationCta } from "./cta";
+import { Playground } from "@organisms";
+import { PlaygroundProvider } from "@context/playground";
 
 const CallToActionOrView = ({ children }: { children: React.ReactNode }) => {
     const isProfile = useMatch("/dashboard/profile");
@@ -25,39 +26,41 @@ export const Dashboard = () => {
     const containerWidth = !is_profile_complete || !is_verified ? "lg" : "xl";
 
     return (
-        <SocketProvider>
-            <UserProvider>
-                <Header />
+        <UserProvider>
+            <Header />
 
-                <Container size={containerWidth} fluid={!!isCourses}>
-                    <Routes>
-                        <Route
-                            path="/"
-                            element={
-                                <CallToActionOrView>
-                                    <Courses />
-                                </CallToActionOrView>
-                            }
-                        />
-                        <Route
-                            path="courses"
-                            element={
-                                <CallToActionOrView>
-                                    <Courses />
-                                </CallToActionOrView>
-                            }
-                        />
-                        <Route
-                            path="profile"
-                            element={
-                                <CallToActionOrView>
-                                    <Profile />
-                                </CallToActionOrView>
-                            }
-                        />
-                    </Routes>
-                </Container>
-            </UserProvider>
-        </SocketProvider>
+            <PlaygroundProvider>
+                <Playground />
+            </PlaygroundProvider>
+
+            <Container size={containerWidth} fluid={!!isCourses}>
+                <Routes>
+                    <Route
+                        path="/"
+                        element={
+                            <CallToActionOrView>
+                                <Courses />
+                            </CallToActionOrView>
+                        }
+                    />
+                    <Route
+                        path="courses"
+                        element={
+                            <CallToActionOrView>
+                                <Courses />
+                            </CallToActionOrView>
+                        }
+                    />
+                    <Route
+                        path="profile"
+                        element={
+                            <CallToActionOrView>
+                                <Profile />
+                            </CallToActionOrView>
+                        }
+                    />
+                </Routes>
+            </Container>
+        </UserProvider>
     );
 };

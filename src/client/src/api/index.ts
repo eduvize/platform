@@ -5,6 +5,7 @@ import UserApi from "./UserApi";
 import InstructorApi from "./InstructorApi";
 import ValidationApi from "./ValidationApi";
 import ChatApi from "./ChatApi";
+import PlaygroundApi from "./PlaygroundApi";
 
 export {
     AuthApi,
@@ -14,4 +15,5 @@ export {
     InstructorApi,
     ValidationApi,
     ChatApi,
+    PlaygroundApi,
 };
