@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ include "eduvize.fullname" . }}-playground-orchestrator"
+  namespace: eduvize
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "{{ include "eduvize.fullname" . }}-playground-orchestrator"
+  template:
+    metadata:
+      labels:
+        app: "{{ include "eduvize.fullname" . }}-playground-orchestrator"
+    spec:
+      serviceAccountName: playground-orchestrator-sa
+      {{- if .Values.privateRegistry.enabled }}
+      imagePullSecrets:
+        - name: {{ .Values.privateRegistry.secretName }}
+      {{- end }}
+      containers:
+      - name: "{{ include "eduvize.fullname" . }}-playground-orchestrator"
+        image: {{ .Values.playground.orchestratorImage }}
+        env:
+        - name: POSTGRES_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: postgres
+              key: connection-string
+        - name: BACKEND_SOCKETIO_ENDPOINT
+          value: "http://{{ include "eduvize.fullname" . }}-api-service:{{ .Values.api.port }}"
+        - name: JWT_SIGNING_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.bearerAuth.playground.secret }}
+              key: {{ .Values.bearerAuth.playground.key }}
+        - name: IMAGE_PULL_SECRET
+          value: "regcred"
+        - name: PLAYGROUND_ENVIRONMENT_IMAGE_PREFIX
+          value: {{ .Values.playground.environmentImagePrefix }}
+        - name: PLAYGROUND_CONTROLLER_IMAGE
+          value: {{ .Values.playground.controllerImage }}

@@ -1,0 +1,6 @@
+python-socketio
+python-dotenv
+requests
+kubernetes
+pydantic
+PyJWT

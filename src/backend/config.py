@@ -49,6 +49,9 @@ def get_refresh_token_expiration_days() -> int:
 def get_token_secret() -> str:
     return os.getenv("TOKEN_SECRET", "secret")
 
+def get_playground_token_secret() -> str:
+    return os.getenv("PLAYGROUND_TOKEN_SECRET", "secret")
+
 # S3 / Min.io
 def get_s3_endpoint() -> str:
     return os.getenv("S3_ENDPOINT")

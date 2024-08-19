@@ -4,3 +4,4 @@ export * from "./FileUploadResponse";
 export * from "./ProfileUpdatePayload";
 export * from "./AssertionResult";
 export * from "./ChatMessagePayload";
+export * from "./PlaygroundCreationResponse";

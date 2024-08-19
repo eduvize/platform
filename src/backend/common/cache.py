@@ -1,5 +1,6 @@
-from typing import List, Optional, Union
 import redis
+from datetime import timedelta
+from typing import List, Optional, Union
 from config import get_redis_host
 from time import time
 
@@ -30,7 +31,8 @@ def set_key(
     
     client = _get_client()
     
-    client.set(key, value, ex=time() + expiration)
+    expiration_delta = timedelta(seconds=expiration)
+    client.setex(key, expiration_delta, value)
     
 def get_key(key: str) -> Optional[str]:
     """
