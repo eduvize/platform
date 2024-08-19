@@ -5,7 +5,6 @@ from app.websocket import socket
 from starlette.middleware.cors import CORSMiddleware
 
 origins = [
-    "http://localhost",
     "http://localhost:5173",
     "https://eduvize.dev"
 ]
@@ -22,6 +21,8 @@ app.add_middleware(
 
 app.include_router(api_router, prefix="/api")
 
-socket_app = ASGIApp(socket, socketio_path="socket.io")
-
-app.mount("/socket.io", socket_app)
+socket_app = ASGIApp(
+    socketio_server=socket, 
+    other_asgi_app=app,
+    socketio_path="socket.io"
+)
