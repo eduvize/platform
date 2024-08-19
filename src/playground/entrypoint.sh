@@ -16,11 +16,16 @@ chroot /userland groupadd -g 1000 user
 chroot /userland useradd -m -s /bin/bash -d /home/user -u 1000 -g 1000 user
 
 # Rewrite PS1 to show the user that they are in a sandbox (user@sandbox $)
-chroot /userland bash -c "echo 'PS1=\"\[\033[01;32m\]\u@\[\033[01;34m\]sandbox\[\033[00m\] \$ \"' >> /home/user/.bashrc"
+chroot /userland bash -c "echo 'PS1=\"\[\033[01;32m\]\u@\[\033[01;34m\]sandbox:\w\[\033[00m\] \$ \"' >> /home/user/.bashrc"
+
+# Force the user into their home directory upon login
+chroot /userland bash -c "echo 'cd /home/user' >> /home/user/.bashrc"
 
 # Set ownership and permissions
-chown -R root:root /userland && \
-chmod -R 0755 /userland
+chroot /userland chown -R root:root /userland
+chroot /userland chown -R user:user /userland/home/user  # Allow user to write in their home directory
+chroot /userland chmod -R 0777 /userland/home/user  # Ensure the user can write
+chroot /userland chmod -R 0755 /userland
 
 echo "This is a sandbox environment for your Eduvize course.
 You can use this environment to run commands and programs
