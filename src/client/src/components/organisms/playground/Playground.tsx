@@ -1,8 +1,9 @@
+import { useEffect, useRef } from "react";
 import { useCommandLine, usePlaygroundState } from "@context/playground/hooks";
 import { Card, Text, Stack, Center, Loader } from "@mantine/core";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
-import { useEffect, useRef } from "react";
+import "./Playground.css";
 
 export const Playground = () => {
     const viewport = useRef<HTMLDivElement>(null);
