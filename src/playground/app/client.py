@@ -1,11 +1,31 @@
 import socketio
-from .config import get_backend_socketio_endpoint
+import threading
+from .config import get_backend_socketio_endpoint, get_max_wait_time
 from .shell import Shell
 from .orchestration import mark_for_deletion
 
 endpoint = get_backend_socketio_endpoint()
 client = socketio.Client()
 shell = Shell(client)
+user_connection_timer = None
+
+def start_user_connection_timer():
+    global user_connection_timer
+    if user_connection_timer is None:
+        user_connection_timer = threading.Timer(10.0, mark_for_deletion)
+        user_connection_timer.start()
+        print("User connection timer started")
+    else:
+        print("User connection timer is already running")
+
+def cancel_user_connection_timer():
+    global user_connection_timer
+    if user_connection_timer is not None:
+        print("Cancelling user connection timer")
+        user_connection_timer.cancel()
+        user_connection_timer = None
+    else:
+        print("No active timer to cancel")
 
 @client.event
 def connect():
@@ -16,6 +36,8 @@ def connect():
 @client.event
 def disconnect():
     print("Disconnected from server")
+    
+    mark_for_deletion()
         
 @client.event
 def terminal_input(t_input: str):
@@ -48,6 +70,8 @@ def terminal_resize(data: dict):
 def user_connected():
     print("User connected")
     
+    cancel_user_connection_timer()
+    
 @client.event
 def user_disconnected():
     print("User disconnected")
@@ -63,3 +87,5 @@ def connect_to_server(token: str):
     )
 
     client.wait()
+    
+start_user_connection_timer()

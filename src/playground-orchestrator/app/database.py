@@ -1,3 +1,4 @@
+import os
 import uuid
 from typing import Optional
 from datetime import datetime
@@ -29,9 +30,12 @@ def get_unreserved_sessions():
 def remove_session(session_id: uuid.UUID):
     session = get_db_session()
     statement = select(PlaygroundSession).where(PlaygroundSession.id == session_id)
-    result = session.exec(statement).one()
-    session.delete(result)
-    session.commit()
+    result = session.exec(statement).first()
+    
+    if result is not None:
+        session.delete(result)
+        session.commit()
+        
     session.close()
 
 def assign_session(session_id: uuid.UUID, instance_hostname: str):
@@ -48,6 +52,7 @@ def assign_session(session_id: uuid.UUID, instance_hostname: str):
     result = db_session.exec(statement).one()
     result.instance_hostname = instance_hostname
     db_session.commit()
+    db_session.close()
 
 def unassign_session(session_id: uuid.UUID):
     session = get_db_session()

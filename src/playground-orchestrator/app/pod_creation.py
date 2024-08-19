@@ -1,3 +1,4 @@
+import logging
 from kubernetes import client, config
 from kubernetes.client import (
     V1ObjectMeta,
