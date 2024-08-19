@@ -1,4 +1,3 @@
-import json
 from time import time
 from typing import Optional, Tuple
 from fastapi import Depends
