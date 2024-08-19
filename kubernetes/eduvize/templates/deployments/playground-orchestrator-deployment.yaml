@@ -27,18 +27,6 @@ spec:
             secretKeyRef:
               name: postgres
               key: connection-string
-        - name: BASE_API_URL
-          value: "http://{{ include "eduvize.fullname" . }}-api-service:{{ .Values.api.port }}/api"
-        - name: BASIC_AUTH_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: {{ .Values.basicAuth.username.secret }}
-              key: {{ .Values.basicAuth.username.key }}
-        - name: BASIC_AUTH_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: {{ .Values.basicAuth.password.secret }}
-              key: {{ .Values.basicAuth.password.key }}
         - name: BACKEND_SOCKETIO_ENDPOINT
           value: "http://{{ include "eduvize.fullname" . }}-api-service:{{ .Values.api.port }}"
         - name: JWT_SIGNING_KEY

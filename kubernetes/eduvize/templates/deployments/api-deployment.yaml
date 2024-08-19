@@ -39,23 +39,21 @@ spec:
               value: {{ .Values.database.name }}
             - name: POSTGRES_USER
               value: {{ .Values.database.user }}
+            - name: TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bearerAuth.users.secret }}
+                  key: {{ .Values.bearerAuth.users.key }}
+            - name: PLAYGROUND_TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.bearerAuth.playground.secret }}
+                  key: {{ .Values.bearerAuth.playground.key }}
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: postgres
                   key: password
-            - name: BASIC_AUTH_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.basicAuth.username.secret }}
-                  key: {{ .Values.basicAuth.username.key }}
-            - name: BASIC_AUTH_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.basicAuth.password.secret }}
-                  key: {{ .Values.basicAuth.password.key }}
-            - name: BASIC_AUTH_PASSWORD
-
             - name: REDIS_HOST
               value: "{{ include "eduvize.fullname" . }}-redis-service:{{ .Values.redis.port }}"
             - name: PORT
