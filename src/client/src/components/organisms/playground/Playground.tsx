@@ -9,11 +9,22 @@ export const Playground = () => {
     const viewport = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<Terminal | null>(null);
     const fitAddonRef = useRef<FitAddon>(new FitAddon());
-    const { connected, ready } = usePlaygroundState();
+    const { connected, ready, reconnecting } = usePlaygroundState();
     const { sendInput, resize, output } = useCommandLine();
 
     useEffect(() => {
-        if (!viewport.current || terminalRef.current) return;
+        if (!connected || reconnecting) {
+            if (terminalRef.current) {
+                terminalRef.current.dispose();
+                terminalRef.current = null;
+            }
+
+            return;
+        }
+
+        if (!ready || terminalRef.current) {
+            return;
+        }
 
         terminalRef.current = new Terminal();
 
@@ -33,13 +44,7 @@ export const Playground = () => {
         const { rows, cols } = terminalRef.current;
 
         resize(rows, cols);
-    }, [connected, ready]);
-
-    useEffect(() => {
-        if (!ready) return;
-
-        terminalRef.current!.writeln("Connected to the playground");
-    }, [ready]);
+    }, [connected, ready, reconnecting]);
 
     const handleScrollToBottom = () => {
         viewport.current?.scrollTo({
@@ -58,21 +63,27 @@ export const Playground = () => {
 
     return (
         <Card withBorder mih="400px">
-            {(!connected || !ready) && (
+            {(!connected || !ready || reconnecting) && (
                 <Center pos="absolute" left="0" top="0" w="100%" h="100%">
                     <Stack align="center">
                         <Loader type="bars" size="lg" />
 
                         <Text mt="lg" ta="center">
-                            {!connected
-                                ? "Connecting to playground..."
-                                : "Initializing playground..."}
+                            {reconnecting && "Session lost. Reconnecting..."}
+
+                            {!reconnecting && (
+                                <>
+                                    {!connected
+                                        ? "Connecting to playground..."
+                                        : "Initializing playground..."}
+                                </>
+                            )}
                         </Text>
                     </Stack>
                 </Center>
             )}
 
-            {connected && ready && (
+            {connected && ready && !reconnecting && (
                 <div ref={viewport} style={{ height: "400px" }} />
             )}
         </Card>

@@ -10,6 +10,7 @@ type Context = {
     output: string | null;
     isConnected: boolean;
     isReady: boolean;
+    isReconnecting: boolean;
 };
 
 const defaultValue: Context = {
@@ -18,6 +19,7 @@ const defaultValue: Context = {
     output: null,
     isConnected: false,
     isReady: false,
+    isReconnecting: false,
 };
 
 export const PlaygroundContext = createContext<Context>(defaultValue);
@@ -35,6 +37,7 @@ export const PlaygroundProvider = memo(
             columns: 0,
         });
         const [isConnected, setIsConnected] = useState(false);
+        const [isReconnecting, setIsReconnecting] = useState(false);
         const [isInstanceReady, setIsInstanceReady] = useState(false);
         const [output, setOutput] = useState<null | string>(null);
 
@@ -45,6 +48,8 @@ export const PlaygroundProvider = memo(
                     extraHeaders: {
                         Authorization: `Bearer ${token}`,
                     },
+                    reconnection: true,
+                    reconnectionAttempts: 99999,
                 });
 
                 clientRef.current.on("connect", () => {
@@ -52,8 +57,24 @@ export const PlaygroundProvider = memo(
                     console.log("Connected to playground server");
                 });
 
+                clientRef.current.on("disconnect", () => {
+                    setIsReconnecting(true);
+                    console.log("Disconnected from playground server");
+                });
+
+                clientRef.current.on("reconnect_attempt", () => {
+                    setIsReconnecting(true);
+                    console.log("Reconnecting to playground server");
+                });
+
+                clientRef.current.on("reconnect", () => {
+                    setIsReconnecting(false);
+                    console.log("Reconnected to playground server");
+                });
+
                 clientRef.current.on("instance_connected", () => {
                     setIsInstanceReady(true);
+                    setIsReconnecting(false);
                     console.log("Instance is ready");
 
                     if (sizeRef.current.rows && sizeRef.current.columns) {
@@ -62,6 +83,11 @@ export const PlaygroundProvider = memo(
                             sizeRef.current
                         );
                     }
+                });
+
+                clientRef.current.on("instance_disconnected", () => {
+                    setIsInstanceReady(false);
+                    setIsReconnecting(true);
                 });
 
                 clientRef.current.on("terminal_output", (data) => {
@@ -103,6 +129,7 @@ export const PlaygroundProvider = memo(
                     output,
                     isConnected,
                     isReady: isInstanceReady,
+                    isReconnecting,
                 }}
             >
                 {children}
