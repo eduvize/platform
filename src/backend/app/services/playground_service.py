@@ -1,5 +1,7 @@
-from typing import Optional, Tuple
+from typing import Tuple
 from fastapi import Depends
+from config import get_playground_token_secret
+from app.utilities.jwt import create_token
 from app.repositories import PlaygroundRepository
 
 class PlaygroundService:
@@ -11,23 +13,27 @@ class PlaygroundService:
     ):
         self.playground_repo = playground_repo
         
-    async def create_playground(self) -> None:
-        await self.playground_repo.create_playground_session("basic")
-    
-    async def create_reservation(self, instance_hostname: str) -> Optional[Tuple[str, str]]:
-        free_session = await self.playground_repo.get_unreserved_session()
+    async def create_playground(self, user_id: str) -> Tuple[str, str]:
+        """
+        Creates a new Playground session for a user. The playground orchestrator will pick up this new record
+        and deploy a new instance after a short delay.
+
+        Args:
+            user_id (str): The ID of the user requesting the playground session
+
+        Returns:
+            Tuple[str, str]: The session ID and token for authorization
+        """
+        session_id = await self.playground_repo.create_playground_session("basic")
         
-        if free_session is None:
-            return None
+        signing_key = get_playground_token_secret()
+        token = create_token(
+            data={
+                "session_id": str(session_id), 
+                "user_id": user_id
+            }, 
+            secret=signing_key,
+            expiration_minutes=5
+        )
         
-        await self.playground_repo.set_session_hostname(free_session.id, instance_hostname)
-        
-        return str(free_session.id), free_session.type
-    
-    async def validate_reservation(self, instance_hostname: str) -> bool:
-        session = await self.playground_repo.get_session_by_hostname(instance_hostname)
-        
-        if session is None:
-            return False
-        
-        return True
+        return str(session_id), token

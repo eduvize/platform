@@ -49,6 +49,9 @@ def get_refresh_token_expiration_days() -> int:
 def get_token_secret() -> str:
     return os.getenv("TOKEN_SECRET", "secret")
 
+def get_playground_token_secret() -> str:
+    return os.getenv("PLAYGROUND_TOKEN_SECRET", "secret")
+
 # S3 / Min.io
 def get_s3_endpoint() -> str:
     return os.getenv("S3_ENDPOINT")
@@ -96,10 +99,3 @@ def get_google_client_secret() -> str:
 
 def get_auth_redirect_url() -> str:
     return os.getenv("AUTH_REDIRECT_URL")
-
-# Internal
-def get_basic_auth_username() -> str:
-    return os.getenv("BASIC_AUTH_USERNAME")
-
-def get_basic_auth_password() -> str:
-    return os.getenv("BASIC_AUTH_PASSWORD")

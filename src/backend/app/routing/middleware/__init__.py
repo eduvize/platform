@@ -1,2 +1,1 @@
 from .token_middleware import token_validator, user_id_extractor
-from .basic_auth_middleware import basic_authorization
