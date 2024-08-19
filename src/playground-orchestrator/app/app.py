@@ -1,5 +1,4 @@
 import os
-import requests
 import time
 import logging
 import signal
@@ -20,16 +19,11 @@ from kubernetes.client import (
     V1VolumeMount, 
     V1EmptyDirVolumeSource,
 )
-from requests.auth import HTTPBasicAuth
-from sqlalchemy import func
 from .config import (
     get_environment_image, 
     get_playground_controller_image,
     get_backend_socketio_endpoint,
     get_jwt_signing_key,
-    get_basic_auth_username,
-    get_basic_auth_password,
-    get_base_api_endpoint,
     get_termination_grace_period,
     get_image_pull_secret
 )
@@ -217,19 +211,6 @@ def get_pods():
     return pod_list
 
 def terminate_pod(pod_name: str):
-    api_base_url = get_base_api_endpoint()
-    username = get_basic_auth_username()
-    password = get_basic_auth_password()
-    url = f"{api_base_url}/playground/internal/session"
-
-    try:
-        logging.info(f"Attempting to call cleanup API for pod {pod_name}")
-        response = requests.delete(url, json={"hostname": pod_name}, auth=HTTPBasicAuth(username, password))
-        response.raise_for_status()
-        logging.info(f"Successfully called cleanup API for pod {pod_name}")
-    except requests.RequestException as e:
-        logging.error(f"Failed to call cleanup API for pod {pod_name}: {e}")
-    
     v1 = client.CoreV1Api()
     v1.delete_namespaced_pod(pod_name, "eduvize")
 

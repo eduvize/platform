@@ -3,14 +3,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def get_api_base_url() -> str:
-    return os.getenv("BASE_API_URL")
+def get_backend_socketio_endpoint() -> str:
+    return os.getenv("BACKEND_SOCKETIO_ENDPOINT")
 
-def get_basic_auth_username() -> str:
-    return os.getenv("BASIC_AUTH_USERNAME")
-
-def get_basic_auth_password() -> str:
-    return os.getenv("BASIC_AUTH_PASSWORD")
-
-def get_session_id_path() -> str:
-    return os.getenv("SESSION_ID_PATH", "/playground/session_id.txt")
+def get_jwt_signing_key() -> str:
+    return os.getenv("JWT_SIGNING_KEY")

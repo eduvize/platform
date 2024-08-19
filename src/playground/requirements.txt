@@ -1,6 +1,6 @@
 python-socketio
-fastapi
-uvicorn
 python-dotenv
 requests
 kubernetes
+pydantic
+PyJWT

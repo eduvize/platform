@@ -1,16 +1,6 @@
 import os
 from typing import Optional
 
-def get_base_api_endpoint() -> str:
-    """
-    Gets the base API endpoint
-
-    Returns:
-        str: The base API endpoint
-    """
-    
-    return os.getenv("BASE_API_URL")
-
 def get_playground_controller_image() -> str:
     """
     Gets the playground controller image
@@ -54,26 +44,6 @@ def get_jwt_signing_key() -> str:
     """
     
     return os.getenv("JWT_SIGNING_KEY")
-
-def get_basic_auth_username() -> str:
-    """
-    Gets the basic auth username
-
-    Returns:
-        str: The basic auth username
-    """
-    
-    return os.getenv("BASIC_AUTH_USERNAME")
-
-def get_basic_auth_password() -> str:
-    """
-    Gets the basic auth password
-
-    Returns:
-        str: The basic auth password
-    """
-    
-    return os.getenv("BASIC_AUTH_PASSWORD")
 
 def get_termination_grace_period() -> int:
     """
