@@ -8,7 +8,7 @@ export const Courses = () => {
 
     if (!instructor?.is_approved)
         return (
-            <Container size="xs">
+            <Container size="xs" p="xl">
                 <InstructorSetup />
             </Container>
         );
