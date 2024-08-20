@@ -113,9 +113,9 @@ class UserOnboardingService:
         profile = user.profile
         
         if (
-            profile.first_name is None or
-            profile.last_name is None or
-            profile.bio is None or
+            profile.first_name is None or profile.first_name.strip() == "" or
+            profile.last_name is None or profile.last_name.strip() == "" or
+            profile.bio is None or profile.bio.strip() == "" or
             profile.disciplines is None
             or len(profile.disciplines) == 0
             or len(profile.skills) == 0
@@ -130,22 +130,31 @@ class UserOnboardingService:
                 return False
             
             if any([
-                project.project_name is None or project.description is None
+                project.project_name is None
+                or project.project_name.strip() == ""
+                or project.description is None
+                or project.description.strip() == ""
                 for project in profile.hobby.projects
             ]):
                 return False
             
         if profile.student:
-            if profile.student.schools is None or len(profile.student.schools) == 0:
+            if(
+                profile.student.schools is None 
+                or len(profile.student.schools) == 0
+                or len(profile.student.schools) == 0
+            ):
                 return False
             
             if any([(
-                    school.school_name is None or 
-                    school.focus is None or
-                    school.start_date is None or
-                    (school.end_date is None and not school.is_current) or
-                    school.did_finish is None or
-                    len(school.skills) == 0
+                    school.school_name is None
+                    or school.school_name.strip() == "" 
+                    or school.focus is None
+                    or school.focus.strip() == ""
+                    or school.start_date is None
+                    or (school.end_date is None and not school.is_current)
+                    or school.did_finish is None
+                    or len(school.skills) == 0
                 )
                 for school in profile.student.schools
             ]):
@@ -157,10 +166,13 @@ class UserOnboardingService:
             
             if any([
                 employer.company_name is None or
+                employer.company_name.strip() == "" or
                 employer.position is None or
+                employer.position.strip() == "" or
                 employer.start_date is None or
                 (employer.end_date is None and not employer.is_current) or
                 employer.description is None
+                or employer.description.strip() == ""
                 for employer in profile.professional.employers
             ]):
                 return False
