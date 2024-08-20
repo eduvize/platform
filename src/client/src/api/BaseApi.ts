@@ -31,7 +31,8 @@ abstract class BaseApi {
     protected async postEventStream<T>(
         url: string,
         data: any,
-        onData: (data: T) => void
+        onData: (data: T) => void,
+        onComplete?: () => void
     ) {
         const response = await fetch(`${apiEndpoint}/${this.prefix}/${url}`, {
             method: "POST",
@@ -40,23 +41,35 @@ abstract class BaseApi {
         });
 
         const reader = response.body!.getReader();
-
         const decoder = new TextDecoder();
+        let buffer = "";
 
         while (true) {
             const { done, value } = await reader.read();
 
             if (done) {
+                onComplete?.();
                 break;
             }
 
-            const text = decoder.decode(value);
+            buffer += decoder.decode(value, { stream: true });
 
-            try {
-                const json = JSON.parse(text);
-                onData(json);
-            } catch (e) {
-                onData(text as any);
+            let boundary = buffer.indexOf("\n");
+
+            while (boundary !== -1) {
+                const completeChunk = buffer.slice(0, boundary);
+                buffer = buffer.slice(boundary + 1);
+
+                if (completeChunk.trim()) {
+                    try {
+                        const json = JSON.parse(completeChunk);
+                        onData(json);
+                    } catch (e) {
+                        onData(completeChunk as any);
+                    }
+                }
+
+                boundary = buffer.indexOf("\n");
             }
         }
     }
