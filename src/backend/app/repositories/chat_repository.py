@@ -5,8 +5,6 @@ from typing import List, Optional
 
 from sqlmodel import Session, select
 from sqlalchemy.orm import joinedload
-from ai.common import BaseToolCall
-from domain.dto.chat import ChatSessionDto
 from domain.schema.chat import ChatMessage, ChatSession, ChatToolCall
 from common.database import engine
 
@@ -17,8 +15,7 @@ class ChatRepository:
         self, 
         session_id: uuid.UUID,
         is_user: bool,
-        content: Optional[str], 
-        tool_calls: List[BaseToolCall] = []
+        content: Optional[str]
     ) -> ChatMessage:
         """
         Adds a message to a chat session
@@ -40,16 +37,6 @@ class ChatRepository:
             session.add(chat_message)
             session.commit()
             session.refresh(chat_message)
-            
-            for tool_call in tool_calls:
-                tool_call = ChatToolCall(
-                    message_id=chat_message.id,
-                    tool_call_id=tool_call.id,
-                    tool_name=tool_call.name,
-                    json_arguments=json.dumps(tool_call.arguments),
-                    result=json.dumps(tool_call.result)
-                )
-                session.add(tool_call)
             
             return chat_message
         
