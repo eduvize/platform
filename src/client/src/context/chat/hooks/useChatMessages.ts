@@ -9,5 +9,5 @@ export const useChatMessages = (): [
     const sendMessage = useContextSelector(ChatContext, (v) => v.sendMessage);
     const messages = useContextSelector(ChatContext, (v) => v.messages);
 
-    return [messages, sendMessage];
+    return [messages.filter((v) => !!v.content), sendMessage];
 };
