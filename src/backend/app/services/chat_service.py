@@ -4,7 +4,7 @@ import logging
 from typing import AsyncGenerator, List, Optional
 from fastapi import Depends
 from ai.prompts import CoursePlanningPrompt
-from ai.common import BaseChatMessage, BaseToolCall, BaseToolCallWithResult, ChatRole
+from ai.common import BaseChatMessage, BaseToolCallWithResult, ChatRole
 from app.services import UserService
 from app.utilities.profile import get_user_profile_text
 from app.repositories import ChatRepository
@@ -12,6 +12,7 @@ from app.routing.contracts.chat_contracts import SendChatMessage, ChatSessionRef
 from domain.schema.chat.chat_message import ChatMessage
 from domain.dto.chat.chat_message import ChatMessageDto
 from domain.dto.profile import UserProfileDto
+from domain.dto.ai import CompletionChunk
 
 logger = logging.getLogger("ChatService")
 
@@ -50,7 +51,7 @@ class ChatService:
         self, 
         user_id: str,
         payload: SendChatMessage
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[CompletionChunk, None]:
         user = await self.user_service.get_user("id", user_id, ["profile.*", "instructor"])
         
         if not user:
@@ -82,9 +83,7 @@ class ChatService:
         # Iterate until complete, then save messages to the database
         while True:
             try:
-                # TODO: Need to communicate msg_id to client so it knows when to split messages
-                (msg_id, content) = next(responses)
-                yield content
+                yield next(responses)
             except StopIteration as e:
                 messages: List[BaseChatMessage] = e.value
                 
@@ -127,8 +126,8 @@ class ChatService:
                     BaseToolCallWithResult(
                         id=tool_call.id,
                         name=tool_call.tool_name,
-                        arguments=json.loads(tool_call.json_arguments),
-                        result=json.loads(tool_call.result)
+                        arguments=tool_call.json_arguments,
+                        result=tool_call.result
                     )
                     for tool_call in record.tool_calls
                 ]
@@ -163,11 +162,7 @@ class ChatService:
         added_msg = self.chat_repository.add_chat_message(
             session_id=session_id, 
             is_user=is_user, 
-            content=message,
-            tool_calls=[
-                BaseToolCall(tool_call.id, tool_call.name, tool_call.arguments)
-                for tool_call in tool_calls
-            ]
+            content=message
         )
         
         if tool_calls:
@@ -176,6 +171,6 @@ class ChatService:
                     message_id=added_msg.id,
                     call_id=tool_call.id,
                     tool_name=tool_call.name,
-                    arguments=json.dumps(tool_call.arguments),
-                    result=json.dumps(tool_call.result)
+                    arguments=tool_call.arguments,
+                    result=tool_call.result
                 )

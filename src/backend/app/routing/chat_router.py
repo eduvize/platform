@@ -1,5 +1,7 @@
 import asyncio
+import json
 import uuid
+import logging
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from app.routing.middleware import token_validator, user_id_extractor
@@ -22,15 +24,11 @@ async def send_message(
 ):
     # This function generates a stream of messages
     async def message_stream():
-        try:
-            async for message in chat_service.get_response(user_id, payload):
-                yield message
-                await asyncio.sleep(0.035)  # Throttle the response rate if needed
-        except Exception as e:
-            print("Error in generator:", str(e))  # Debug: Check for errors in the generator
+        async for message in chat_service.get_response(user_id, payload):
+            yield f"{message.model_dump_json()}\n\n"
+            await asyncio.sleep(0.01)
 
     response = StreamingResponse(message_stream(), media_type="text/event-stream")
-    print("Streaming response set up")  # Debug: Check if this line is reached
     return response
     
 @router.get("/history")
