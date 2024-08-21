@@ -1,2 +1,10 @@
+import uuid
+from domain.schema.courses.course import Course
+
 class CourseRepository:
-    pass
+    def create_course(
+        self,
+        user_id: uuid.UUID,
+        course: Course
+    ):
+        pass
