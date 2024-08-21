@@ -14,7 +14,7 @@ export const useChatMessages = (): UseChatMessagesReturn => {
     const processing = useContextSelector(ChatContext, (v) => v.isProcessing);
 
     return {
-        messages,
+        messages: messages.filter((x) => x.content),
         sendMessage,
         processing,
     };
