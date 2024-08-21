@@ -39,13 +39,34 @@ const router = createBrowserRouter([
         path: "/dashboard/*",
         element: <DashboardOrAuth />,
         children: [
-            { path: "courses", element: <DashboardOrAuth /> },
-            { path: "profile", element: <DashboardOrAuth /> },
-            { path: "jobs", element: <DashboardOrAuth /> },
+            {
+                path: "courses/*",
+                handle: "courses",
+                element: <DashboardOrAuth />,
+                children: [
+                    {
+                        path: "new",
+                        handle: "new-course",
+                        element: <DashboardOrAuth />,
+                    },
+                ],
+            },
+            {
+                path: "profile",
+                handle: "profile",
+                element: <DashboardOrAuth />,
+            },
+            { path: "jobs", handle: "jobs", element: <DashboardOrAuth /> },
             {
                 path: "account/*",
                 element: <DashboardOrAuth />,
-                children: [{ path: "billing", element: <DashboardOrAuth /> }],
+                children: [
+                    {
+                        path: "billing",
+                        handle: "billing",
+                        element: <DashboardOrAuth />,
+                    },
+                ],
             },
         ],
     },

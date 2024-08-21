@@ -38,6 +38,7 @@ export const Dashboard = () => {
             <Routes>
                 <Route
                     path="/"
+                    handle="home"
                     element={
                         <CallToActionOrView>
                             <Courses />
@@ -45,7 +46,8 @@ export const Dashboard = () => {
                     }
                 />
                 <Route
-                    path="courses"
+                    path="courses*"
+                    handle="courses"
                     element={
                         <CallToActionOrView>
                             <Courses />
@@ -54,6 +56,7 @@ export const Dashboard = () => {
                 />
                 <Route
                     path="profile"
+                    handle="profile"
                     element={
                         <CallToActionOrView>
                             <Profile />
