@@ -1,9 +1,18 @@
+import uuid
 from typing import Optional
-from sqlmodel import SQLModel
-from .exercise import ExerciseBase
+from sqlmodel import Field, Relationship, SQLModel
+import domain.schema as schema
 
 class LessonBase(SQLModel):
     title: str
     description: str
     
-    exercise: Optional[ExerciseBase]
+class Lesson(LessonBase, table=True):
+    __tablename__ = "lessons"
+    
+    id: uuid.UUID                                   = Field(default_factory=uuid.uuid4, primary_key=True)
+    course_id: uuid.UUID                            = Field(default=None, foreign_key="courses.id")
+    
+    module: "schema.courses.Module"                 = Relationship(back_populates="lessons")
+    
+    exercise: Optional["schema.courses.Exercise"]   = Relationship(back_populates="lesson")
