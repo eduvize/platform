@@ -9,6 +9,8 @@ type Context = {
     remotePartyAvatarUrl: string | null;
     localPartyAvatarUrl: string | null;
     messages: ChatMessageDto[];
+    pendingTools: string[];
+    toolResults: Record<string, any | null>;
     sendMessage: (message: string) => void;
 };
 
@@ -16,6 +18,8 @@ const defaultValue: Context = {
     remotePartyAvatarUrl: null,
     localPartyAvatarUrl: null,
     messages: [],
+    pendingTools: [],
+    toolResults: {},
     sendMessage: () => {},
 };
 
@@ -29,6 +33,10 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     const [localUser] = useCurrentUser();
 
     const [instructor] = useInstructor();
+    const [pendingToolNames, setPendingToolNames] = useState<string[]>([]);
+    const [toolResults, setToolResults] = useState<Record<string, any | null>>(
+        {}
+    );
     const [receiveBuffer, setReceiveBuffer] = useState<string>("");
     const [messages, setMessages] = useState<ChatMessageDto[]>([]);
 
@@ -81,6 +89,22 @@ Now that you've completed the onboarding process, let's get started with plannin
         }
     }, [receiveBuffer]);
 
+    useEffect(() => {
+        // Set it on the last message received
+        setMessages((prev) => {
+            const newMessages = [...prev];
+            newMessages[newMessages.length - 1] = {
+                ...newMessages[newMessages.length - 1],
+                tool_calls: Object.keys(toolResults).map((name) => ({
+                    tool_name: name,
+                    arguments: toolResults[name],
+                })),
+            };
+
+            return newMessages;
+        });
+    }, [toolResults]);
+
     const handleSendMessage = (message: string) => {
         setMessages((prev) => [
             ...prev,
@@ -91,11 +115,43 @@ Now that you've completed the onboarding process, let's get started with plannin
             },
         ]);
 
-        ChatApi.sendMessage({ message }, (message) => {
-            setReceiveBuffer((prev) => prev + message);
-        }).finally(() => {
-            setReceiveBuffer("");
-        });
+        let receivedText = "";
+        let completedToolCalls: Record<string, any> = {};
+
+        ChatApi.sendMessage(
+            { message },
+            (chunk) => {
+                if (chunk.text) {
+                    receivedText += chunk.text;
+                    setReceiveBuffer(receivedText);
+                }
+
+                if (chunk.tools) {
+                    setPendingToolNames((prev) => [
+                        ...prev,
+                        ...chunk
+                            .tools!.map((tool) => tool.name)
+                            .filter((name) => !prev.includes(name)),
+                    ]);
+
+                    for (const tool of chunk.tools) {
+                        if (!completedToolCalls[tool.name]) {
+                            toolResults[tool.name] = null;
+                        }
+
+                        try {
+                            const data = JSON.parse(tool.data);
+                            completedToolCalls[tool.name] = data;
+                        } catch (e) {}
+                    }
+                }
+            },
+            () => {
+                // Complete
+                setPendingToolNames([]);
+                setToolResults(completedToolCalls);
+            }
+        );
     };
 
     if (!instructor || !localUser) {
@@ -112,6 +168,8 @@ Now that you've completed the onboarding process, let's get started with plannin
                 remotePartyAvatarUrl: instructor.avatar_url,
                 localPartyAvatarUrl: localUser.profile?.avatar_url,
                 messages,
+                pendingTools: pendingToolNames,
+                toolResults,
                 sendMessage: handleSendMessage,
             }}
         >

@@ -1,6 +1,7 @@
 from typing import Generator, List, Tuple
 from ai.prompts import BasePrompt
 from ai.common import BaseChatMessage, BaseChatResponse, BaseTool
+from domain.dto.ai import CompletionChunk
 
 class BaseModel:
     def get_responses(self, prompt: BasePrompt) -> List[BaseChatResponse]:
@@ -23,7 +24,7 @@ class BaseModel:
         except StopIteration as e:
             return e.value
     
-    def get_streaming_response(self, prompt: BasePrompt) -> Generator[Tuple[str, str], None, List[BaseChatResponse]]:
+    def get_streaming_response(self, prompt: BasePrompt) -> Generator[CompletionChunk, None, List[BaseChatResponse]]:
         """
         Performs a streaming request to the AI model and returns the response as a generator
 
@@ -31,7 +32,7 @@ class BaseModel:
             prompt (BasePrompt): The prompt to send to the AI model
 
         Yields:
-            Generator[Tuple[str, str], None, List[BaseChatResponse]]: A tuple containing the message id and delta message content
+            Generator[CompletionChunk, None, List[BaseChatResponse]]: Metadata about the completion chunk
             
         Returns:
             List[BaseChatResponse]: The final response from the AI model

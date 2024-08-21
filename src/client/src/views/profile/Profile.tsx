@@ -173,7 +173,7 @@ export const Profile = memo(() => {
     };
 
     return (
-        <Container size="lg">
+        <Container size="lg" pt="lg">
             <Stack>
                 <Header />
 

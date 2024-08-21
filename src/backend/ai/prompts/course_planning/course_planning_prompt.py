@@ -1,10 +1,13 @@
+import logging
 from typing import Generator, List, Tuple
 from ai.prompts import BasePrompt
 from ai.common import BaseChatMessage, BaseChatResponse, ChatRole
+from .provide_course_outline import ProvideCourseOutlineTool
+from domain.dto.ai import CompletionChunk
 
 class CoursePlanningPrompt(BasePrompt):
     def setup(self) -> None:
-        pass
+        self.use_tool(ProvideCourseOutlineTool)
 
     def get_response(
         self,
@@ -12,31 +15,26 @@ class CoursePlanningPrompt(BasePrompt):
         profile_text: str, 
         history: List[BaseChatMessage], 
         message: str
-    ) -> Generator[Tuple[str, str], None, List[BaseChatResponse]]:
+    ) -> Generator[CompletionChunk, None, List[BaseChatResponse]]:
         from ai.models.gpt_4o import GPT4o
         
         self.set_system_prompt(f"""
-You are {instructor_name}, a virtual instructor for an online educational platform named Eduvize.
-You will be helping a student plan courses that will help them further develop their software engineering skills.
+You are {instructor_name}, a friendly and insightful online learning course instructor.
+You will leverage the user's profile information to help them plan a learning course of their choice.
+Before submitting the course outline, you will make sure that you have all the necessary details.
+You will iteratively work with the user to understand their learning goals and preferences for the course.
 
-A course is a series of lessons based around one subject that may contain theory, exercises, and projects.
-
-When designing a course, you will remember the following:
-- You will not lay it out in days or weeks, but rather in terms of the skills the student will learn.
-- You will organize a course into a series of lessons in a logical order.
-- Lessons will be a mix of theory and practice where the student will learn concepts and apply them in exercises and projects.
-- Projects should be spaced out to allow the student to apply what they have learned throughout the course.
-- The student will be able to ask questions and propose changes to the course.
-
-Remember to use headings in your responses to help the student understand the structure of the course, do not use lists.
-
-You will not discuss anything outside of the course planning process. If the student asks about something else, or tries to change the subject, you will remind them that you are here to help them plan courses.""")
+You will use your provide_course_outline tool to show the user what you currently have planned as you iterate. You will not include the course outline or an overview in your response, rather you will direct them to the UI.
+Examples include:
+- "I've updated the course outline. Please check the UI for the details."
+- "I've made some changes to the course outline. Please review the UI for the latest updates."
+""")
 
         self.add_agent_message(f"""
 I've pulled the profile information for the student. Here is what I have:
 {profile_text}""")
         
-        self.add_agent_message("I'll walk you through planning your first few courses one at a time.")
+        self.add_agent_message("I'll wait to see what the user would like to learn and guide them through appropriate topics step-by-step. Afterwards, I'll let them confirm the details before providing a comprehensive outline in natural language.")
         
         for hist in history:
             if hist.role == ChatRole.USER:
@@ -47,10 +45,10 @@ I've pulled the profile information for the student. Here is what I have:
         self.add_user_message(message)
 
         model = GPT4o()
-        text_stream = model.get_streaming_response(self)
+        chunk_generator = model.get_streaming_response(self)
         
         while True:
             try:
-                yield next(text_stream)
+                yield next(chunk_generator)
             except StopIteration as e:
                 return e.value

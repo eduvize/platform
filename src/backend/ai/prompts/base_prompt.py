@@ -43,6 +43,12 @@ class BasePrompt:
         
         return result
     
+    def is_tool_public(self, tool_name: str) -> bool:
+        if tool_name not in self.tool_types:
+            return False
+        
+        return hasattr(self.tool_types[tool_name], "IS_PUBLIC")
+    
     def get_tool_calls(self, tool_type: Type[T]) -> List[T]:
         if tool_type.__name__ not in self.tool_instances:
             return []

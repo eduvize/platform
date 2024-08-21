@@ -1,7 +1,9 @@
 import logging
 import json
 import base64
+
 from . import BaseModel
+from domain.dto.ai.completion_chunk import CompletionChunk, Tool
 from typing import Generator, List, Literal, Tuple, cast
 from openai import OpenAI, Stream
 from openai.types.chat.chat_completion_assistant_message_param import FunctionCall
@@ -29,10 +31,10 @@ class ToolCallRecord:
     index: int
     id: str
     name: str
-    arguments: dict
+    arguments: str
     result: str
     
-    def __init__(self, index: int, id: str, name: str, arguments: dict) -> None:
+    def __init__(self, index: int, id: str, name: str, arguments: str) -> None:
         self.index = index
         self.id = id
         self.name = name
@@ -52,7 +54,7 @@ class BaseGPT(BaseModel):
     def get_streaming_response(
         self, 
         prompt: BasePrompt
-    ) -> Generator[Tuple[str, str], None, List[BaseChatResponse]]:
+    ) -> Generator[CompletionChunk, None, List[BaseChatResponse]]:
         responses: List[BaseChatResponse] = []
         
         # Create an initial message list based on the prompt, this may be added to later
@@ -94,10 +96,6 @@ class BaseGPT(BaseModel):
             for chunk in response:
                 available_tools = chunk.choices[0].delta.tool_calls
                 content = chunk.choices[0].delta.content
-                
-                if content:
-                    response_content += content
-                    yield chunk.id, content
                     
                 if available_tools:
                     for tool_call in available_tools:
@@ -117,6 +115,23 @@ class BaseGPT(BaseModel):
                             ))
                         else:
                             existing_record.arguments += tool_call.function.arguments
+                         
+                if content:
+                    response_content += content
+                
+                if content or len(tool_call_dict) > 0:
+                    yield CompletionChunk.model_construct(
+                        message_id=chunk.id,
+                        text=content,
+                        tools=[
+                            Tool.model_construct(
+                                name=record.name,
+                                data=record.arguments
+                            )
+                            for record in tool_call_dict
+                            if prompt.is_tool_public(record.name)
+                        ]
+                    )
                             
                 if chunk.choices[0].finish_reason:
                     finish_reason = chunk.choices[0].finish_reason

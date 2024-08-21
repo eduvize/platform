@@ -31,8 +31,11 @@ def set_key(
     
     client = _get_client()
     
-    expiration_delta = timedelta(seconds=expiration)
-    client.setex(key, expiration_delta, value)
+    if expiration:
+        expiration_delta = timedelta(seconds=expiration)
+        client.setex(key, expiration_delta, value)
+    else:
+        client.set(key, value)
     
 def get_key(key: str) -> Optional[str]:
     """

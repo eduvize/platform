@@ -40,7 +40,9 @@
 }
 
 .message p {
-    font-size: 12px;
+    font-size: 14px;
+    margin: 0 !important;
+    line-height: 1.5 !important;
 }
 
 .message code {
@@ -59,4 +61,10 @@
     padding: 10px !important;
     border-left: 4px solid var(--mantine-color-primary) !important;
     margin: 0 !important;
+}
+
+.message {
+    font-size: 14px;
+    line-height: 1.5 !important;
+    padding: 0 !important;
 }
