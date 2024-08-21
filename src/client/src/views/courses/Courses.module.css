@@ -1,0 +1,11 @@
+.active {
+}
+
+.link {
+    color: #fff;
+}
+
+.active .link {
+    border-radius: 6px;
+    background-color: var(--mantine-color-blue-6);
+}

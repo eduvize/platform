@@ -56,7 +56,7 @@ export const Profile = memo(() => {
             switch (payload.field) {
                 case "hobby.skills":
                 case "hobby.reasons":
-                    return mapCheckListField(
+                    return mapCheckListField<ProfileUpdatePayload>(
                         payload.form,
                         payload.field,
                         payload.options,
@@ -70,7 +70,7 @@ export const Profile = memo(() => {
                             )) &&
                         payload.field.endsWith(".skills")
                     ) {
-                        return mapCheckListField(
+                        return mapCheckListField<ProfileUpdatePayload>(
                             payload.form,
                             payload.field,
                             payload.options,

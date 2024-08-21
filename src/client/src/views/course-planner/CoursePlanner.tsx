@@ -1,85 +1,139 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Chat } from "@organisms";
-import { ChatProvider, useLastToolResult } from "@context/chat";
-import { ChatTool } from "@models/enums";
+import { useEffect, useMemo, useState } from "react";
+import { ChatProvider } from "@context/chat";
 import {
-    Accordion,
     Box,
     Card,
-    Grid,
-    List,
-    ListItem,
+    Center,
+    Container,
+    Loader,
+    LoadingOverlay,
+    Stack,
     Text,
 } from "@mantine/core";
-import { Course } from "@models/dto";
+import { AdditionalInputsDto, CoursePlan } from "@models/dto";
+import { useForm } from "@mantine/form";
+import { mapCheckListField } from "../profile/util";
+import { FirstStep, SecondStep } from "./steps";
+import { CourseApi } from "@api";
+
+enum Step {
+    Overview = 0,
+    Followup = 1,
+    Generation = 2,
+}
 
 const Component = () => {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const outline = useLastToolResult<Course>(ChatTool.ProvideCourseOutline);
+    const form = useForm<CoursePlan>({
+        initialValues: {
+            subject: "",
+            motivations: [],
+            experience: null,
+            materials: [],
+        },
+        enhanceGetInputProps: (payload) => {
+            switch (payload.field) {
+                case "motivations":
+                case "materials":
+                    return mapCheckListField<CoursePlan>(
+                        payload.form,
+                        payload.field,
+                        payload.options,
+                        payload.inputProps
+                    );
+                case "experience":
+                    return {
+                        ...payload.inputProps,
+                        onChange: (e: any) => {
+                            payload.form.setFieldValue(
+                                "experience",
+                                payload.options.value
+                            );
+                        },
+                        checked:
+                            payload.form.values.experience ===
+                            payload.options.value,
+                    };
+            }
+
+            return payload.inputProps;
+        },
+    });
+    const [step, setStep] = useState<Step>(Step.Overview);
+    const [followup, setFollowup] = useState<AdditionalInputsDto | null>(null);
+
+    useEffect(() => {
+        console.log(form.values);
+    }, [form.values]);
+
+    useEffect(() => {
+        if (step === 1) {
+            CourseApi.getAdditionalInputs(form.values).then((inputs) => {
+                setFollowup(inputs);
+            });
+        }
+    }, [step]);
+
+    const isLoading = useMemo(() => {
+        return step === 1 && !followup;
+    }, [step, followup]);
+
+    const loadingDescription = useMemo(() => {
+        switch (step) {
+            case Step.Followup:
+                return "Reviewing your request...";
+            case Step.Generation:
+                return "Coming up with a course plan...";
+        }
+    }, [step]);
 
     return (
-        <Grid>
-            <Grid.Col span={8}>
-                <Box px="md">
-                    <Chat
-                        height={`calc(100vh - 8em)`}
-                        toolDescriptionMap={{
-                            [ChatTool.ProvideCourseOutline]:
-                                "Revising your course plan...",
+        <Container size="md" p="lg">
+            <Stack>
+                <Box pos="relative">
+                    <LoadingOverlay
+                        visible={isLoading}
+                        overlayProps={{
+                            radius: "md",
+                            blur: 1,
+                            backgroundOpacity: 1,
+                        }}
+                        loaderProps={{
+                            children: (
+                                <Stack>
+                                    <Center>
+                                        <Loader type="bars" size="lg" />
+                                    </Center>
+
+                                    <Text mt="lg">{loadingDescription}</Text>
+                                </Stack>
+                            ),
                         }}
                     />
-                </Box>
-            </Grid.Col>
 
-            <Grid.Col span={4}>
-                {outline && (
-                    <Card withBorder h="100%">
-                        <Text size="xl">{outline.title}</Text>
+                    <Card withBorder p="lg">
+                        <Stack gap="xl">
+                            {(step === 0 || (step == 1 && isLoading)) && (
+                                <FirstStep
+                                    form={form}
+                                    onContinue={() => setStep(Step.Followup)}
+                                />
+                            )}
 
-                        <Text size="sm" c="dimmed">
-                            {outline.description}
-                        </Text>
-
-                        <Accordion>
-                            {outline.modules.map((module, index) => (
-                                <Accordion.Item
-                                    key={module.title}
-                                    value={module.title}
-                                >
-                                    <Accordion.Control pl={0}>
-                                        <Text size="sm">
-                                            Module {index + 1}: {module.title}
-                                        </Text>
-                                    </Accordion.Control>
-
-                                    <Accordion.Panel>
-                                        <List listStyleType="none">
-                                            {module.lessons.map(
-                                                (lesson, index) => (
-                                                    <ListItem
-                                                        key={lesson.title}
-                                                    >
-                                                        <Text size="md">
-                                                            {lesson.title}
-                                                        </Text>
-                                                        <Text
-                                                            size="sm"
-                                                            c="dimmed"
-                                                        >
-                                                            {lesson.description}
-                                                        </Text>
-                                                    </ListItem>
-                                                )
-                                            )}
-                                        </List>
-                                    </Accordion.Panel>
-                                </Accordion.Item>
-                            ))}
-                        </Accordion>
+                            {step == 1 && followup && (
+                                <SecondStep
+                                    followupInformation={followup}
+                                    onBack={() => {
+                                        setFollowup(null);
+                                        setStep(Step.Overview);
+                                    }}
+                                    onContinue={() => setStep(Step.Generation)}
+                                />
+                            )}
+                        </Stack>
                     </Card>
-                )}
-            </Grid.Col>
-        </Grid>
+                </Box>
+            </Stack>
+        </Container>
     );
 };
 
