@@ -25,10 +25,10 @@ class User(UserBase, table=True):
     
     last_login_at_utc: datetime         = Field(default_factory=datetime.utcnow)
     
-    profile: "UserProfile"                          = Relationship(back_populates="user")
-    external_auth: Optional["UserExternalAuth"]     = Relationship(back_populates="user")
-    instructor: Optional["schema.instructor.Instructor"]   = Relationship(back_populates="user")
-    courses: list["schema.courses.Course"]                 = Relationship(back_populates="user")
+    profile: "UserProfile"                                          = Relationship(back_populates="user")
+    external_auth: Optional["UserExternalAuth"]                     = Relationship(back_populates="user")
+    instructor: Optional["schema.instructor.instructor.Instructor"] = Relationship(back_populates="user")
+    courses: list["schema.courses.course.Course"]                   = Relationship(back_populates="user")
     
 class UserExternalAuth(SQLModel, table=True):
     __tablename__ = "users_external_auth"

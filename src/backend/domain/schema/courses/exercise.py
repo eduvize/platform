@@ -8,7 +8,7 @@ class ExerciseBase(SQLModel):
 class Exercise(ExerciseBase, table=True):
     __tablename__ = "exercises"
     
-    id: uuid.UUID                       = Field(default=None, primary_key=True)
-    course_id: uuid.UUID                = Field(default=None, foreign_key="courses.id")
+    id: uuid.UUID                           = Field(default=None, primary_key=True)
+    lesson_id: uuid.UUID                    = Field(default=None, foreign_key="lessons.id")
     
-    lesson: "schema.courses.Lesson"     = Relationship(back_populates="exercise")
+    lesson: "schema.courses.lesson.Lesson"  = Relationship(back_populates="exercise")

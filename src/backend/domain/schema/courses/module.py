@@ -13,6 +13,6 @@ class Module(ModuleBase, table=True):
     id: uuid.UUID                               = Field(default=None, primary_key=True)
     course_id: uuid.UUID                        = Field(default=None, foreign_key="courses.id")
     
-    course: "schema.courses.Course"             = Relationship(back_populates="modules")
-    lessons: list["schema.courses.Lesson"]      = Relationship(back_populates="module")
-    quiz: Optional["schema.courses.Quiz"]       = Relationship(back_populates="module")
+    course: "schema.courses.course.Course"              = Relationship(back_populates="modules")
+    lessons: list["schema.courses.lesson.Lesson"]       = Relationship(back_populates="module")
+    quiz: Optional["schema.courses.quiz.Quiz"]          = Relationship(back_populates="module")
