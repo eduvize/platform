@@ -7,7 +7,7 @@ from ai.prompts import CoursePlanningPrompt
 from ai.common import BaseChatMessage, BaseToolCallWithResult, ChatRole
 from app.services import UserService
 from app.utilities.profile import get_user_profile_text
-from app.repositories import ChatRepository
+from app.repositories import ChatRepository, CourseRepository
 from app.routing.contracts.chat_contracts import SendChatMessage, ChatSessionReference
 from domain.schema.chat.chat_message import ChatMessage
 from domain.dto.chat.chat_message import ChatMessageDto
@@ -19,14 +19,17 @@ logger = logging.getLogger("ChatService")
 class ChatService:
     user_service: UserService
     chat_repository: ChatRepository
+    course_repository: CourseRepository
     
     def __init__(
         self, 
         user_service: UserService = Depends(UserService),
-        chat_repository: ChatRepository = Depends(ChatRepository)
+        chat_repository: ChatRepository = Depends(ChatRepository),
+        course_repository: CourseRepository = Depends(CourseRepository)
     ):
         self.user_service = user_service
         self.chat_repository = chat_repository
+        self.course_repository = course_repository
         
     async def get_history(
         self,
