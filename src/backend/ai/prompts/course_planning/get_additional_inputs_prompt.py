@@ -2,7 +2,7 @@ from ai.prompts.base_prompt import BasePrompt
 from .provide_additional_inputs_tool import ProvideAdditionalInputsTool
 from domain.dto.courses import CoursePlanDto
 from domain.enums.course_enums import CourseMotivation, CurrentSubjectExperience, CourseMaterial
-from .models import AdditionalInputs
+from domain.dto.courses import AdditionalInputs
 
 class GetAdditionalInputsPrompt(BasePrompt):
     def setup(self) -> None:

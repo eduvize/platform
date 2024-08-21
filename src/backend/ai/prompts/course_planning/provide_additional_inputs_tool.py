@@ -1,5 +1,5 @@
 from ai.common.base_tool import BaseTool
-from .models import AdditionalInputs
+from domain.dto.courses import AdditionalInputs
 
 class ProvideAdditionalInputsTool(BaseTool):
     def __init__(self):

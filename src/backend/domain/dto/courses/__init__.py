@@ -1,4 +1,4 @@
-from .course_plan import CoursePlanDto
+from .course_plan import CoursePlanDto, AdditionalInputs
 from .course import CourseDto
 from .exercise import ExerciseDto
 from .lesson import LessonDto
