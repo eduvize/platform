@@ -1,12 +1,8 @@
 import uuid
 from sqlmodel import Field, Relationship, SQLModel
+from domain.enums.course_enums import QuizType
 import domain.schema as schema
 from datetime import datetime
-from enum import Enum
-
-class QuizType(Enum):
-    MULTIPLE_CHOICE = "multiple_choice"
-    SHORT_ANSWER = "short_answer"
 
 class QuizBase(SQLModel):
     title: str
