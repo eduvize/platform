@@ -1,8 +1,7 @@
 from datetime import datetime
 from typing import Literal, Optional
 from sqlmodel import Field, Relationship, SQLModel
-import domain.schema.courses as courses
-import domain.schema.instructor as instructor
+import domain.schema as schema
 from domain.schema.profile import UserProfileHobby, UserProfileStudent, UserProfileProfessional
 import uuid
 
@@ -28,8 +27,8 @@ class User(UserBase, table=True):
     
     profile: "UserProfile"                          = Relationship(back_populates="user")
     external_auth: Optional["UserExternalAuth"]     = Relationship(back_populates="user")
-    instructor: Optional["instructor.Instructor"]   = Relationship(back_populates="user")
-    courses: list["courses.Course"]                 = Relationship(back_populates="user")
+    instructor: Optional["schema.instructor.Instructor"]   = Relationship(back_populates="user")
+    courses: list["schema.courses.Course"]                 = Relationship(back_populates="user")
     
 class UserExternalAuth(SQLModel, table=True):
     __tablename__ = "users_external_auth"
