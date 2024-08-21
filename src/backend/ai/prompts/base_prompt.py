@@ -1,4 +1,4 @@
-from typing import Dict, List, Type, TypeVar
+from typing import Dict, List, Optional, Type, TypeVar
 from ai.common import BaseChatMessage, BaseTool, ChatRole
 
 T = TypeVar('T', bound='BaseTool')
@@ -9,6 +9,7 @@ class BasePrompt:
     tools: List[BaseTool]
     tool_types: Dict[str, Type[BaseTool]]
     tool_instances: Dict[str, List[BaseTool]]
+    forced_tool_name: Optional[str] = None
      
     def __init__(self) -> None:
         self.system_prompt = None
@@ -25,11 +26,18 @@ class BasePrompt:
     def set_system_prompt(self, system_prompt: str) -> None:
         self.system_prompt = system_prompt
         
-    def use_tool(self, tool_type: Type[BaseTool]) -> None:
+    def use_tool(self, tool_type: Type[BaseTool], force: Optional[bool] = False) -> None:
         inst = tool_type()
         self.tools.append(inst)
         self.tool_types[inst.name] = tool_type
         self.tool_instances[tool_type.__name__] = []
+        
+        if force:
+            self.force_tool(tool_type)
+        
+    def force_tool(self, tool_type: Type[BaseTool]) -> None:
+        inst = tool_type()
+        self.forced_tool_name = inst.name
         
     def process_tool(self, tool_name: str, arguments: dict):
         if tool_name not in self.tool_types:

@@ -17,8 +17,10 @@ from openai.types.chat import (
     ChatCompletionContentPartImageParam,
     ChatCompletionMessageToolCall, 
     ChatCompletionChunk,
-    ChatCompletionMessageParam
+    ChatCompletionMessageParam,
+    ChatCompletionToolChoiceOptionParam
 )
+from openai.types.chat.chat_completion_named_tool_choice_param import Function as NamedToolFunction, ChatCompletionNamedToolChoiceParam
 from openai.types.chat.chat_completion_content_part_image_param import ImageURL
 from openai.types.shared import FunctionDefinition
 from config import get_openai_key
@@ -73,12 +75,28 @@ class BaseGPT(BaseModel):
         # Loops until there are no more tool calls to process
         while True:
             if available_tools:
-                response = cast(Stream[ChatCompletionChunk], self.client.chat.completions.create(
-                    model=self.model_name,
-                    messages=messages,
-                    tools=available_tools,
-                    stream=True
-                ))
+                if prompt.forced_tool_name:
+                    tool_choice = ChatCompletionNamedToolChoiceParam(
+                        type="function",
+                        function=NamedToolFunction(
+                            name=prompt.forced_tool_name
+                        )
+                    )
+                    
+                    response = cast(Stream[ChatCompletionChunk], self.client.chat.completions.create(
+                        model=self.model_name,
+                        messages=messages,
+                        tools=available_tools,
+                        tool_choice=tool_choice,
+                        stream=True
+                    ))
+                else:    
+                    response = cast(Stream[ChatCompletionChunk], self.client.chat.completions.create(
+                        model=self.model_name,
+                        messages=messages,
+                        tools=available_tools,
+                        stream=True
+                    ))
             else:
                 response = cast(Stream[ChatCompletionChunk], self.client.chat.completions.create(
                     model=self.model_name,
