@@ -11,6 +11,7 @@ type Context = {
     messages: ChatMessageDto[];
     pendingTools: string[];
     toolResults: Record<string, any | null>;
+    isProcessing: boolean;
     sendMessage: (message: string) => void;
 };
 
@@ -20,6 +21,7 @@ const defaultValue: Context = {
     messages: [],
     pendingTools: [],
     toolResults: {},
+    isProcessing: false,
     sendMessage: () => {},
 };
 
@@ -34,6 +36,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
     const [instructor] = useInstructor();
     const [pendingToolNames, setPendingToolNames] = useState<string[]>([]);
+    const [isProcessing, setIsProcessing] = useState(false);
     const [toolResults, setToolResults] = useState<Record<string, any | null>>(
         {}
     );
@@ -106,6 +109,10 @@ Now that you've completed the onboarding process, let's get started with plannin
     }, [toolResults]);
 
     const handleSendMessage = (message: string) => {
+        if (isProcessing) return;
+
+        setIsProcessing(true);
+
         setMessages((prev) => [
             ...prev,
             {
@@ -150,6 +157,7 @@ Now that you've completed the onboarding process, let's get started with plannin
                 // Complete
                 setPendingToolNames([]);
                 setToolResults(completedToolCalls);
+                setIsProcessing(false);
             }
         );
     };
@@ -170,6 +178,7 @@ Now that you've completed the onboarding process, let's get started with plannin
                 messages,
                 pendingTools: pendingToolNames,
                 toolResults,
+                isProcessing,
                 sendMessage: handleSendMessage,
             }}
         >

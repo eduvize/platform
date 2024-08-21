@@ -23,7 +23,7 @@ export const Chat = ({ height, toolDescriptionMap, onTool }: ChatProps) => {
     const isAtBottomRef = useRef(true);
     const pendingToolNames = usePendingTools();
     const toolResults = useToolResults();
-    const [messages, sendMessage] = useChatMessages();
+    const { messages, sendMessage, processing } = useChatMessages();
     const [message, setMessage] = useState("");
 
     const handleScrollToBottom = () => {
@@ -56,6 +56,7 @@ export const Chat = ({ height, toolDescriptionMap, onTool }: ChatProps) => {
             <ScrollArea.Autosize
                 viewportRef={viewport}
                 h={height}
+                p="lg"
                 scrollbars="y"
                 onScroll={() => {
                     isAtBottomRef.current =
@@ -64,14 +65,18 @@ export const Chat = ({ height, toolDescriptionMap, onTool }: ChatProps) => {
                         viewport.current!.scrollHeight;
                 }}
             >
-                <Stack gap="xl">
+                <Stack
+                    gap="xl"
+                    mt="md"
+                    pb={pendingToolNames.length ? "xl" : undefined}
+                >
                     {messages.map((message) => (
                         <ChatMessage {...message} />
                     ))}
                 </Stack>
 
                 {pendingToolNames.length > 0 && (
-                    <Box mt="md">
+                    <Box mt="md" pos="absolute" bottom="0" left="0">
                         {pendingToolNames.map((toolName) => (
                             <PendingTool
                                 name={
@@ -97,6 +102,7 @@ export const Chat = ({ height, toolDescriptionMap, onTool }: ChatProps) => {
                         setMessage("");
                     }
                 }}
+                disabled={processing}
             />
         </Stack>
     );
