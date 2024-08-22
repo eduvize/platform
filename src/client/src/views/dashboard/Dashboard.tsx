@@ -2,11 +2,11 @@ import { Route, Routes, useMatch } from "react-router-dom";
 import { UserProvider } from "@context/user";
 import { useOnboarding } from "@context/user/hooks";
 import { Profile } from "@views/profile";
-import { Courses } from "@views/courses";
 import { Header } from "./sections";
 import { SetupCta, VerificationCta } from "./cta";
 import { ReactNode } from "react";
 import { Container } from "@mantine/core";
+import { Courses } from "@views/courses";
 
 const CallToActionOrView = ({ children }: { children: React.ReactNode }) => {
     const isProfile = useMatch("/dashboard/profile");
