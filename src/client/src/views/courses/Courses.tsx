@@ -5,6 +5,7 @@ import {
     Flex,
     Grid,
     List,
+    ScrollArea,
     Stack,
     ThemeIcon,
 } from "@mantine/core";
@@ -80,15 +81,17 @@ export const Courses = () => {
             </Grid.Col>
 
             <Grid.Col span="auto">
-                <Center>
-                    <Routes>
-                        <Route
-                            path="new"
-                            handle="new"
-                            element={<CoursePlanner />}
-                        />
-                    </Routes>
-                </Center>
+                <ScrollArea.Autosize h="calc(100vh - 75px)">
+                    <Center>
+                        <Routes>
+                            <Route
+                                path="new"
+                                handle="new"
+                                element={<CoursePlanner />}
+                            />
+                        </Routes>
+                    </Center>
+                </ScrollArea.Autosize>
             </Grid.Col>
         </Grid>
     );
