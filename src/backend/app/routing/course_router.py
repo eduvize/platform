@@ -15,7 +15,12 @@ async def get_additional_inputs(
     user_id: str = Depends(user_id_extractor), 
     course_service: CourseService = Depends(CourseService)
 ):
-    try:
-        return await course_service.get_additional_inputs(user_id, payload)
-    except InstructorNotFoundError:
-        return Response(status_code=404)
+    return await course_service.get_additional_inputs(user_id, payload)
+    
+@router.post("/generate")
+async def generate_course(
+    payload: CoursePlanDto,
+    user_id: str = Depends(user_id_extractor), 
+    course_service: CourseService = Depends(CourseService)
+):
+    return await course_service.generate_course(user_id, payload)

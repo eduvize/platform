@@ -12,7 +12,7 @@ The instructor is teaching software development courses.
 The name of the instructor must be one word only, and should be some silly or fun variant of the type of animal it is.
 """)
         
-        self.use_tool(ProvideInstructorProfileTool)
+        self.use_tool(ProvideInstructorProfileTool, force=True)
         
     def get_profile(self, animal: str) -> Optional[InstructorDto]:
         from ...models.gpt_4o_mini import GPT4oMini
@@ -21,15 +21,15 @@ The name of the instructor must be one word only, and should be some silly or fu
         
         model = GPT4oMini()
         model.get_responses(self)
-        calls = self.get_tool_calls(ProvideInstructorProfileTool)
+        call = self.get_tool_call(ProvideInstructorProfileTool)
         
-        if not calls:
+        if not call.result:
             return None
         
-        result = calls[-1].result
+        instructor_profile = call.result        
         
         instructor = InstructorDto.model_construct(
-            name=result["name"],
+            name=instructor_profile.name,
             avatar_url = ""
         )
         

@@ -1,8 +1,10 @@
 from typing import Optional
-from domain.dto.courses.exercise import ExerciseDto
+
+from pydantic import field_validator
 from domain.schema.courses.lesson import LessonBase
+from .section import SectionDto
 
 class LessonDto(LessonBase):
     title: str
     description: str
-    exercise: Optional[ExerciseDto] = None
+    sections: list[SectionDto]

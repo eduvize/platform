@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     Stack,
     Input,
@@ -7,6 +7,7 @@ import {
     Textarea,
     Button,
     Text,
+    Switch,
 } from "@mantine/core";
 import { UseFormReturnType } from "@mantine/form";
 import { CoursePlan } from "@models/dto";
@@ -71,6 +72,15 @@ export const FirstStep = ({ form, onContinue }: FirstStepProps) => {
                 return null;
         }
     }, [form.values.experience]);
+    const [challenges, setChallenges] = useState(false);
+
+    useEffect(() => {
+        if (challenges) {
+            form.setFieldValue("challenges", "");
+        } else {
+            form.setFieldValue("challenges", undefined);
+        }
+    }, [challenges]);
 
     return (
         <>
@@ -112,6 +122,28 @@ export const FirstStep = ({ form, onContinue }: FirstStepProps) => {
                         <Textarea mt="sm" />
                     </Input.Wrapper>
                 )}
+            </Input.Wrapper>
+
+            <Input.Wrapper required label="Challenges" size="lg">
+                <Stack>
+                    <Group mt="md">
+                        <Switch
+                            label="I've faced challenges in the past related to this subject"
+                            checked={challenges}
+                            onChange={() => setChallenges((c) => !c)}
+                        />
+                    </Group>
+
+                    {challenges && (
+                        <Input.Wrapper
+                            required
+                            label="Describe the challenges you've faced"
+                            {...form.getInputProps("challenges")}
+                        >
+                            <Textarea mt="sm" />
+                        </Input.Wrapper>
+                    )}
+                </Stack>
             </Input.Wrapper>
 
             <Input.Wrapper required label="Current Experience" size="lg">
@@ -171,6 +203,14 @@ export const FirstStep = ({ form, onContinue }: FirstStepProps) => {
                         </Chip>
                     ))}
                 </Group>
+            </Input.Wrapper>
+
+            <Input.Wrapper required label="Desired Outcome" size="lg">
+                <Text size="sm" c="dimmed">
+                    What do you hope to achieve by the end of this course?
+                </Text>
+
+                <Textarea mt="sm" {...form.getInputProps("desired_outcome")} />
             </Input.Wrapper>
 
             <Group justify="flex-end" mt="xl">

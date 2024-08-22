@@ -29,6 +29,8 @@ const Component = () => {
             motivations: [],
             experience: null,
             materials: [],
+            followup_answers: {},
+            desired_outcome: "",
         },
         enhanceGetInputProps: (payload) => {
             switch (payload.field) {
@@ -59,32 +61,46 @@ const Component = () => {
         },
     });
     const [step, setStep] = useState<Step>(Step.Overview);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const [followup, setFollowup] = useState<AdditionalInputsDto | null>(null);
 
     useEffect(() => {
-        console.log(form.values);
-    }, [form.values]);
-
-    useEffect(() => {
         if (step === 1) {
-            CourseApi.getAdditionalInputs(form.values).then((inputs) => {
-                setFollowup(inputs);
-            });
+            setIsLoading(true);
+
+            CourseApi.getAdditionalInputs(form.values)
+                .then((inputs) => {
+                    setFollowup(inputs);
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                });
         }
     }, [step]);
-
-    const isLoading = useMemo(() => {
-        return step === 1 && !followup;
-    }, [step, followup]);
 
     const loadingDescription = useMemo(() => {
         switch (step) {
             case Step.Followup:
                 return "Reviewing your request...";
             case Step.Generation:
-                return "Coming up with a course plan...";
+                return "Generating your course content...";
         }
     }, [step]);
+
+    const handleFollowupAnswers = (answers: any) => {
+        form.setFieldValue("followup_answers", answers);
+
+        setIsLoading(true);
+
+        CourseApi.generateCourse({
+            ...form.values,
+            followup_answers: answers,
+        }).finally(() => {
+            setIsLoading(false);
+        });
+
+        setStep(Step.Generation);
+    };
 
     return (
         <Container size="md" p="lg">
@@ -119,14 +135,14 @@ const Component = () => {
                                 />
                             )}
 
-                            {step == 1 && followup && (
+                            {step >= 1 && followup && (
                                 <SecondStep
                                     followupInformation={followup}
                                     onBack={() => {
                                         setFollowup(null);
                                         setStep(Step.Overview);
                                     }}
-                                    onContinue={() => setStep(Step.Generation)}
+                                    onContinue={handleFollowupAnswers}
                                 />
                             )}
                         </Stack>

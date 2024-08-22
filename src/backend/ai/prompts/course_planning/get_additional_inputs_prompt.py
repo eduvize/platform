@@ -4,9 +4,27 @@ from domain.dto.courses import CoursePlanDto
 from domain.enums.course_enums import CourseMotivation, CurrentSubjectExperience, CourseMaterial
 from domain.dto.courses import AdditionalInputs
 
-class GetAdditionalInputsPrompt(BasePrompt):
+class GetAdditionalInputsPrompt(BasePrompt):    
     def setup(self) -> None:
         self.use_tool(ProvideAdditionalInputsTool, force=True)
+        
+        self.set_system_prompt(f"""
+You are an AI assistant tasked with reviewing student applications for an online education platform focused on Software Engineering. Your goal is to generate follow-up questions that will help gather specific details about the student's current knowledge gaps and additional relevant information, aiding in the creation of a tailored course syllabus.
+
+**Rules for generating questions:**
+1. **Avoid Redundancy**: Ensure that none of your questions repeat those already presented in the student's initial request form.
+2. **Limit to 8 Questions**: Generate up to 8 follow-up questions, but only if each question provides significant value.
+3. **Use Appropriate Input Types**: Utilize "text," "select," and "multiselect" input types to make questions easy to answer.
+4. **Focus on Knowledge Gaps and Context**: Target areas where the student feels they lack understanding or experience, gather relevant information about their background, and specify tools, frameworks, or methodologies related to the subject they want to learn.
+5. **No Questions on Learning Pace or Time Commitment**: Do not ask about the student's preferred learning pace or time availability, as the course is designed to be taken at their leisure.
+6. **Dependent Fields**: If a question depends on a previous answer, ensure it is logically connected to the student's response.
+
+**Guidelines:**
+- **Relevance**: Ensure each question directly relates to the student's desired learning subject and their existing knowledge.
+- **Clarity**: Avoid overloading the student with too many questions. Aim for a balance between gathering necessary details and keeping the form concise.
+- **Follow-Up**: If "Other" is selected, always include a follow-up question to clarify the student's needs.
+- **Rule-Based Questions**: If any of your questions need to follow specific rules, define them clearly in the tool’s schema.
+""")
     
     def get_inputs(
         self,
@@ -15,46 +33,30 @@ class GetAdditionalInputsPrompt(BasePrompt):
     ) -> AdditionalInputs:
         from ai.models.gpt_4o import GPT4o
         
-        self.set_system_prompt(f"""
-Review a student application request to enroll an online education platform for Software Engineering.
-You are expected to provide follow-up questions to the student to get a comprehensive understanding of their needs and expectations so course material can be created accordingly.
-The answers to these questions will be handed off to a course planner who will create a course outline based on the student's responses.
+        plan_description = get_course_plan_description(plan)
+        
+        self.add_user_message(f"""### User Profile:
+{profile_text}
 
-An ideal set of questions will provide additional insight into what the student is looking to achieve with this course, information around their motivations, and to drill into specifics about their understanding of the subject at hand.
-If the student provided any additional information about their motivations or experience, it is a good idea to orient a few questions around those details.
-You will not ask questions that can already be derived from the student's profile (like proficiency in a language or library), what their preferred learning style or time commitment is, what learning resources they use, or about subjects not directly related to the course subject.
-It's important that you do not go off course with your questions: do not attempt to ask the student if they would like to learn more about a related subject.
+### Initial Request Form:
+{plan_description}
 
-Select and Multiselect:
-- Do not add parantheses to selection options.
-- If you specify 'Other' as an option, you must provide a follow-up question to gather more information.
-
-If any of your questions are rule based, you can specify them in the tool's schema.
-
-You will make these questions as easy to fill out as possible, leveraging selections and multiple-choice questions where possible.
+Using the user profile information and the initial request form data, generate follow-up questions to gather more specific details. Ensure no repetition of previous questions, limit to 8 questions only if necessary, and utilize text, select, and multiselect inputs where appropriate.
 """)
-        
-        self.add_agent_message(f"""
-I've pulled the user's profile information. Here is what I have:
-{profile_text}                            
-""")
-        
-        plan_description = _get_course_plan_description(plan)
-        
-        self.add_user_message(plan_description)
-        self.add_agent_message("Excellent, I will analyze what you have provided and determine if I have any follow-up questions in order to make this course work for you.")
-        
+                    
         model = GPT4o()
         model.get_responses(self)
         
-        calls = self.get_tool_calls(ProvideAdditionalInputsTool)
+        followup_call = self.get_tool_call(ProvideAdditionalInputsTool)
         
-        if not calls:
-            return []
+        if not followup_call.result:
+            return AdditionalInputs.model_construct(
+                inputs=[]
+            )
         
-        return calls[-1].result
-        
-def _get_course_plan_description(plan: CoursePlanDto) -> str:
+        return followup_call.result
+    
+def get_course_plan_description(plan: CoursePlanDto) -> str:
     motivation_strs = []
     current_experience_str = ""
     
@@ -87,9 +89,16 @@ def _get_course_plan_description(plan: CoursePlanDto) -> str:
     
     motivations_str = "- " + "\n- ".join(motivation_strs)
 
+    challenges_str = f"""
+Challenges I've faced with this in the past:
+{plan.challanges}
+""" if plan.challanges else ""
+
     return f"""
 I would like to learn {plan.subject}.
 
+Desired outcome: {plan.desired_outcome}
+{challenges_str}
 My motivation behind this desire:
 {motivations_str}
 

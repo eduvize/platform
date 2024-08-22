@@ -35,6 +35,7 @@ class ToolCallRecord:
     name: str
     arguments: str
     result: str
+    errors: bool
     
     def __init__(self, index: int, id: str, name: str, arguments: str) -> None:
         self.index = index
@@ -42,6 +43,7 @@ class ToolCallRecord:
         self.name = name
         self.arguments = arguments
         self.result = "Success"
+        self.errors = False
 
 class BaseGPT(BaseModel):
     client: OpenAI
@@ -70,7 +72,14 @@ class BaseGPT(BaseModel):
             messages.insert(0, ChatCompletionSystemMessageParam(role="system", content=prompt.system_prompt))
         
         # Create the list of tools
-        available_tools = [self.get_tool(tool) for tool in prompt.tools]
+        if prompt.tool_choice_filter:
+            available_tools = [
+                self.get_tool(tool)
+                for tool in prompt.tools
+                if tool.name in prompt.tool_choice_filter
+            ]
+        else:    
+            available_tools = [self.get_tool(tool) for tool in prompt.tools]
         
         # Loops until there are no more tool calls to process
         while True:
@@ -88,6 +97,14 @@ class BaseGPT(BaseModel):
                         messages=messages,
                         tools=available_tools,
                         tool_choice=tool_choice,
+                        stream=True
+                    ))
+                elif prompt.tool_choice_filter:
+                    response = cast(Stream[ChatCompletionChunk], self.client.chat.completions.create(
+                        model=self.model_name,
+                        messages=messages,
+                        tools=available_tools,
+                        tool_choice="required",
                         stream=True
                     ))
                 else:    
@@ -112,11 +129,11 @@ class BaseGPT(BaseModel):
             # Yield text content as it is received
             # Collect tool calls as they populate
             for chunk in response:
-                available_tools = chunk.choices[0].delta.tool_calls
+                tool_calls = chunk.choices[0].delta.tool_calls
                 content = chunk.choices[0].delta.content
                     
-                if available_tools:
-                    for tool_call in available_tools:
+                if available_tools and tool_calls:
+                    for tool_call in tool_calls:
                         existing_record = next((record for record in tool_call_dict if record.index == tool_call.index), None)
                         
                         if existing_record is None:
@@ -153,35 +170,33 @@ class BaseGPT(BaseModel):
                             
                 if chunk.choices[0].finish_reason:
                     finish_reason = chunk.choices[0].finish_reason
+                    logger.info(f"Finish reason: {finish_reason}")
                     break
             
             # Execute any tools that were called
             if len(tool_call_dict) > 0:
+                logging.info(f"Took calls: {tool_call_dict}")
                 for record in tool_call_dict:
+                    logging.info(f"Processing tool: {record.name}")
+
                     # Try to load the JSON - if it fails, return an error to the model for correction
                     try:
                         json_dict = json.loads(record.arguments)
                         record.result = prompt.process_tool(tool_name=record.name, arguments=json_dict)
                     except json.JSONDecodeError:
-                        record.result = "Error: Invalid json arguments"
+                        logging.error(f"Error decoding JSON: {record.arguments}")
+                        record.result = "Invalid JSON provided to tool"
+                        record.errors = True
+                    except ValueError as e:
+                        logging.error(f"Error processing tool, invalid argument schema: {record.name}: {e}")
+                        record.result = f"""{e}
+Correct the errors in tool arguments and try again.
+"""
+                        record.errors = True
                     except Exception as e:
+                        logging.error(f"Error processing tool, unhandled error: {record.name}: {e}")
                         record.result = f"Error: {e}"
-                
-            # Build the response message
-            response_message = ChatCompletionAssistantMessageParam(
-                role="assistant",
-                content=response_content,
-                tool_calls=[
-                    ChatCompletionMessageToolCall(
-                        id=record.id,
-                        type="function",
-                        function=FunctionCall(
-                            name=record.name,
-                            arguments=record.arguments
-                        )
-                    ) for record in tool_call_dict
-                ]
-            )
+                        record.errors = True
             
             responses.append(
                 BaseChatResponse(
@@ -199,15 +214,37 @@ class BaseGPT(BaseModel):
             
             # If the finish reason is tool calls, added to the chat context and repeat the loop
             if finish_reason == "tool_calls" or len(tool_call_dict) > 0:
+                # Build the response message
+                response_message = ChatCompletionAssistantMessageParam(
+                    role="assistant",
+                    content=response_content,
+                    tool_calls=[
+                        ChatCompletionMessageToolCall(
+                            id=record.id,
+                            type="function",
+                            function=FunctionCall(
+                                name=record.name,
+                                arguments=record.arguments
+                            )
+                        ) for record in tool_call_dict
+                    ]
+                )
+                
                 messages.append(response_message)
                 
                 for record in tool_call_dict:
-                    messages.append(ChatCompletionToolMessageParam(role="tool", tool_call_id=record.id, content=record.result))
-                
-                continue
+                    messages.append(ChatCompletionToolMessageParam(
+                        role="tool", 
+                        tool_call_id=record.id, 
+                        content=record.result
+                    ))
+                    
+                # If the model was forced to call this a tool, break the loop unless there are errors
+                if prompt.forced_tool_name and not any(record.errors for record in tool_call_dict):
+                    break
             else:
                 break
-            
+        
         return responses
         
     def get_messages(

@@ -11,16 +11,16 @@ It is okay to provide less than 5 options if you cannot think of more. If the qu
 If there is an exact match, you will make sure you provide it as the first option.
 """)
         
-        self.use_tool(ProvideOptionsTool)
+        self.use_tool(ProvideOptionsTool, force=True)
         
     def get_options(self) -> List[str]:
         from ...models.gpt_4o_mini import GPT4oMini
         
         model = GPT4oMini()
         model.get_responses(self)
-        calls = self.get_tool_calls(ProvideOptionsTool)
+        call = self.get_tool_call(ProvideOptionsTool)
         
-        if not calls:
+        if not call.result:
             return []
         
-        return calls[-1].result
+        return call.result.options

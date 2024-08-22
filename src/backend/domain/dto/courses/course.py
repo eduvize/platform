@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from domain.dto.courses.module import ModuleDto
 from domain.schema.courses.course import CourseBase
 

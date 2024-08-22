@@ -1,11 +1,12 @@
 import { Group, Button, Text, Title, Stack } from "@mantine/core";
 import { AdditionalInputsDto } from "@models/dto";
 import { CoursePlanningFollowUp } from "@organisms";
+import { useState } from "react";
 
 interface SecondStepProps {
     followupInformation: AdditionalInputsDto;
     onBack: () => void;
-    onContinue: () => void;
+    onContinue: (data: any) => void;
 }
 
 export const SecondStep = ({
@@ -13,6 +14,8 @@ export const SecondStep = ({
     onBack,
     onContinue,
 }: SecondStepProps) => {
+    const [answers, setAnswers] = useState<any>({});
+
     return (
         <>
             <Stack gap={0}>
@@ -23,7 +26,10 @@ export const SecondStep = ({
                 </Text>
             </Stack>
 
-            <CoursePlanningFollowUp inputs={followupInformation.inputs} />
+            <CoursePlanningFollowUp
+                inputs={followupInformation.inputs}
+                onChange={(data) => setAnswers(data)}
+            />
 
             <Group justify="flex-end" mt="xl">
                 <Group>
@@ -31,7 +37,10 @@ export const SecondStep = ({
                         Back
                     </Button>
 
-                    <Button variant="gradient" onClick={onContinue}>
+                    <Button
+                        variant="gradient"
+                        onClick={() => onContinue(answers)}
+                    >
                         Continue
                     </Button>
                 </Group>

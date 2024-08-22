@@ -1,3 +1,4 @@
+import logging
 from typing import Generator, List, Tuple
 from ai.prompts import BasePrompt
 from ai.common import BaseChatMessage, BaseChatResponse, BaseTool
@@ -15,14 +16,12 @@ class BaseModel:
             List[BaseChatResponse]: The final response from the AI model
         """
         generator = self.get_streaming_response(prompt)
-        
-        for _ in generator:
-            pass
-        
-        try:
-            next(generator)
-        except StopIteration as e:
-            return e.value
+
+        while True:
+            try:
+                next(generator)
+            except StopIteration as e:
+                return e.value
     
     def get_streaming_response(self, prompt: BasePrompt) -> Generator[CompletionChunk, None, List[BaseChatResponse]]:
         """

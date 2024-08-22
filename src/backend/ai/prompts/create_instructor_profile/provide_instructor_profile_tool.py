@@ -2,6 +2,8 @@ from .models import InstructorProfile
 from ai.common import BaseTool
 
 class ProvideInstructorProfileTool(BaseTool):
+    result: InstructorProfile
+    
     def __init__(self):
         super().__init__("provide_instructor", "Returns the completed instructor profile")
         self.use_schema(InstructorProfile.model_json_schema())

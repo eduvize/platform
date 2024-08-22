@@ -8,11 +8,10 @@ class ModuleBase(SQLModel):
     description: str
     
 class Module(ModuleBase, table=True):
-    __tablename__ = "modules"
+    __tablename__ = "course_modules"
     
-    id: uuid.UUID                               = Field(default=None, primary_key=True)
-    course_id: uuid.UUID                        = Field(default=None, foreign_key="courses.id")
+    id: uuid.UUID                                       = Field(default_factory=uuid.uuid4, primary_key=True)
+    course_id: uuid.UUID                                = Field(default=None, foreign_key="courses.id")
     
     course: "schema.courses.course.Course"              = Relationship(back_populates="modules")
     lessons: list["schema.courses.lesson.Lesson"]       = Relationship(back_populates="module")
-    quiz: Optional["schema.courses.quiz.Quiz"]          = Relationship(back_populates="module")

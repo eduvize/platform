@@ -31,4 +31,6 @@ class CoursePlanDto(BaseModel):
     experience: CurrentSubjectExperience
     experience_details: Optional[str] = None
     materials: list[CourseMaterial]
-    follow_up_questions: Optional[list[AdditionalInputs]] = None
+    challanges: Optional[str] = None
+    desired_outcome: str
+    followup_answers: Optional[dict] = None

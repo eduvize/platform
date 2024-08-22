@@ -1,14 +1,16 @@
 import { Input, Stack, Text } from "@mantine/core";
 import { AdditionalInputDto } from "@models/dto";
 import { FollowUpField } from "@molecules";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface CoursePlanningFollowUpProps {
     inputs: AdditionalInputDto[];
+    onChange: (data: any) => void;
 }
 
 export const CoursePlanningFollowUp = ({
     inputs,
+    onChange,
 }: CoursePlanningFollowUpProps) => {
     const [data, setData] = useState<Record<string, string | string[]>>(
         Object.fromEntries(
@@ -18,6 +20,10 @@ export const CoursePlanningFollowUp = ({
             ])
         )
     );
+
+    useEffect(() => {
+        onChange(data);
+    }, [data]);
 
     const shouldShowInput = (input: AdditionalInputDto) => {
         if (!input.depends_on_input_name) return true;

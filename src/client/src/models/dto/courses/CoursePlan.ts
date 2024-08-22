@@ -11,4 +11,7 @@ export interface CoursePlan {
     experience: CurrentSubjectExperience | null;
     experience_details?: string;
     materials: CourseMaterial[];
+    challenges?: string;
+    desired_outcome: string;
+    followup_answers?: any;
 }

@@ -3,4 +3,5 @@ from .autocomplete import AutocompletePrompt
 from .resume_scan import ResumeScannerPrompt
 from .create_instructor_profile import CreateInstructorProfilePrompt
 from .assertion import AssertionPrompt
-from .course_planning import CoursePlanningPrompt, GetAdditionalInputsPrompt
+from .course_planning import GetAdditionalInputsPrompt
+from .course_generation import GenerateCourseOutlinePrompt, GenerateModuleContentPrompt

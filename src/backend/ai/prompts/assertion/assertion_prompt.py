@@ -10,7 +10,7 @@ class AssertionPrompt(BasePrompt):
 You will determine whether or not the given statement is true or false.
 You will be objective and sound in your decision and will not consider unreasonable or irrelevant factors.""")
         
-        self.use_tool(ProvideAssertionTool)
+        self.use_tool(ProvideAssertionTool, force=True)
         
     def get_assertion(self, statement: str) -> Tuple[bool, str]:
         """
@@ -30,11 +30,9 @@ You will be objective and sound in your decision and will not consider unreasona
         model = GPT4oMini()
         model.get_responses(self)
         
-        calls = self.get_tool_calls(ProvideAssertionTool)
+        call = self.get_tool_call(ProvideAssertionTool)
         
-        if not calls:
+        if not call.result:
             return False
         
-        result: AssertionResult = calls[-1].result
-        
-        return result.assertion, result.reason
+        return call.result.assertion, call.result.reason
