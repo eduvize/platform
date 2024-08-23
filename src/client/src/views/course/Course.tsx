@@ -25,9 +25,10 @@ const Component = () => {
     const [moduleIndex, setModuleIndex] = useState(0);
     const [lessonIndex, setLessonIndex] = useState(0);
     const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
-    const [openedModule, setOpenedModule] = useState<number>(0);
+    const [openedModuleIndex, setOpenedModule] = useState<number>(0);
 
     const currentModule = course?.modules[moduleIndex];
+    const openedModule = course?.modules[openedModuleIndex];
     const currentLesson = currentModule?.lessons[lessonIndex];
 
     useEffect(() => {
@@ -61,9 +62,9 @@ const Component = () => {
                 </Group>
 
                 <Group align="flex-start" wrap="nowrap">
-                    <Box w="280px" mr="lg" mt="sm">
+                    <Box w="280px" mr="lg">
                         <Accordion
-                            value={`module-${openedModule}`}
+                            value={`module-${openedModuleIndex}`}
                             onChange={(name) =>
                                 setOpenedModule(
                                     parseInt(name?.split("-")[1] || "0")
@@ -78,11 +79,12 @@ const Component = () => {
 
                                     <Accordion.Panel>
                                         <List listStyleType="none">
-                                            {currentModule?.lessons.map(
+                                            {openedModule?.lessons.map(
                                                 (lesson, lIndex) => (
                                                     <ListItem>
                                                         <Button
                                                             variant="transparent"
+                                                            size="compact-sm"
                                                             c={
                                                                 mIndex ===
                                                                     moduleIndex &&
@@ -130,7 +132,9 @@ const Component = () => {
                                     title={section.title}
                                     value={`section-${index}`}
                                 >
-                                    <Text c="white">{section.title}</Text>
+                                    <Text c="white" size="sm">
+                                        {section.title}
+                                    </Text>
                                 </Tabs.Tab>
                             ))}
                         </Tabs.List>
