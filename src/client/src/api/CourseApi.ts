@@ -1,5 +1,9 @@
 import BaseApi from "./BaseApi";
-import { AdditionalInputsDto, CoursePlan as CoursePlanDto } from "@models/dto";
+import {
+    AdditionalInputsDto,
+    CourseDto,
+    CoursePlan as CoursePlanDto,
+} from "@models/dto";
 
 class CourseApi extends BaseApi {
     getAdditionalInputs(plan: CoursePlanDto): Promise<AdditionalInputsDto> {
@@ -8,6 +12,10 @@ class CourseApi extends BaseApi {
 
     generateCourse(plan: CoursePlanDto): Promise<void> {
         return this.post("generate", plan);
+    }
+
+    getCourse(id: string): Promise<CourseDto> {
+        return this.get(id);
     }
 }
 

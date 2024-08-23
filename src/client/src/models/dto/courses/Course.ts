@@ -1,8 +1,8 @@
-import { Module } from "./Module";
+import { ModuleDto } from "./Module";
 
-export interface Course {
+export interface CourseDto {
     title: string;
     description: string;
 
-    modules: Module[];
+    modules: ModuleDto[];
 }

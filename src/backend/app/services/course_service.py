@@ -4,6 +4,7 @@ from fastapi import Depends
 from app.services import UserService
 from app.repositories import CourseRepository
 from app.utilities.profile import get_user_profile_text
+from domain.schema.courses.course import Course
 from domain.dto.courses import CourseDto
 from domain.dto.profile import UserProfileDto
 from domain.dto.courses import CoursePlanDto
@@ -85,3 +86,19 @@ class CourseService:
             course_dto=course_dto
         )
         
+    async def get_course(
+        self,
+        user_id: str,
+        course_id: str
+    ) -> Course:
+        user = await self.user_service.get_user("id", user_id)
+        
+        if user is None:
+            raise ValueError("User not found")
+        
+        course = self.course_repo.get_course(user.id, course_id)
+        
+        if course is None:
+            raise ValueError("Course not found")
+        
+        return course

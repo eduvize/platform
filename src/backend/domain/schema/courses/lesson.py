@@ -14,4 +14,4 @@ class Lesson(LessonBase, table=True):
     module_id: uuid.UUID                            = Field(default=None, foreign_key="course_modules.id")
     
     module: "schema.courses.module.Module"          = Relationship(back_populates="lessons")
-    sections: "schema.courses.section.Section"      = Relationship(back_populates="lesson")
+    sections: list["schema.courses.section.Section"]      = Relationship(back_populates="lesson")

@@ -1,8 +1,7 @@
-import { Exercise } from "./Exercise";
+import { Section } from "./Section";
 
-export interface Lesson {
+export interface LessonDto {
     title: string;
     description: string;
-
-    exercise: Exercise | null;
+    sections: Section[];
 }

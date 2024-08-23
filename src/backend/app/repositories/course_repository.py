@@ -1,6 +1,8 @@
+from typing import Optional
 import uuid
 
-from sqlmodel import Session
+from sqlmodel import Session, select
+from sqlalchemy.orm import joinedload
 from domain.schema.courses import Course, Module, Lesson, Section
 from domain.dto.courses.course import CourseDto
 from common.database import engine
@@ -51,3 +53,20 @@ class CourseRepository:
             session.commit()
             
             return course_entity.id
+        
+    def get_course(self, user_id: uuid.UUID, course_id: uuid.UUID) -> Optional[Course]:
+        with Session(engine) as session:
+            query = (
+                select(Course)
+                .where(Course.id == course_id and Course.user_id == user_id)
+                .options(
+                    joinedload(Course.modules)
+                    .joinedload(Module.lessons)
+                    .joinedload(Lesson.sections)
+                )
+            )
+            
+            resultset = session.exec(query)
+            course = resultset.first()
+            
+            return course

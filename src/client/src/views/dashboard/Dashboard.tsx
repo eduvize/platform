@@ -7,6 +7,7 @@ import { SetupCta, VerificationCta } from "./cta";
 import { ReactNode } from "react";
 import { Container } from "@mantine/core";
 import { Courses } from "@views/courses";
+import { Course } from "@views/course";
 
 const CallToActionOrView = ({ children }: { children: React.ReactNode }) => {
     const isProfile = useMatch("/dashboard/profile");
@@ -51,6 +52,15 @@ export const Dashboard = () => {
                     element={
                         <CallToActionOrView>
                             <Courses />
+                        </CallToActionOrView>
+                    }
+                />
+                <Route
+                    path="course/:course_id"
+                    handle="course"
+                    element={
+                        <CallToActionOrView>
+                            <Course />
                         </CallToActionOrView>
                     }
                 />
