@@ -4,8 +4,11 @@ from datetime import datetime
 import domain.schema as schema
 
 class CourseBase(SQLModel):
-    title: str
-    description: str
+    title: str                  = Field(nullable=False)
+    description: str            = Field(nullable=False)
+    cover_image_url: str        = Field(nullable=False) 
+    is_generating: bool         = Field(default=True, nullable=False)
+    generation_progress: int    = Field(default=0, nullable=False)
     
 class Course(CourseBase, table=True):
     __tablename__ = "courses"

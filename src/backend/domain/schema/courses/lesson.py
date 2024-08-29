@@ -4,8 +4,8 @@ from sqlmodel import Field, Relationship, SQLModel
 import domain.schema as schema
 
 class LessonBase(SQLModel):
-    title: str
-    description: str
+    title: str          = Field(nullable=False)
+    description: str    = Field(nullable=False)
     
 class Lesson(LessonBase, table=True):
     __tablename__ = "course_lessons"
