@@ -1,4 +1,5 @@
 export * from "./Course";
+export * from "./CourseListing";
 export * from "./Lesson";
 export * from "./Module";
 export * from "./CoursePlan";

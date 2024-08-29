@@ -1,19 +1,19 @@
-import {
-    Center,
-    Container,
-    Divider,
-    Flex,
-    Grid,
-    List,
-    ScrollArea,
-    Stack,
-    ThemeIcon,
-} from "@mantine/core";
+import { Container, Grid, Group, List, ScrollArea, Stack } from "@mantine/core";
 import { InstructorSetup } from "./cta";
 import { useInstructor } from "@context/user/hooks";
 import { CoursePlanner } from "@views/course-planner";
-import { Link, NavLink, Route, Routes, useMatches } from "react-router-dom";
+import {
+    NavLink,
+    Route,
+    Routes,
+    useMatch,
+    useNavigate,
+} from "react-router-dom";
 import classes from "./Courses.module.css";
+import { useEffect, useState } from "react";
+import { CourseApi } from "@api";
+import { CourseListingDto } from "@models/dto";
+import { CourseListing } from "@molecules";
 
 interface NavItemProps {
     to: string;
@@ -21,10 +21,24 @@ interface NavItemProps {
 }
 
 export const Courses = () => {
+    const navigate = useNavigate();
+    const isMainScreen = useMatch("/dashboard/courses");
     const [instructor] = useInstructor();
-    const matches = useMatches();
+    const [courses, setCourses] = useState<CourseListingDto[]>([]);
 
-    console.log(matches);
+    useEffect(() => {
+        if (!instructor || !instructor.is_approved) return;
+
+        CourseApi.getCourses().then((courses) => {
+            setCourses(courses);
+        });
+    }, [instructor]);
+
+    useEffect(() => {
+        if (!isMainScreen) return;
+
+        navigate("/dashboard/courses/active");
+    }, [isMainScreen]);
 
     if (!instructor?.is_approved)
         return (
@@ -82,15 +96,32 @@ export const Courses = () => {
 
             <Grid.Col span="auto">
                 <ScrollArea.Autosize h="calc(100vh - 75px)">
-                    <Center>
-                        <Routes>
-                            <Route
-                                path="new"
-                                handle="new"
-                                element={<CoursePlanner />}
-                            />
-                        </Routes>
-                    </Center>
+                    <Routes>
+                        <Route
+                            path="active"
+                            handle="active"
+                            element={
+                                <Group p="lg">
+                                    {courses.map((course) => (
+                                        <CourseListing
+                                            key={course.id}
+                                            {...course}
+                                            onClick={() => {
+                                                navigate(
+                                                    `/dashboard/course/${course.id}`
+                                                );
+                                            }}
+                                        />
+                                    ))}
+                                </Group>
+                            }
+                        />
+                        <Route
+                            path="new"
+                            handle="new"
+                            element={<CoursePlanner />}
+                        />
+                    </Routes>
                 </ScrollArea.Autosize>
             </Grid.Col>
         </Grid>

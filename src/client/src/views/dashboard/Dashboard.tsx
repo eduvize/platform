@@ -47,20 +47,20 @@ export const Dashboard = () => {
                     }
                 />
                 <Route
-                    path="courses*"
-                    handle="courses"
-                    element={
-                        <CallToActionOrView>
-                            <Courses />
-                        </CallToActionOrView>
-                    }
-                />
-                <Route
                     path="course/:course_id"
                     handle="course"
                     element={
                         <CallToActionOrView>
                             <Course />
+                        </CallToActionOrView>
+                    }
+                />
+                <Route
+                    path="courses*"
+                    handle="courses"
+                    element={
+                        <CallToActionOrView>
+                            <Courses />
                         </CallToActionOrView>
                     }
                 />
