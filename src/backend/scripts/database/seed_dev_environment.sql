@@ -166,6 +166,9 @@ CREATE TABLE IF NOT EXISTS courses (
     user_id UUID NOT NULL REFERENCES users(id),
     title TEXT NOT NULL,
     description TEXT NOT NULL,
+    cover_image_url TEXT NOT NULL,
+    is_generating BOOLEAN NOT NULL DEFAULT TRUE,
+    generation_progress INT NOT NULL DEFAULT 0,
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
 
@@ -227,6 +230,6 @@ CREATE TABLE IF NOT EXISTS chat_tool_calls (
 CREATE TABLE IF NOT EXISTS playground_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     type TEXT NOT NULL,
-    is_reserved BOOLEAN NOT NULL DEFAULT FALSE,
+    instance_hostname TEXT,
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
