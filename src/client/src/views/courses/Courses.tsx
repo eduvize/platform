@@ -1,4 +1,4 @@
-import { Container, Grid, Group, List, ScrollArea, Stack } from "@mantine/core";
+import { Container, Grid, List, ScrollArea, Stack } from "@mantine/core";
 import { InstructorSetup } from "./cta";
 import { useInstructor } from "@context/user/hooks";
 import { CoursePlanner } from "@views/course-planner";
@@ -10,10 +10,9 @@ import {
     useNavigate,
 } from "react-router-dom";
 import classes from "./Courses.module.css";
-import { useEffect, useState } from "react";
-import { CourseApi } from "@api";
-import { CourseListingDto } from "@models/dto";
-import { CourseListing } from "@molecules";
+import { useEffect } from "react";
+import { useCourses } from "@context/course/hooks";
+import { CourseList } from "@organisms";
 
 interface NavItemProps {
     to: string;
@@ -24,15 +23,6 @@ export const Courses = () => {
     const navigate = useNavigate();
     const isMainScreen = useMatch("/dashboard/courses");
     const [instructor] = useInstructor();
-    const [courses, setCourses] = useState<CourseListingDto[]>([]);
-
-    useEffect(() => {
-        if (!instructor || !instructor.is_approved) return;
-
-        CourseApi.getCourses().then((courses) => {
-            setCourses(courses);
-        });
-    }, [instructor]);
 
     useEffect(() => {
         if (!isMainScreen) return;
@@ -100,21 +90,7 @@ export const Courses = () => {
                         <Route
                             path="active"
                             handle="active"
-                            element={
-                                <Group p="lg">
-                                    {courses.map((course) => (
-                                        <CourseListing
-                                            key={course.id}
-                                            {...course}
-                                            onClick={() => {
-                                                navigate(
-                                                    `/dashboard/course/${course.id}`
-                                                );
-                                            }}
-                                        />
-                                    ))}
-                                </Group>
-                            }
+                            element={<CourseList />}
                         />
                         <Route
                             path="new"

@@ -38,15 +38,6 @@ export const Dashboard = () => {
 
             <Routes>
                 <Route
-                    path="/"
-                    handle="home"
-                    element={
-                        <CallToActionOrView>
-                            <Courses />
-                        </CallToActionOrView>
-                    }
-                />
-                <Route
                     path="course/:course_id"
                     handle="course"
                     element={

@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { ChatProvider } from "@context/chat";
 import {
     Box,
+    Button,
     Card,
     Center,
     Container,
     Loader,
-    LoadingOverlay,
     Stack,
     Text,
 } from "@mantine/core";
@@ -15,6 +15,8 @@ import { useForm } from "@mantine/form";
 import { mapCheckListField } from "../profile/util";
 import { FirstStep, SecondStep } from "./steps";
 import { CourseApi } from "@api";
+import { IconCircleCheck } from "@tabler/icons-react";
+import { useNavigate } from "react-router-dom";
 
 enum Step {
     Overview = 0,
@@ -23,6 +25,7 @@ enum Step {
 }
 
 const Component = () => {
+    const navigate = useNavigate();
     const form = useForm<CoursePlan>({
         initialValues: {
             subject: "",
@@ -62,6 +65,7 @@ const Component = () => {
     });
     const [step, setStep] = useState<Step>(Step.Overview);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [isFinished, setIsFinished] = useState<boolean>(false);
     const [followup, setFollowup] = useState<AdditionalInputsDto | null>(null);
 
     useEffect(() => {
@@ -81,9 +85,11 @@ const Component = () => {
     const loadingDescription = useMemo(() => {
         switch (step) {
             case Step.Followup:
-                return "Reviewing your request...";
+                return "Processing your information...";
             case Step.Generation:
-                return "Generating your course content...";
+                return "Building a course outline based on your answers...";
+            default:
+                return "Working on it...";
         }
     }, [step]);
 
@@ -97,59 +103,107 @@ const Component = () => {
             followup_answers: answers,
         }).finally(() => {
             setIsLoading(false);
+            setIsFinished(true);
         });
 
         setStep(Step.Generation);
     };
 
-    return (
-        <Container size="md" p="lg">
-            <Stack>
-                <Box pos="relative">
-                    <LoadingOverlay
-                        visible={isLoading}
-                        overlayProps={{
-                            radius: "md",
-                            blur: 1,
-                            backgroundOpacity: 1,
-                        }}
-                        loaderProps={{
-                            children: (
-                                <Stack>
-                                    <Center>
-                                        <Loader type="bars" size="lg" />
-                                    </Center>
+    if (isLoading)
+        return (
+            <Box pos="fixed" left="50%" top="50%" w="200px">
+                <Stack align="center" gap={0}>
+                    <Loader type="bars" />
 
-                                    <Text mt="lg">{loadingDescription}</Text>
-                                </Stack>
-                            ),
-                        }}
-                    />
+                    <Text c="dimmed" mt="sm">
+                        {loadingDescription}
+                    </Text>
+                </Stack>
+            </Box>
+        );
 
-                    <Card withBorder p="lg">
-                        <Stack gap="xl">
-                            {(step === 0 || (step == 1 && isLoading)) && (
-                                <FirstStep
-                                    form={form}
-                                    onContinue={() => setStep(Step.Followup)}
-                                />
-                            )}
+    if (isFinished) {
+        return (
+            <Container size="xs" pt="xl" mt="xl">
+                <Stack gap="xl">
+                    <Card withBorder p="xl">
+                        <Stack align="center">
+                            <IconCircleCheck
+                                color="var(--mantine-color-green-5)"
+                                size={96}
+                            />
 
-                            {step >= 1 && followup && (
-                                <SecondStep
-                                    followupInformation={followup}
-                                    onBack={() => {
-                                        setFollowup(null);
-                                        setStep(Step.Overview);
-                                    }}
-                                    onContinue={handleFollowupAnswers}
-                                />
-                            )}
+                            <Text ta="center" size="xl">
+                                Submission successful
+                            </Text>
+
+                            <Text ta="center" size="sm" c="dimmed">
+                                We've created a course syllabus based on your
+                                answers and are working on generating the
+                                content right now. This process can take several
+                                minutes to complete.
+                            </Text>
+
+                            <Text ta="center" size="sm" c="dimmed">
+                                You'll receive an email once it's ready!
+                            </Text>
                         </Stack>
                     </Card>
-                </Box>
-            </Stack>
-        </Container>
+
+                    <Stack px="20%">
+                        <Button
+                            variant="gradient"
+                            onClick={() => {
+                                navigate("/dashboard/courses/active");
+                            }}
+                        >
+                            Back to courses
+                        </Button>
+
+                        <Button
+                            variant="filled"
+                            c="dimmed"
+                            bg="dark"
+                            onClick={() => {
+                                setStep(Step.Overview);
+                                setIsFinished(false);
+                                form.reset();
+                            }}
+                        >
+                            Create another
+                        </Button>
+                    </Stack>
+                </Stack>
+            </Container>
+        );
+    }
+
+    return (
+        <Stack>
+            <Box pos="relative" p="xl">
+                <Center>
+                    <Stack gap="xl">
+                        {(step === 0 || (step == 1 && isLoading)) && (
+                            <FirstStep
+                                form={form}
+                                onContinue={() => setStep(Step.Followup)}
+                            />
+                        )}
+
+                        {step >= 1 && followup && (
+                            <SecondStep
+                                followupInformation={followup}
+                                onBack={() => {
+                                    setFollowup(null);
+                                    setStep(Step.Overview);
+                                }}
+                                onContinue={handleFollowupAnswers}
+                            />
+                        )}
+                    </Stack>
+                </Center>
+            </Box>
+        </Stack>
     );
 };
 

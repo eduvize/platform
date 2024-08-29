@@ -1,4 +1,4 @@
-import { Text, Card, Progress } from "@mantine/core";
+import { Text, Card, Progress, Box, LoadingOverlay } from "@mantine/core";
 import { CourseListingDto } from "@models/dto";
 import classes from "./CourseListing.module.css";
 
@@ -9,30 +9,53 @@ interface CourseListingProps extends CourseListingDto {
 export const CourseListing = ({
     title,
     cover_image_url,
+    is_generating,
     onClick,
 }: CourseListingProps) => {
     return (
-        <Card
-            withBorder
-            className={classes.courseCard}
-            pos="relative"
-            w="18vw"
-            h="20vh"
-            bg={`url(${cover_image_url}) center / cover`}
-            onClick={onClick}
-        >
-            <Text
-                size="xl"
-                c="white"
-                fw={700}
-                style={{
-                    textShadow: "0px 0px 8px #000",
+        <Box pos="relative">
+            <LoadingOverlay
+                visible={is_generating}
+                loaderProps={{
+                    type: "dots",
+                    color: "lightgray",
+                    top: 40,
                 }}
-            >
-                {title}
-            </Text>
+                overlayProps={{
+                    opacity: 0.8,
+                }}
+            />
 
-            <Progress pos="absolute" bottom="0" left="0" w="100%" value={50} />
-        </Card>
+            <Card
+                withBorder
+                className={classes.courseCard}
+                pos="relative"
+                w="18vw"
+                h="20vh"
+                bg={`url(${cover_image_url}) center / cover`}
+                onClick={onClick}
+            >
+                <Text
+                    size="xl"
+                    c="white"
+                    fw={700}
+                    style={{
+                        textShadow: "0px 0px 8px #000",
+                    }}
+                >
+                    {title}
+                </Text>
+
+                {!is_generating && (
+                    <Progress
+                        pos="absolute"
+                        bottom="0"
+                        left="0"
+                        w="100%"
+                        value={50}
+                    />
+                )}
+            </Card>
+        </Box>
     );
 };
