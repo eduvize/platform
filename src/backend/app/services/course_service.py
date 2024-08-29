@@ -15,11 +15,12 @@ from domain.dto.courses import CoursePlanDto
 from domain.topics import CourseGenerationTopic
 from ai.prompts import GetAdditionalInputsPrompt, GenerateCourseOutlinePrompt, GenerateModuleContentPrompt
 
+kafka_producer = KafkaProducer()
+
 class CourseService:
     user_service: UserService
     course_repo: CourseRepository
     openai: OpenAI
-    kafka_producer: KafkaProducer
     
     def __init__(
         self,
@@ -29,7 +30,6 @@ class CourseService:
         self.user_service = user_service
         self.course_repo = course_repo
         self.openai = OpenAI(api_key=get_openai_key())
-        self.kafka_producer = KafkaProducer()
     
     async def get_additional_inputs(
         self, 
@@ -111,7 +111,7 @@ class CourseService:
             course_dto=course_dto
         )
         
-        self.kafka_producer.produce_message(
+        kafka_producer.produce_message(
             topic=Topic.GENERATE_NEW_COURSE,
             message=CourseGenerationTopic(
                 course_id=course_id,
