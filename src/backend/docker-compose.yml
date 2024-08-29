@@ -11,8 +11,32 @@ services:
       - S3_ENDPOINT=http://s3:9000
       - POSTGRES_HOST=database
       - REDIS_HOST=redis
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - database
+      - redis
+      - s3
+      - kafka
     ports:
       - "8000:8000"
+    networks:
+      - app-tier
+
+  course_generation_job:
+    build:
+      context: .
+      dockerfile: jobs/Dockerfile
+      args:
+        JOB_NAME: course_generator
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=database
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_MAX_POLL_INTERVAL_SECONDS=1800 # 30 minutes
+    depends_on:
+      - kafka
+      - database
     networks:
       - app-tier
 
@@ -50,6 +74,32 @@ services:
       - MINIO_REGION=us-east-1
     volumes:
       - s3_data:/data
+    networks:
+      - app-tier
+
+  zookeeper:
+    image: wurstmeister/zookeeper
+    hostname: zookeeper
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+      - app-tier
+
+  kafka:
+    image: wurstmeister/kafka
+    hostname: kafka
+    container_name: kafka
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - zookeeper
     networks:
       - app-tier
 
