@@ -1,6 +1,7 @@
 from typing import Optional
 import uuid
 
+from sqlalchemy import update
 from sqlmodel import Session, select
 from sqlalchemy.orm import joinedload
 from domain.schema.courses import Course, Module, Lesson, Section
@@ -17,10 +18,35 @@ class CourseRepository:
             course_entity = Course(
                 title=course_dto.title,
                 description=course_dto.description,
+                cover_image_url=course_dto.cover_image_url,
                 user_id=user_id
             )
             
             session.add(course_entity)
+            session.commit()
+            session.refresh(course_entity)
+            
+            return course_entity.id
+        
+    def create_course_content(
+        self,
+        course_id: uuid.UUID,
+        course_dto: CourseDto
+    ):
+        with Session(engine) as session:
+            query = (
+                select(Course)
+                .where(Course.id == course_id)
+            )
+            resultset = session.exec(query)
+            
+            course_entity = resultset.first()
+            
+            if course_entity is None:
+                raise ValueError("Course not found")
+            
+            course_entity.is_generating = False
+            course_entity.generation_progress = 100
             
             for module_dto in course_dto.modules:
                 module_entity = Module(
@@ -52,7 +78,31 @@ class CourseRepository:
                         
             session.commit()
             
-            return course_entity.id
+    def set_generation_progress(
+        self,
+        course_id: uuid.UUID,
+        progress: int
+    ) -> None:
+        with Session(engine) as session:
+            update_query = (
+                update(Course)
+                .where(Course.id == course_id)
+                .values(generation_progress=progress)
+            )
+            
+            session.exec(update_query)
+            
+    def get_courses(self, user_id: uuid.UUID) -> list[Course]:
+        with Session(engine) as session:
+            query = (
+                select(Course)
+                .where(Course.user_id == user_id)
+            )
+            
+            resultset = session.exec(query)
+            courses = resultset.all()
+            
+            return courses
         
     def get_course(self, user_id: uuid.UUID, course_id: uuid.UUID) -> Optional[Course]:
         with Session(engine) as session:

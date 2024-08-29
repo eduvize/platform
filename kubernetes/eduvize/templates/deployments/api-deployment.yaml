@@ -39,6 +39,11 @@ spec:
               value: {{ .Values.database.name }}
             - name: POSTGRES_USER
               value: {{ .Values.database.user }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: password
             - name: TOKEN_SECRET
               valueFrom:
                 secretKeyRef:
@@ -49,11 +54,8 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.bearerAuth.playground.secret }}
                   key: {{ .Values.bearerAuth.playground.key }}
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: postgres
-                  key: password
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: {{ .Values.kafka.bootstrapServers | quote }}
             - name: REDIS_HOST
               value: "{{ include "eduvize.fullname" . }}-redis-service:{{ .Values.redis.port }}"
             - name: PORT

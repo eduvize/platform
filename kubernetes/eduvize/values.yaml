@@ -88,10 +88,21 @@ api:
       secret: google-oauth
       key: client-secret
 
+course_generator:
+  image: registry.crosswinds.cloud/eduvize/course-generator:latest
+  replicas: 1
+  envSecretMap:
+    - name: OPENAI_KEY
+      secret: openai
+      key: api-key
+
 playground:
   controllerImage: registry.crosswinds.cloud/eduvize/playground-controller:latest
   environmentImagePrefix: registry.crosswinds.cloud/eduvize/playground-environment
   orchestratorImage: registry.crosswinds.cloud/eduvize/playground-orchestrator:latest
+
+kafka:
+    bootstrapServers: kafka:9092
 
 redis:
   image: redis:6
