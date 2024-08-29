@@ -32,7 +32,7 @@ The content you generate should:
         
         module_dto = ModuleDto.model_construct(
             title=module.title,
-            description=module.long_objective_description,
+            description=module.description,
             lessons=[]
         )
         model = GPT4o()
@@ -40,7 +40,7 @@ The content you generate should:
         key_outcomes_str = "\n".join([f"- {outcome}" for outcome in course.key_outcomes])       
         self.add_user_message(f"""### Course:
 - **Subject**: {course.course_subject}
-- **Description**: {course.long_description}
+- **Description**: {course.description}
 
 #### Key Outcomes:
 {key_outcomes_str}
@@ -56,7 +56,7 @@ I will provide you with each lesson in the module. You will focus on one lesson 
         for lesson in module.lessons:
             lesson_dto = LessonDto.model_construct(
                 title=lesson.title,
-                description=lesson.long_objective_description,
+                description=lesson.description,
                 sections=[]
             )
             
@@ -69,7 +69,7 @@ I will provide you with the title for each section in this lesson. You will gene
             
             for section in lesson.sections:
                 self.add_user_message(f"""{section.title}
-{section.long_description_of_content}                                   
+{section.description}                                   
 """)
                 messages = model.get_responses(self)
                 
@@ -80,7 +80,7 @@ I will provide you with the title for each section in this lesson. You will gene
                 lesson_dto.sections.append(
                     SectionDto.model_construct(
                         title=section.title,
-                        description=section.long_description_of_content,
+                        description=section.description,
                         content=content
                     )
                 )

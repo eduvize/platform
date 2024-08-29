@@ -3,13 +3,13 @@ from pydantic import BaseModel, field_validator
 
 class SectionOutline(BaseModel):
     title: str
-    long_description_of_content: str
+    description: str
 
 class LessonOutline(BaseModel):
     internal_name: str
     focus_area: str
     title: str
-    long_objective_description: str
+    description: str
     sections: list[SectionOutline]
     
     @field_validator("sections", mode="after")
@@ -23,7 +23,7 @@ class ModuleOutline(BaseModel):
     internal_name: str
     title: str
     focus_area: str
-    long_objective_description: str
+    description: str
     lessons: list[LessonOutline]
     
     @field_validator("lessons", mode="after")
@@ -36,7 +36,7 @@ class ModuleOutline(BaseModel):
 class CourseOutline(BaseModel):
     course_subject: str
     course_title: str
-    long_description: str
+    description: str
     modules: list[ModuleOutline]
     key_outcomes: list[str]
     
