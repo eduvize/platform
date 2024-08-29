@@ -61,3 +61,5 @@ sqlmodel
 asyncpg
 sqlalchemy[asyncio]
 requests
+confluent-kafka
+types-confluent-kafka
