@@ -1,3 +1,6 @@
+scripts/build_images.log
+scripts/.repository
+
 .prettierignore
 
 .vscode
