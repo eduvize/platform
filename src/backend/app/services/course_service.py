@@ -1,4 +1,6 @@
 import logging
+from typing import Optional
+import uuid
 from fastapi import Depends
 from openai import OpenAI
 from app.services import UserService
@@ -8,12 +10,11 @@ from common.messaging.topics import Topic
 from config import get_openai_key
 from common.storage import StoragePurpose, import_from_url, get_public_object_url
 from common.messaging import KafkaProducer
-from domain.schema.courses.course import Course
-from domain.dto.courses import CourseDto, CourseListingDto
+from domain.schema.courses import Course, Lesson
+from domain.dto.courses import CourseDto, CourseListingDto, CoursePlanDto, CourseProgressionDto
 from domain.dto.profile import UserProfileDto
-from domain.dto.courses import CoursePlanDto
 from domain.topics import CourseGenerationTopic
-from ai.prompts import GetAdditionalInputsPrompt, GenerateCourseOutlinePrompt, GenerateModuleContentPrompt
+from ai.prompts import GetAdditionalInputsPrompt, GenerateCourseOutlinePrompt
 
 kafka_producer = KafkaProducer()
 
@@ -117,6 +118,64 @@ class CourseService:
                 course_id=course_id,
                 course_outline=outline   
             ) 
+        )
+        
+    async def mark_section_as_completed(
+        self,
+        user_id: str,
+        course_id: str
+    ) -> CourseProgressionDto:
+        user = await self.user_service.get_user("id", user_id)
+        
+        if user is None:
+            raise ValueError("User not found")
+        
+        course = self.course_repo.get_course(user.id, uuid.UUID(course_id))
+        
+        if course is None:
+            raise ValueError("Course not found")
+        
+        current_lesson: Optional[Lesson] = next((
+            lesson
+            for module in course.modules
+            for lesson in module.lessons
+            if lesson.id == course.current_lesson_id
+        ), None)
+        
+        if current_lesson is None:
+            raise ValueError("Current lesson not found")
+        
+        if course.lesson_index == len(current_lesson.sections) - 1:
+            # They're finished with this lesson
+            next_lesson = self.course_repo.get_next_lesson(
+                course_id=course.id,
+                current_lesson_id=course.current_lesson_id
+            )
+            
+            if next_lesson is None:
+                # They're finished with the course
+                next_lesson_id = None
+                next_section_index = 0
+            else:
+                # Move to section #1 of the next lesson
+                next_lesson_id = next_lesson.id
+                next_section_index = 0
+        else:
+            # There's another section to go
+            next_lesson_id = course.current_lesson_id
+            next_section_index = course.lesson_index + 1
+        
+        if next_lesson_id:
+            self.course_repo.set_current_lesson(
+                course_id=course.id,
+                lesson_id=next_lesson_id,
+                section_index=next_section_index
+            )
+            
+        return CourseProgressionDto.model_construct(
+            is_course_complete=next_lesson_id is None,
+            lesson_id=next_lesson_id,
+            section_index=next_section_index
         )
         
     async def get_courses(
