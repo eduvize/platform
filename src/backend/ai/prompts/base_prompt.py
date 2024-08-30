@@ -2,9 +2,9 @@ import json
 import logging
 from typing import Dict, List, Optional, Type, TypeVar, cast, get_type_hints
 
-from pydantic import BaseModel, TypeAdapter, parse_obj_as
+from pydantic import BaseModel
 from pydantic_core import ValidationError
-from ai.common import BaseChatMessage, BaseTool, ChatRole
+from ai.common import BaseChatMessage, BaseTool, ChatRole, BaseToolCallWithResult
 
 T = TypeVar('T', bound='BaseTool')
 
@@ -115,8 +115,8 @@ class BasePrompt:
     def add_user_message(self, message: str, png_images: List[bytes] = []) -> None:
         self.messages.append(BaseChatMessage(role=ChatRole.USER, message=message, png_images=png_images))
         
-    def add_agent_message(self, message: str) -> None:
-        self.messages.append(BaseChatMessage(role=ChatRole.AGENT, message=message))
+    def add_agent_message(self, message: str, tool_calls: Optional[List[BaseToolCallWithResult]] = None) -> None:
+        self.messages.append(BaseChatMessage(role=ChatRole.AGENT, message=message, tool_calls=tool_calls or []))
         
     def with_input(self, message: str) -> "BasePrompt":
         self.add_user_message(message)
