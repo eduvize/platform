@@ -4,7 +4,7 @@ import base64
 
 from . import BaseModel
 from domain.dto.ai.completion_chunk import CompletionChunk, Tool
-from typing import Generator, List, Literal, Tuple, cast
+from typing import Generator, List, Literal, cast
 from openai import OpenAI, Stream
 from openai.types.chat.chat_completion_assistant_message_param import FunctionCall
 from openai.types.chat import (
@@ -17,8 +17,7 @@ from openai.types.chat import (
     ChatCompletionContentPartImageParam,
     ChatCompletionMessageToolCall, 
     ChatCompletionChunk,
-    ChatCompletionMessageParam,
-    ChatCompletionToolChoiceOptionParam
+    ChatCompletionMessageParam
 )
 from openai.types.chat.chat_completion_named_tool_choice_param import Function as NamedToolFunction, ChatCompletionNamedToolChoiceParam
 from openai.types.chat.chat_completion_content_part_image_param import ImageURL
@@ -175,7 +174,6 @@ class BaseGPT(BaseModel):
             
             # Execute any tools that were called
             if len(tool_call_dict) > 0:
-                logging.info(f"Took calls: {tool_call_dict}")
                 for record in tool_call_dict:
                     logging.info(f"Processing tool: {record.name}")
 
