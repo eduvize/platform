@@ -1,8 +1,11 @@
 import json
 import logging
+from typing import Callable
 from ai.prompts.base_prompt import BasePrompt
 from .models import CourseOutline, ModuleOutline
 from domain.dto.courses import ModuleDto, LessonDto, SectionDto
+
+ProgressCallback = Callable[[int], None] # int represents the current section number
 
 class GenerateModuleContentPrompt(BasePrompt):
     def setup(self) -> None:
@@ -26,7 +29,8 @@ The content you generate should:
     def generate_module_content(
         self, 
         course: CourseOutline, 
-        module: ModuleOutline
+        module: ModuleOutline,
+        progress_cb: ProgressCallback = None
     ) -> ModuleDto:
         from ai.models.gpt_4o import GPT4o
         
@@ -53,6 +57,7 @@ The content you generate should:
 I will provide you with each lesson in the module. You will focus on one lesson at a time.
 """)
         
+        current_section = 0
         for lesson in module.lessons:
             lesson_dto = LessonDto.model_construct(
                 title=lesson.title,
@@ -84,6 +89,10 @@ I will provide you with the title for each section in this lesson. You will gene
                         content=content
                     )
                 )
+                
+                if progress_cb:
+                    current_section += 1
+                    progress_cb(current_section)
 
             module_dto.lessons.append(lesson_dto)
                 

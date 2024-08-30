@@ -5,9 +5,7 @@ from domain.enums.course_enums import CourseMotivation, CurrentSubjectExperience
 from domain.dto.courses import AdditionalInputs
 
 class GetAdditionalInputsPrompt(BasePrompt):    
-    def setup(self) -> None:
-        self.use_tool(ProvideAdditionalInputsTool, force=True)
-        
+    def setup(self) -> None:        
         self.set_system_prompt(f"""
 You are an AI assistant tasked with reviewing student applications for an online education platform focused on Software Engineering. Your goal is to generate follow-up questions that will help gather specific details about the student's current knowledge gaps and additional relevant information, aiding in the creation of a tailored course syllabus.
 
@@ -24,7 +22,7 @@ You are an AI assistant tasked with reviewing student applications for an online
 - **Clarity**: Avoid overloading the student with too many questions. Aim for a balance between gathering necessary details and keeping the form concise.
 - **Follow-Up**: If "Other" is selected, always include a follow-up question to clarify the student's needs.
 - **Rule-Based Questions**: If any of your questions need to follow specific rules, define them clearly in the tool’s schema.
-""")
+""".strip())
     
     def get_inputs(
         self,
@@ -32,6 +30,7 @@ You are an AI assistant tasked with reviewing student applications for an online
         profile_text: str
     ) -> AdditionalInputs:
         from ai.models.gpt_4o import GPT4o
+        model = GPT4o()
         
         plan_description = get_course_plan_description(plan)
         
@@ -41,12 +40,25 @@ You are an AI assistant tasked with reviewing student applications for an online
 ### Initial Request Form:
 {plan_description}
 
-Using the user profile information and the initial request form data, generate follow-up questions to gather more specific details. Ensure no repetition of previous questions, limit to 8 questions only if necessary, and utilize text, select, and multiselect inputs where appropriate.
-""")
+Given the information provided, can you think up some follow-up questions that would help better understand the type of information the course should cover?
+It might be a good idea to review their profile to cross compare with the course plan. Make sure you don't ask any redundant questions.
+""".strip())
                     
-        model = GPT4o()
+        # Let the model think
         model.get_responses(self)
         
+        self.add_user_message("Do you think these questions will help the instructor understand the student's needs better and are conducive to creating a tailored course syllabus?")
+        
+        # Let the model think again
+        model.get_responses(self)
+        
+        self.add_user_message("""
+Good, now generate follow-up questions to gather more specific details. Ensure no repetition of previous questions, limit to 8 questions only if necessary, and utilize text, select, and multiselect inputs where appropriate.                   
+""".strip())
+        
+        # Now we force it to use the tool to produce the question fields
+        self.use_tool(ProvideAdditionalInputsTool, force=True)
+        model.get_responses(self)
         followup_call = self.get_tool_call(ProvideAdditionalInputsTool)
         
         if not followup_call.result:
