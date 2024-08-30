@@ -13,7 +13,6 @@ import {
 } from "@mantine/core";
 import { useWindowScroll } from "@mantine/hooks";
 import { ReadingMaterial } from "@molecules";
-import { getCumulativeLessonIndex } from "@util/course";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -24,11 +23,9 @@ interface LessonProps {
 
 export const Lesson = ({ courseId, lessonId }: LessonProps) => {
     const navigate = useNavigate();
-    const course = useCourse();
     const [scroll, scrollTo] = useWindowScroll();
-    const { title, description, sections } = useLesson(lessonId);
+    const { title, description, sections, order } = useLesson(lessonId);
     const [section, setSection] = useState(0);
-    const cumulativeIndex = getCumulativeLessonIndex(course, lessonId) + 1;
 
     useEffect(() => {
         // TODO: Figure out what's wrong with useWindowScroll. Hack in the meantime!
@@ -74,7 +71,7 @@ export const Lesson = ({ courseId, lessonId }: LessonProps) => {
                         <Group justify="space-between">
                             <Stack gap={0}>
                                 <Text size="xl" fw={700}>
-                                    Lesson {cumulativeIndex}: {title}
+                                    Lesson {order + 1}: {title}
                                 </Text>
 
                                 <Text size="sm" c="dimmed">
