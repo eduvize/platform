@@ -17,7 +17,7 @@ export const useCourses = () => {
         return () => {
             clearInterval(refreshInterval);
         };
-    }, [courses]);
+    }, [courses.length]);
 
     const handleLoadCourses = () => {
         CourseApi.getCourses().then(setCourses);

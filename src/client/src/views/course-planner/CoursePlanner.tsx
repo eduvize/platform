@@ -111,11 +111,11 @@ const Component = () => {
 
     if (isLoading)
         return (
-            <Box pos="fixed" left="50%" top="50%" w="200px">
+            <Box pos="fixed" left="50%" top="50%" w="300px">
                 <Stack align="center" gap={0}>
                     <Loader type="bars" />
 
-                    <Text c="dimmed" mt="sm">
+                    <Text ta="center" c="dimmed" mt="sm">
                         {loadingDescription}
                     </Text>
                 </Stack>

@@ -1,4 +1,13 @@
-import { Text, Card, Progress, Box, LoadingOverlay } from "@mantine/core";
+import {
+    Text,
+    Card,
+    Progress,
+    Box,
+    LoadingOverlay,
+    RingProgress,
+    Center,
+    Flex,
+} from "@mantine/core";
 import { CourseListingDto } from "@models/dto";
 import classes from "./CourseListing.module.css";
 
@@ -10,6 +19,7 @@ export const CourseListing = ({
     title,
     cover_image_url,
     is_generating,
+    generation_progress,
     onClick,
 }: CourseListingProps) => {
     return (
@@ -17,12 +27,25 @@ export const CourseListing = ({
             <LoadingOverlay
                 visible={is_generating}
                 loaderProps={{
-                    type: "dots",
-                    color: "lightgray",
-                    top: 40,
+                    display: "none",
                 }}
                 overlayProps={{
                     opacity: 0.8,
+                    children: (
+                        <Flex h="100%" align="flex-end" justify="center">
+                            <RingProgress
+                                sections={[
+                                    {
+                                        value: generation_progress,
+                                        color: "white",
+                                    },
+                                ]}
+                                thickness={4}
+                                size={48}
+                                mb="xl"
+                            />
+                        </Flex>
+                    ),
                 }}
             />
 
