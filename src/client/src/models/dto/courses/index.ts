@@ -5,3 +5,4 @@ export * from "./Module";
 export * from "./CoursePlan";
 export * from "./AdditionalInputs";
 export * from "./Section";
+export * from "./CourseProgressionDto";

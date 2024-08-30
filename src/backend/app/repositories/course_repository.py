@@ -50,7 +50,6 @@ class CourseRepository:
             
             module_index = 0
             lesson_index = 0
-            section_index = 0
             
             for module_dto in course_dto.modules:
                 module_entity = Module(
@@ -73,7 +72,11 @@ class CourseRepository:
                     lesson_index += 1
                     
                     session.add(lesson_entity)
+
+                    if course_entity.current_lesson_id is None:
+                        course_entity.current_lesson_id = lesson_entity.id
                     
+                    section_index = 0
                     for section_dto in lesson_dto.sections:
                         section_entity = Section(
                             title=section_dto.title,
@@ -102,6 +105,50 @@ class CourseRepository:
             
             session.exec(update_query)
             session.commit()
+            
+    def set_current_lesson(
+        self,
+        course_id: uuid.UUID,
+        lesson_id: uuid.UUID,
+        section_index: int
+    ) -> None:
+        with Session(engine) as session:
+            update_query = (
+                update(Course)
+                .where(Course.id == course_id)
+                .values(current_lesson_id=lesson_id, current_section_index=section_index)
+            )
+            
+            session.exec(update_query)
+            session.commit()
+            
+    def get_next_lesson(
+        self,
+        course_id: uuid.UUID,
+        current_lesson_id: uuid.UUID
+    ) -> Optional[Lesson]:
+        with Session(engine) as session:
+            current_lesson = (
+                select(Lesson)
+                .where(Lesson.id == current_lesson_id)
+            )
+            
+            resultset = session.exec(current_lesson)
+            lesson = resultset.first()
+            
+            if lesson is None:
+                return None
+            
+            query = (
+                select(Lesson)
+                .where(Lesson.module_id == course_id and Lesson.order > lesson.order)
+                .order_by(Lesson.order)
+            )
+            
+            resultset = session.exec(query)
+            lesson = resultset.first()
+            
+            return lesson
             
     def get_courses(self, user_id: uuid.UUID) -> list[Course]:
         with Session(engine) as session:

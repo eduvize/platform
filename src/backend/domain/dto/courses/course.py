@@ -7,6 +7,8 @@ class CourseDto(CourseBase):
     title: str
     description: str
     cover_image_url: str
+    current_lesson_id: uuid.UUID
+    lesson_index: int
     modules: list[ModuleDto]
     
 class CourseListingDto(CourseBase):
