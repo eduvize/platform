@@ -1,9 +1,8 @@
-import cx from "clsx";
-import { Title, Text, Container, Button, Overlay, Stack } from "@mantine/core";
-import classes from "./Hero.module.css";
+import { Title, Overlay, Stack } from "@mantine/core";
+import classes from "./CourseHero.module.css";
 import { useCourse } from "@context/course/hooks";
 
-export const Hero = () => {
+export const CourseHero = () => {
     const { title, description, cover_image_url } = useCourse();
 
     return (

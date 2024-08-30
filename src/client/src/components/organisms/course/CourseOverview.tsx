@@ -13,7 +13,6 @@ import {
     Tooltip,
     Collapse,
 } from "@mantine/core";
-import { Hero } from "../../../views/course/Hero";
 import { ModuleDto } from "@models/dto";
 import {
     IconCircleCheckFilled,
@@ -21,6 +20,7 @@ import {
     IconProgressCheck,
 } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
+import { CourseHero } from "@molecules";
 
 export const CourseOverview = () => {
     const navigate = useNavigate();
@@ -187,7 +187,7 @@ export const CourseOverview = () => {
         <Container size="md" pt="xl">
             <Stack>
                 <Stack gap="md">
-                    <Hero />
+                    <CourseHero />
 
                     <Card>
                         <Text size="md" c="white">
