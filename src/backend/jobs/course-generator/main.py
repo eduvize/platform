@@ -18,6 +18,15 @@ consumer = KafkaConsumer(
 for data, message in consumer.messages(message_type=CourseGenerationTopic):
     logging.info(f"Received course generation job: {data.course_outline.course_title}, id: {data.course_id}")
     
+    total_lesson_count = sum(
+        len(lesson.sections)
+        for module in data.course_outline.modules
+        for lesson in module.lessons
+    )
+    
+    def get_total_progress(current_lesson: int):
+        return int(((current_lesson + 1) / total_lesson_count) * 100)
+    
     try:
         # Build a new course DTO
         course_dto = CourseDto.model_construct(
@@ -26,18 +35,15 @@ for data, message in consumer.messages(message_type=CourseGenerationTopic):
         
         # Generate each module as defined in the outline
         for index, module in enumerate(data.course_outline.modules):
-            # Update the overall progress of the course generation
-            overall_progress = int(((index + 1) / len(data.course_outline.modules)) * 100)
-            repository.set_generation_progress(
-                course_id=data.course_id,
-                progress=overall_progress
-            )
-            
             # Generate the module content
             module_prompt = GenerateModuleContentPrompt()
             module_dto = module_prompt.generate_module_content(
                 course=data.course_outline,
-                module=module
+                module=module,
+                progress_cb=lambda cur_section: repository.set_generation_progress(
+                    course_id=data.course_id,
+                    progress=get_total_progress(cur_section)
+                )
             )
             
             logging.info(f"Generated module '{module_dto.title}'")

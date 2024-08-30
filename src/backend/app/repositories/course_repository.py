@@ -91,6 +91,7 @@ class CourseRepository:
             )
             
             session.exec(update_query)
+            session.commit()
             
     def get_courses(self, user_id: uuid.UUID) -> list[Course]:
         with Session(engine) as session:
