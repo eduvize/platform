@@ -45,12 +45,18 @@ It might be a good idea to review their profile to cross compare with the course
 """.strip())
                     
         # Let the model think
-        model.get_responses(self)
+        responses = model.get_responses(self)
+        for response in responses:
+            if response.message:
+                self.add_agent_message(response.message)
         
         self.add_user_message("Do you think these questions will help the instructor understand the student's needs better and are conducive to creating a tailored course syllabus?")
         
         # Let the model think again
-        model.get_responses(self)
+        responses = model.get_responses(self)
+        for response in responses:
+            if response.message:
+                self.add_agent_message(response.message)
         
         self.add_user_message("""
 Good, now generate follow-up questions to gather more specific details. Ensure no repetition of previous questions, limit to 8 questions only if necessary, and utilize text, select, and multiselect inputs where appropriate.                   

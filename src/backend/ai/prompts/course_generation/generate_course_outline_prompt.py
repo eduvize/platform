@@ -39,7 +39,10 @@ Each module should have a clear objective and be separated by a logical progress
 """.strip())
         
         # Allow the model to brainstorm modules
-        model.get_responses(self)
+        responses = model.get_responses(self)
+        for response in responses:
+            if response.message:
+                self.add_agent_message(response.message)
         
         self.add_user_message(f"""
 Great! Now that we have the modules, let's focus on each module's content.
@@ -48,7 +51,10 @@ to achieve those objectives. Include lesson titles and a brief overview of the c
 """.strip())
         
         # Allow the model to come up with lessons
-        model.get_responses(self)
+        responses = model.get_responses(self)
+        for response in responses:
+            if response.message:
+                self.add_agent_message(response.message)
         
         self.add_user_message(f"""
 Now that we have lessons figured out, let's move on to the sections of each lesson. These can be thought of as groupings of content
@@ -57,7 +63,10 @@ lesson objective. Include the title of each section and what content it will cov
 """.strip())
         
         # Allow the model to come up with sections
-        model.get_responses(self)
+        responses = model.get_responses(self)
+        for response in responses:
+            if response.message:
+                self.add_agent_message(response.message)
         
         self.add_user_message(f"""
 Finally, I would like you to generate a full course outline using the information we've collected here. Use your tool to provide a structured representation that will be given to the instructor.
