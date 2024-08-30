@@ -3,6 +3,7 @@ from domain.dto.courses.module import ModuleDto
 from domain.schema.courses.course import CourseBase
 
 class CourseDto(CourseBase):
+    id: uuid.UUID
     title: str
     description: str
     cover_image_url: str
