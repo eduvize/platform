@@ -6,6 +6,7 @@ import domain.schema as schema
 class LessonBase(SQLModel):
     title: str          = Field(nullable=False)
     description: str    = Field(nullable=False)
+    order: int          = Field(nullable=False)
     
 class Lesson(LessonBase, table=True):
     __tablename__ = "course_lessons"

@@ -48,12 +48,18 @@ class CourseRepository:
             course_entity.is_generating = False
             course_entity.generation_progress = 100
             
+            module_index = 0
+            lesson_index = 0
+            section_index = 0
+            
             for module_dto in course_dto.modules:
                 module_entity = Module(
                     title=module_dto.title,
                     description=module_dto.description,
-                    course_id=course_entity.id
+                    course_id=course_entity.id,
+                    order=module_index
                 )
+                module_index += 1
                 
                 session.add(module_entity)
                 
@@ -61,8 +67,10 @@ class CourseRepository:
                     lesson_entity = Lesson(
                         title=lesson_dto.title,
                         description=lesson_dto.description,
-                        module_id=module_entity.id
+                        module_id=module_entity.id,
+                        order=lesson_index
                     )
+                    lesson_index += 1
                     
                     session.add(lesson_entity)
                     
@@ -71,8 +79,10 @@ class CourseRepository:
                             title=section_dto.title,
                             description=section_dto.description,
                             content=section_dto.content,
-                            lesson_id=lesson_entity.id
+                            lesson_id=lesson_entity.id,
+                            order=section_index
                         )
+                        section_index += 1
                         
                         session.add(section_entity)
                         
@@ -98,6 +108,7 @@ class CourseRepository:
             query = (
                 select(Course)
                 .where(Course.user_id == user_id)
+                .order_by(Course.created_at, Course.title)
             )
             
             resultset = session.exec(query)
@@ -115,6 +126,7 @@ class CourseRepository:
                     .joinedload(Module.lessons)
                     .joinedload(Lesson.sections)
                 )
+                .order_by(Module.order, Lesson.order, Section.order)
             )
             
             resultset = session.exec(query)

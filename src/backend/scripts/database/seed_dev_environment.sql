@@ -177,7 +177,8 @@ CREATE TABLE IF NOT EXISTS course_modules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     course_id UUID NOT NULL REFERENCES courses(id),
     title TEXT NOT NULL,
-    description TEXT NOT NULL
+    description TEXT NOT NULL,
+    order INT NOT NULL
 );
 
 -- Create table for Lessons
@@ -185,7 +186,8 @@ CREATE TABLE IF NOT EXISTS course_lessons (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     module_id UUID NOT NULL REFERENCES course_modules(id),
     title TEXT NOT NULL,
-    description TEXT NOT NULL
+    description TEXT NOT NULL,
+    order INT NOT NULL
 );
 
 -- Create table for Lesson Sections
@@ -194,7 +196,8 @@ CREATE TABLE IF NOT EXISTS course_lesson_sections (
     lesson_id UUID NOT NULL REFERENCES course_lessons(id),
     title TEXT NOT NULL,
     description TEXT NOT NULL,
-    content TEXT NOT NULL
+    content TEXT NOT NULL,
+    order INT NOT NULL
 );
 
 -- Create table for Chat Sessions

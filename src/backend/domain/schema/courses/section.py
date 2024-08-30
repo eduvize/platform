@@ -6,6 +6,7 @@ class SectionBase(SQLModel):
     title: str          = Field(nullable=False)
     description: str    = Field(nullable=False)
     content: str        = Field(nullable=False)
+    order: int          = Field(nullable=False)
     
 class Section(SectionBase, table=True):
     __tablename__ = "course_lesson_sections"

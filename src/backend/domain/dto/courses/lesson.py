@@ -6,4 +6,5 @@ class LessonDto(LessonBase):
     id: uuid.UUID
     title: str
     description: str
+    order: int
     sections: list[SectionDto]
