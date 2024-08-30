@@ -13,7 +13,7 @@ import {
     Tooltip,
     Collapse,
 } from "@mantine/core";
-import { Hero } from "./Hero";
+import { Hero } from "../../../views/course/Hero";
 import { ModuleDto } from "@models/dto";
 import {
     IconCircleCheckFilled,
@@ -22,7 +22,7 @@ import {
 } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 
-export const Modules = () => {
+export const CourseOverview = () => {
     const navigate = useNavigate();
     const { id, modules, description } = useCourse();
 

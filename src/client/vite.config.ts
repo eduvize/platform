@@ -26,6 +26,7 @@ export default defineConfig(() => {
                     "./src/components/organisms"
                 ),
                 "@views": path.resolve(__dirname, "./src/views"),
+                "@util": path.resolve(__dirname, "./src/util"),
             },
         },
     };

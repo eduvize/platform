@@ -1,10 +1,9 @@
 import { useParams } from "react-router-dom";
 import { CourseProvider } from "@context/course";
-import { Modules } from "./Modules";
-import { Lesson } from "./Lesson";
 import { Space } from "@mantine/core";
 import { useCourse } from "@context/course/hooks";
 import { useDocumentTitle } from "@mantine/hooks";
+import { Lesson, CourseOverview } from "@organisms";
 
 const Component = () => {
     const params = useParams();
@@ -19,7 +18,7 @@ const Component = () => {
             />
         );
 
-    return <Modules />;
+    return <CourseOverview />;
 };
 
 export const Course = () => {

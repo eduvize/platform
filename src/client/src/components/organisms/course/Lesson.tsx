@@ -13,9 +13,9 @@ import {
 } from "@mantine/core";
 import { useWindowScroll } from "@mantine/hooks";
 import { ReadingMaterial } from "@molecules";
+import { getCumulativeLessonIndex } from "@util/course";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getCumulativeLessonIndex } from "./getCumulativeLessonIndex";
 
 interface LessonProps {
     courseId: string;
