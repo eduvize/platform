@@ -1,5 +1,5 @@
 import { CourseApi } from "@api";
-import { Box, LoadingOverlay } from "@mantine/core";
+import { Box, Center, Loader, LoadingOverlay } from "@mantine/core";
 import { CourseDto } from "@models/dto";
 import { useEffect, useState } from "react";
 import { createContext } from "use-context-selector";
@@ -27,6 +27,14 @@ export const CourseProvider = ({ courseId, children }: CourseProviderProps) => {
             setCourse(course);
         });
     }, [courseId]);
+
+    if (!course) {
+        return (
+            <Center h="100%">
+                <Loader size="lg" type="dots" />
+            </Center>
+        );
+    }
 
     return (
         <CourseContext.Provider
