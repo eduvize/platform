@@ -4,6 +4,7 @@ import {
     CourseDto,
     CourseListingDto,
     CoursePlan as CoursePlanDto,
+    CourseProgressionDto,
 } from "@models/dto";
 
 class CourseApi extends BaseApi {
@@ -13,6 +14,10 @@ class CourseApi extends BaseApi {
 
     generateCourse(plan: CoursePlanDto): Promise<void> {
         return this.post("generate", plan);
+    }
+
+    markSectionCompleted(courseId: string): Promise<CourseProgressionDto> {
+        return this.post(`${courseId}/section-complete`, {});
     }
 
     getCourses(): Promise<CourseListingDto[]> {
