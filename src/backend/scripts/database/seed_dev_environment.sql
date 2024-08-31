@@ -169,6 +169,8 @@ CREATE TABLE IF NOT EXISTS courses (
     cover_image_url TEXT NOT NULL,
     is_generating BOOLEAN NOT NULL DEFAULT TRUE,
     generation_progress INT NOT NULL DEFAULT 0,
+    lesson_index INT NOT NULL DEFAULT 0,
+    completed_at_utc TIMESTAMP,
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
 
@@ -189,6 +191,9 @@ CREATE TABLE IF NOT EXISTS course_lessons (
     description TEXT NOT NULL,
     order INT NOT NULL
 );
+
+-- Add the current_lesson_id column to the courses table
+ALTER TABLE courses ADD COLUMN current_lesson_id UUID REFERENCES course_lessons(id);
 
 -- Create table for Lesson Sections
 CREATE TABLE IF NOT EXISTS course_lesson_sections (
@@ -236,3 +241,36 @@ CREATE TABLE IF NOT EXISTS playground_sessions (
     instance_hostname TEXT,
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
+
+-- Bcrypt hash for the password "testpassword"
+DO $$
+DECLARE
+    user_id UUID;
+BEGIN
+    -- Insert user and capture the ID
+    INSERT INTO users (id, username, email, password_hash, pending_verification, verification_code, verification_sent_at_utc, created_at_utc, last_login_at_utc)
+    VALUES (
+        gen_random_uuid(), 
+        'testuser', 
+        'tester@eduvize.dev', 
+        '$2b$12$r9QAwcJiOvuFGY0oTP5XW.SAwVTD70bjrmSABfVoqAdwpqnyDwRKy', 
+        FALSE, 
+        NULL, 
+        NULL, 
+        now(), 
+        now()
+    )
+    RETURNING id INTO user_id;
+
+    INSERT INTO user_profiles (id, user_id, first_name, last_name, birthdate, bio, github_username, last_updated_at_utc)
+    VALUES (
+        gen_random_uuid(),
+        user_id,
+        'John',
+        'Doe',
+        '1990-01-01',
+        'I am here to learn more about software engineering',
+        'cameron5906',
+        now()
+    );
+END $$;
