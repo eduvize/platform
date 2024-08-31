@@ -171,6 +171,8 @@ class CourseService:
                 lesson_id=next_lesson_id,
                 section_index=next_section_index
             )
+        else:
+            self.course_repo.set_course_completion(course.id)
             
         return CourseProgressionDto.model_construct(
             is_course_complete=next_lesson_id is None,

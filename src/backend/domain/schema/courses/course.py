@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 import uuid
 from sqlmodel import Field, Relationship, SQLModel
 from datetime import datetime
@@ -6,13 +6,14 @@ import domain.schema as schema
 from domain.schema.courses.module import Module
 
 class CourseBase(SQLModel):
-    title: str                      = Field(nullable=False)
-    description: str                = Field(nullable=False)
-    cover_image_url: str            = Field(nullable=False) 
-    is_generating: bool             = Field(default=True, nullable=False)
-    generation_progress: int        = Field(default=0, nullable=False)
-    current_lesson_id: uuid.UUID    = Field(default=None, nullable=True)
-    lesson_index: int               = Field(default=0, nullable=False)
+    title: str                              = Field(nullable=False)
+    description: str                        = Field(nullable=False)
+    cover_image_url: str                    = Field(nullable=False) 
+    is_generating: bool                     = Field(default=True, nullable=False)
+    generation_progress: int                = Field(default=0, nullable=False)
+    current_lesson_id: Optional[uuid.UUID]  = Field(default=None, nullable=True)
+    lesson_index: int                       = Field(default=0, nullable=False)
+    completed_at_utc: Optional[datetime]    = Field(default=None, nullable=True)
     
 class Course(CourseBase, table=True):
     __tablename__ = "courses"

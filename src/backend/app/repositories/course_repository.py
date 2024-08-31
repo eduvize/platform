@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 import uuid
 
@@ -50,6 +51,7 @@ class CourseRepository:
             
             module_index = 0
             lesson_index = 0
+            added_lessons = []
             
             for module_dto in course_dto.modules:
                 module_entity = Module(
@@ -72,9 +74,8 @@ class CourseRepository:
                     lesson_index += 1
                     
                     session.add(lesson_entity)
-
-                    if course_entity.current_lesson_id is None:
-                        course_entity.current_lesson_id = lesson_entity.id
+                    
+                    added_lessons.append(lesson_entity)
                     
                     section_index = 0
                     for section_dto in lesson_dto.sections:
@@ -89,6 +90,13 @@ class CourseRepository:
                         
                         session.add(section_entity)
                         
+            session.commit()
+            session.refresh(course_entity)
+            
+            # Set the first lesson as the current lesson
+            course_entity.current_lesson_id = added_lessons[0].id
+            
+            # save the course entity
             session.commit()
             
     def set_generation_progress(
@@ -116,7 +124,21 @@ class CourseRepository:
             update_query = (
                 update(Course)
                 .where(Course.id == course_id)
-                .values(current_lesson_id=lesson_id, current_section_index=section_index)
+                .values(current_lesson_id=lesson_id, lesson_index=section_index)
+            )
+            
+            session.exec(update_query)
+            session.commit()
+            
+    def set_course_completion(
+        self,
+        course_id: uuid.UUID
+    ) -> None:
+        with Session(engine) as session:
+            update_query = (
+                update(Course)
+                .where(Course.id == course_id)
+                .values(completed_at_utc=datetime.utcnow())
             )
             
             session.exec(update_query)
@@ -128,34 +150,58 @@ class CourseRepository:
         current_lesson_id: uuid.UUID
     ) -> Optional[Lesson]:
         with Session(engine) as session:
-            current_lesson = (
-                select(Lesson)
-                .where(Lesson.id == current_lesson_id)
+            course_query = (
+                select(Course)
+                .where(Course.id == course_id)
+                .options(
+                    joinedload(Course.modules)
+                    .joinedload(Module.lessons)
+                )
             )
             
-            resultset = session.exec(current_lesson)
-            lesson = resultset.first()
+            resultset = session.exec(course_query)
+            course = resultset.first()
             
-            if lesson is None:
-                return None
+            if course is None:
+                raise ValueError("Course not found")
             
-            query = (
-                select(Lesson)
-                .where(Lesson.module_id == course_id and Lesson.order > lesson.order)
-                .order_by(Lesson.order)
-            )
+            current_lesson = next((
+                lesson
+                for module in course.modules
+                for lesson in module.lessons
+                if lesson.id == current_lesson_id
+            ), None)
             
-            resultset = session.exec(query)
-            lesson = resultset.first()
+            if current_lesson is None:
+                raise ValueError("Current lesson not found")
             
-            return lesson
+            next_lesson_in_module = next((
+                lesson
+                for module in course.modules
+                for lesson in module.lessons
+                if lesson.module_id == current_lesson.module_id and lesson.order == current_lesson.order + 1
+            ), None)
+            
+            if next_lesson_in_module:
+                return next_lesson_in_module
+            
+            next_module = next((
+                module
+                for module in course.modules
+                if module.order == current_lesson.module.order + 1
+            ), None)
+            
+            if next_module:
+                return next_module.lessons[0]
+            
+            return None
             
     def get_courses(self, user_id: uuid.UUID) -> list[Course]:
         with Session(engine) as session:
             query = (
                 select(Course)
                 .where(Course.user_id == user_id)
-                .order_by(Course.created_at, Course.title)
+                .order_by(Course.created_at_utc, Course.title)
             )
             
             resultset = session.exec(query)
@@ -173,10 +219,16 @@ class CourseRepository:
                     .joinedload(Module.lessons)
                     .joinedload(Lesson.sections)
                 )
-                .order_by(Module.order, Lesson.order, Section.order)
             )
             
             resultset = session.exec(query)
             course = resultset.first()
             
+            # Order by module, lesson, section "order" field
+            course.modules.sort(key=lambda x: x.order)
+            for module in course.modules:
+                module.lessons.sort(key=lambda x: x.order)
+                for lesson in module.lessons:
+                    lesson.sections.sort(key=lambda x: x.order)
+                    
             return course
