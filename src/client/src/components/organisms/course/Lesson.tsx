@@ -23,9 +23,13 @@ interface LessonProps {
 
 export const Lesson = ({ courseId, lessonId }: LessonProps) => {
     const navigate = useNavigate();
+    const {
+        markSectionCompleted,
+        course: { lesson_index },
+    } = useCourse();
     const [scroll, scrollTo] = useWindowScroll();
     const { title, description, sections, order } = useLesson(lessonId);
-    const [section, setSection] = useState(0);
+    const [section, setSection] = useState(lessonId ? lesson_index : 0);
 
     useEffect(() => {
         // TODO: Figure out what's wrong with useWindowScroll. Hack in the meantime!
@@ -103,20 +107,25 @@ export const Lesson = ({ courseId, lessonId }: LessonProps) => {
                         <Space h="sm" />
 
                         <Center>
-                            {section === sections.length - 1 && (
-                                <Button variant="gradient">
-                                    Finish Lesson
-                                </Button>
-                            )}
+                            <Button
+                                variant="gradient"
+                                onClick={() => {
+                                    markSectionCompleted(lessonId, section);
 
-                            {section < sections.length - 1 && (
-                                <Button
-                                    onClick={handleNextSection}
-                                    variant="gradient"
-                                >
-                                    Continue
-                                </Button>
-                            )}
+                                    if (section === sections.length - 1) {
+                                        navigate(
+                                            `/dashboard/course/${courseId}`
+                                        );
+                                        return;
+                                    } else {
+                                        handleNextSection();
+                                    }
+                                }}
+                            >
+                                {section === sections.length - 1
+                                    ? "Complete Lesson"
+                                    : "Next Section"}
+                            </Button>
                         </Center>
 
                         <Space h="xl" />

@@ -7,7 +7,7 @@ import { Lesson, CourseOverview } from "@organisms";
 
 const Component = () => {
     const params = useParams();
-    const course = useCourse();
+    const { course } = useCourse();
     useDocumentTitle(`${course.title} | Eduvize`);
 
     if (params.lesson_id)

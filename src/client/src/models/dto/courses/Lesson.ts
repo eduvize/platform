@@ -6,5 +6,4 @@ export interface LessonDto {
     description: string;
     order: number;
     sections: Section[];
-    is_completed: boolean;
 }
