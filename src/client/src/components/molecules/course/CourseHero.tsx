@@ -3,7 +3,9 @@ import classes from "./CourseHero.module.css";
 import { useCourse } from "@context/course/hooks";
 
 export const CourseHero = () => {
-    const { title, description, cover_image_url } = useCourse();
+    const {
+        course: { title, cover_image_url },
+    } = useCourse();
 
     return (
         <div
