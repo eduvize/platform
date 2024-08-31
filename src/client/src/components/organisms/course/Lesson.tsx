@@ -52,7 +52,6 @@ export const Lesson = ({ courseId, lessonId }: LessonProps) => {
                             pt="md"
                             orientation="vertical"
                             active={section}
-                            onStepClick={setSection}
                         >
                             {sections.map((section, index) => (
                                 <Stepper.Step
@@ -107,6 +106,18 @@ export const Lesson = ({ courseId, lessonId }: LessonProps) => {
                         <Space h="sm" />
 
                         <Center>
+                            {section > 0 && (
+                                <Button
+                                    variant="filled"
+                                    bg="dark"
+                                    c="dimmed"
+                                    onClick={() => setSection(section - 1)}
+                                    mr="xl"
+                                >
+                                    Previous Section
+                                </Button>
+                            )}
+
                             <Button
                                 variant="gradient"
                                 onClick={() => {
