@@ -1,10 +1,10 @@
-import { Route, Routes, useMatch } from "react-router-dom";
+import { Route, Routes, useMatch, useNavigate } from "react-router-dom";
 import { UserProvider } from "@context/user";
 import { useOnboarding } from "@context/user/hooks";
 import { Profile } from "@views/profile";
 import { Header } from "./sections";
 import { SetupCta, VerificationCta } from "./cta";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Container } from "@mantine/core";
 import { Courses } from "@views/courses";
 import { Course } from "@views/course";
@@ -32,6 +32,15 @@ const CallToActionOrView = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const Dashboard = () => {
+    const navigate = useNavigate();
+    const isDashboardRoot = useMatch("/dashboard");
+
+    useEffect(() => {
+        if (isDashboardRoot) {
+            navigate("/dashboard/courses");
+        }
+    }, []);
+
     return (
         <UserProvider>
             <Header />
