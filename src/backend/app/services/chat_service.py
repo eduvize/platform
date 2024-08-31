@@ -1,13 +1,11 @@
 import uuid
-import json
 import logging
 from typing import AsyncGenerator, List, Optional
 from fastapi import Depends
-from ai.prompts import CoursePlanningPrompt
 from ai.common import BaseChatMessage, BaseToolCallWithResult, ChatRole
 from app.services import UserService
 from app.utilities.profile import get_user_profile_text
-from app.repositories import ChatRepository
+from app.repositories import ChatRepository, CourseRepository
 from app.routing.contracts.chat_contracts import SendChatMessage, ChatSessionReference
 from domain.schema.chat.chat_message import ChatMessage
 from domain.dto.chat.chat_message import ChatMessageDto
@@ -19,14 +17,17 @@ logger = logging.getLogger("ChatService")
 class ChatService:
     user_service: UserService
     chat_repository: ChatRepository
+    course_repository: CourseRepository
     
     def __init__(
         self, 
         user_service: UserService = Depends(UserService),
-        chat_repository: ChatRepository = Depends(ChatRepository)
+        chat_repository: ChatRepository = Depends(ChatRepository),
+        course_repository: CourseRepository = Depends(CourseRepository)
     ):
         self.user_service = user_service
         self.chat_repository = chat_repository
+        self.course_repository = course_repository
         
     async def get_history(
         self,
@@ -72,36 +73,36 @@ class ChatService:
         model_messages = self._get_chat_messages(messages)
         
         logger.info(f"Calling model for response generation")
-        prompt = CoursePlanningPrompt()
-        responses = prompt.get_response(
-            instructor_name=user.instructor.name,
-            profile_text=user_profile_text,
-            history=model_messages, 
-            message=payload.message
-        )
+        #prompt = CoursePlanningPrompt()
+        #responses = prompt.get_response(
+        #    instructor_name=user.instructor.name,
+        #    profile_text=user_profile_text,
+        #    history=model_messages, 
+        #    message=payload.message
+        #)
         
         # Iterate until complete, then save messages to the database
-        while True:
-            try:
-                yield next(responses)
-            except StopIteration as e:
-                messages: List[BaseChatMessage] = e.value
-                
-                self._add_message(
-                    session_id=session_id, 
-                    is_user=True, 
-                    message=payload.message
-                )
-                
-                for new_message in messages:
-                    self._add_message(
-                        session_id=session_id, 
-                        is_user=new_message.role == ChatRole.USER, 
-                        message=new_message.message, 
-                        tool_calls=new_message.tool_calls
-                    )
-                
-                break
+        #while True:
+        #    try:
+        #        yield next(responses)
+        #    except StopIteration as e:
+        #        messages: List[BaseChatMessage] = e.value
+        #        
+        #        self._add_message(
+        #            session_id=session_id, 
+        #            is_user=True, 
+        #            message=payload.message
+        #        )
+        #        
+        #        for new_message in messages:
+        #            self._add_message(
+        #                session_id=session_id, 
+        #                is_user=new_message.role == ChatRole.USER, 
+        #                message=new_message.message, 
+        #                tool_calls=new_message.tool_calls
+        #            )
+        #        
+        #        break
     
     def _get_chat_messages(
         self,

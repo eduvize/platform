@@ -103,8 +103,8 @@ export const mapOutboundProfileData = (
     };
 };
 
-export function mapCheckListField(
-    form: UseFormReturnType<ProfileUpdatePayload>,
+export function mapCheckListField<T>(
+    form: UseFormReturnType<T>,
     field: string,
     options: any,
     inputProps: any
@@ -135,12 +135,15 @@ export function mapCheckListField(
     return {
         ...inputProps,
         onChange: (checked: boolean) => {
+            const currentValue = getValueFromDotPath(form.values, field) || [];
+
             if (checked) {
-                console.log(`add ${value} to ${field}`);
-                form.insertListItem(field, value);
+                form.setFieldValue(field, [...currentValue, value] as any);
             } else {
-                console.log(`remove ${value} from ${field}`);
-                form.removeListItem(field, value);
+                form.setFieldValue(
+                    field,
+                    currentValue.filter((v: any) => v !== value)
+                );
             }
         },
         checked: getValueFromDotPath(form.values, field)?.includes(value),

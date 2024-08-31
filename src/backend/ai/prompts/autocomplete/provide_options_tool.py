@@ -1,26 +1,19 @@
 from typing import List
+
+from pydantic import BaseModel
 from ai.common import BaseTool
 
+class ResultObject(BaseModel):
+    options: List[str]
+
 class ProvideOptionsTool(BaseTool):
+    result: ResultObject
+    
     def __init__(self):
         super().__init__("provide_options", "Returns a list of options to choose from")
-        self.use_schema({
-            "type": "object",
-            "properties": {
-                "options": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            },
-            "required": ["options"]
-        })
+        self.use_schema(ResultObject.model_json_schema())
         
     def process(self, arguments: dict) -> str:
-        if arguments["options"]:
-            self.result = arguments["options"]
-        else:
-            self.result = []
+        self.result = arguments
         
         return "Success"

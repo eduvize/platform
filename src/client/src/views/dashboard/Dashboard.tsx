@@ -1,12 +1,13 @@
-import { Route, Routes, useMatch } from "react-router-dom";
+import { Route, Routes, useMatch, useNavigate } from "react-router-dom";
 import { UserProvider } from "@context/user";
 import { useOnboarding } from "@context/user/hooks";
 import { Profile } from "@views/profile";
-import { Courses } from "@views/courses";
 import { Header } from "./sections";
 import { SetupCta, VerificationCta } from "./cta";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Container } from "@mantine/core";
+import { Courses } from "@views/courses";
+import { Course } from "@views/course";
 
 const CallToActionOrView = ({ children }: { children: React.ReactNode }) => {
     const isProfile = useMatch("/dashboard/profile");
@@ -31,21 +32,41 @@ const CallToActionOrView = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const Dashboard = () => {
+    const navigate = useNavigate();
+    const isDashboardRoot = useMatch("/dashboard");
+
+    useEffect(() => {
+        if (isDashboardRoot) {
+            navigate("/dashboard/courses");
+        }
+    }, []);
+
     return (
         <UserProvider>
             <Header />
 
             <Routes>
                 <Route
-                    path="/"
+                    path="course/:course_id"
+                    handle="course"
                     element={
                         <CallToActionOrView>
-                            <Courses />
+                            <Course />
                         </CallToActionOrView>
                     }
                 />
                 <Route
-                    path="courses"
+                    path="course/:course_id/lesson/:lesson_id"
+                    handle="lesson"
+                    element={
+                        <CallToActionOrView>
+                            <Course />
+                        </CallToActionOrView>
+                    }
+                />
+                <Route
+                    path="courses/*"
+                    handle="courses"
                     element={
                         <CallToActionOrView>
                             <Courses />
@@ -54,6 +75,7 @@ export const Dashboard = () => {
                 />
                 <Route
                     path="profile"
+                    handle="profile"
                     element={
                         <CallToActionOrView>
                             <Profile />

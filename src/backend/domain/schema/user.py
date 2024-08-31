@@ -1,8 +1,7 @@
 from datetime import datetime
-from typing import Any, Literal, Optional
+from typing import Literal, Optional
 from sqlmodel import Field, Relationship, SQLModel
-import domain.schema.curriculum as curriculum
-import domain.schema.instructor as instructor
+import domain.schema as schema
 from domain.schema.profile import UserProfileHobby, UserProfileStudent, UserProfileProfessional
 import uuid
 
@@ -26,12 +25,10 @@ class User(UserBase, table=True):
     
     last_login_at_utc: datetime         = Field(default_factory=datetime.utcnow)
     
-    profile: "UserProfile"                                              = Relationship(back_populates="user")
-    external_auth: Optional["UserExternalAuth"]                         = Relationship(back_populates="user")
-    instructor: Optional["instructor.Instructor"]                       = Relationship(back_populates="user")
-    curriculums: list["UserCurriculum"]                                 = Relationship(back_populates="user")
-    curriculum_reviews: list["curriculum.CurriculumReview"]             = Relationship(back_populates="user")
-    curriculum_enrollments: list["curriculum.CurriculumEnrollment"]     = Relationship(back_populates="user")
+    profile: "UserProfile"                                          = Relationship(back_populates="user")
+    external_auth: Optional["UserExternalAuth"]                     = Relationship(back_populates="user")
+    instructor: Optional["schema.instructor.instructor.Instructor"] = Relationship(back_populates="user")
+    courses: list["schema.courses.course.Course"]                   = Relationship(back_populates="user")
     
 class UserExternalAuth(SQLModel, table=True):
     __tablename__ = "users_external_auth"
@@ -94,16 +91,3 @@ class UserProfileSkill(UserProfileSkillBase, table=True):
     user_profile_id: uuid.UUID      = Field(default=None, foreign_key="user_profiles.id")
     
     user_profile: UserProfile      = Relationship(back_populates="skills")    
-
-class UserCurriculumBase(SQLModel):
-    curriculum_id: uuid.UUID                = Field(default=None, foreign_key="curriculums.id")
-    current_lesson_id: Optional[uuid.UUID]  = Field(default=None, foreign_key="curriculum_lessons.id")
-
-class UserCurriculum(UserCurriculumBase, table=True):
-    __tablename__ = "user_curriculums"
-    
-    id: uuid.UUID                           = Field(default_factory=uuid.uuid4, primary_key=True)
-    user_id: uuid.UUID                      = Field(default=None, foreign_key="users.id")
-    instructor_notes: Optional[str]         = Field()
-    
-    user: User                              = Relationship(back_populates="curriculums")

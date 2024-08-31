@@ -1,0 +1,8 @@
+.courseCard {
+    transition: transform 0.4s;
+}
+
+.courseCard:hover {
+    cursor: pointer;
+    transform: scale(1.05) rotate(0.3deg);
+}

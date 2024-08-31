@@ -1,10 +1,8 @@
-import { Lesson } from "./Lesson";
-import { Quiz } from "./Quiz";
+import { LessonDto } from "./Lesson";
 
-export interface Module {
+export interface ModuleDto {
     title: string;
     description: string;
-    lessons: Lesson[];
-
-    quiz: Quiz | null;
+    order: number;
+    lessons: LessonDto[];
 }

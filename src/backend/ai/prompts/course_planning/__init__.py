@@ -1,1 +1,1 @@
-from .course_planning_prompt import CoursePlanningPrompt
+from .get_additional_inputs_prompt import GetAdditionalInputsPrompt

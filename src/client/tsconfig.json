@@ -28,7 +28,8 @@
             "@atoms": ["./src/components/atoms"],
             "@molecules": ["./src/components/molecules"],
             "@organisms": ["./src/components/organisms"],
-            "@views/*": ["./src/views/*/index.ts"]
+            "@views/*": ["./src/views/*/index.ts"],
+            "@util/*": ["./src/util/*/index.ts"]
         }
     },
     "include": ["src", "vite-env.d.ts"],

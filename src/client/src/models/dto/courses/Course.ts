@@ -1,8 +1,13 @@
-import { Module } from "./Module";
+import { ModuleDto } from "./Module";
 
-export interface Course {
+export interface CourseDto {
+    id: string;
     title: string;
     description: string;
+    cover_image_url: string;
+    current_lesson_id: string;
+    lesson_index: number;
+    completed_at_utc?: string;
 
-    modules: Module[];
+    modules: ModuleDto[];
 }

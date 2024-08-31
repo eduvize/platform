@@ -160,67 +160,49 @@ CREATE TABLE IF NOT EXISTS user_instructors (
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
 
--- Create table for Curriculums
-CREATE TABLE IF NOT EXISTS curriculums (
+-- Create table for Course
+CREATE TABLE IF NOT EXISTS courses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
     title TEXT NOT NULL,
     description TEXT NOT NULL,
-    view_count INT NOT NULL,
-    enrollment_count INT NOT NULL,
+    cover_image_url TEXT NOT NULL,
+    is_generating BOOLEAN NOT NULL DEFAULT TRUE,
+    generation_progress INT NOT NULL DEFAULT 0,
+    lesson_index INT NOT NULL DEFAULT 0,
+    completed_at_utc TIMESTAMP,
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
 
--- Create table for Curriculum Reviews
-CREATE TABLE IF NOT EXISTS curriculum_reviews (
+-- Create table for Modules
+CREATE TABLE IF NOT EXISTS course_modules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    curriculum_id UUID NOT NULL REFERENCES curriculums(id),
-    user_id UUID NOT NULL REFERENCES users(id),
-    rating DOUBLE PRECISION NOT NULL,
-    review TEXT NOT NULL,
-    created_at_utc TIMESTAMP NOT NULL DEFAULT now()
-);
-
--- Create table for Curriculum Enrollment
-CREATE TABLE IF NOT EXISTS curriculum_enrollments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    curriculum_id UUID NOT NULL REFERENCES curriculums(id),
-    user_id UUID NOT NULL REFERENCES users(id),
-    created_at_utc TIMESTAMP NOT NULL DEFAULT now()
+    course_id UUID NOT NULL REFERENCES courses(id),
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    order INT NOT NULL
 );
 
 -- Create table for Lessons
-CREATE TABLE IF NOT EXISTS lessons (
+CREATE TABLE IF NOT EXISTS course_lessons (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    curriculum_id UUID NOT NULL REFERENCES curriculums(id),
+    module_id UUID NOT NULL REFERENCES course_modules(id),
     title TEXT NOT NULL,
     description TEXT NOT NULL,
-    curriculum_index INT NOT NULL
+    order INT NOT NULL
 );
 
--- Create table for Exercises
-CREATE TABLE IF NOT EXISTS exercises (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    lesson_id UUID NOT NULL REFERENCES lessons(id),
-    user_id UUID NOT NULL REFERENCES users(id),
-    instructions TEXT NOT NULL,
-    expectations TEXT NOT NULL
-);
+-- Add the current_lesson_id column to the courses table
+ALTER TABLE courses ADD COLUMN current_lesson_id UUID REFERENCES course_lessons(id);
 
--- Create table for Exercise Submissions
-CREATE TABLE IF NOT EXISTS exercise_submissions (
+-- Create table for Lesson Sections
+CREATE TABLE IF NOT EXISTS course_lesson_sections (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    exercise_id UUID NOT NULL REFERENCES exercises(id),
+    lesson_id UUID NOT NULL REFERENCES course_lessons(id),
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
     content TEXT NOT NULL,
-    created_at_utc TIMESTAMP NOT NULL DEFAULT now()
-);
-
--- Create table for User Curriculums
-CREATE TABLE IF NOT EXISTS user_curriculums (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id),
-    curriculum_id UUID NOT NULL REFERENCES curriculums(id),
-    instructor_notes TEXT NOT NULL,
-    current_lesson_id UUID NOT NULL REFERENCES lessons(id)
+    order INT NOT NULL
 );
 
 -- Create table for Chat Sessions
@@ -256,6 +238,39 @@ CREATE TABLE IF NOT EXISTS chat_tool_calls (
 CREATE TABLE IF NOT EXISTS playground_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     type TEXT NOT NULL,
-    is_reserved BOOLEAN NOT NULL DEFAULT FALSE,
+    instance_hostname TEXT,
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
+
+-- Bcrypt hash for the password "testpassword"
+DO $$
+DECLARE
+    user_id UUID;
+BEGIN
+    -- Insert user and capture the ID
+    INSERT INTO users (id, username, email, password_hash, pending_verification, verification_code, verification_sent_at_utc, created_at_utc, last_login_at_utc)
+    VALUES (
+        gen_random_uuid(), 
+        'testuser', 
+        'tester@eduvize.dev', 
+        '$2b$12$r9QAwcJiOvuFGY0oTP5XW.SAwVTD70bjrmSABfVoqAdwpqnyDwRKy', 
+        FALSE, 
+        NULL, 
+        NULL, 
+        now(), 
+        now()
+    )
+    RETURNING id INTO user_id;
+
+    INSERT INTO user_profiles (id, user_id, first_name, last_name, birthdate, bio, github_username, last_updated_at_utc)
+    VALUES (
+        gen_random_uuid(),
+        user_id,
+        'John',
+        'Doe',
+        '1990-01-01',
+        'I am here to learn more about software engineering',
+        'cameron5906',
+        now()
+    );
+END $$;

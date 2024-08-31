@@ -1,10 +1,10 @@
-from typing import Optional
+from typing import Any, Optional
 
 class BaseTool:
     name: str
     description: str
     schema: dict
-    result: Optional[dict]
+    result: Optional[Any] = None
     
     def __init__(self, name: str, description: str):
         self.name = name
