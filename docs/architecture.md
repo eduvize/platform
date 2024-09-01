@@ -1,6 +1,7 @@
 ## High-Level Architecture
 
 Eduvize is divided up into several high level components and is designed to run in either a Kubernetes or Docker Compose environment.
+![Blank diagram - Page 1 (2)](https://github.com/user-attachments/assets/a9891dfe-2f03-49f3-ab8e-758ffd5f83cc)
 
 ### Application components
 
