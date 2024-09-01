@@ -24,27 +24,13 @@ To get involved with Eduvize, follow these steps:
    cd eduvize-ai
    ```
 
-2. **Set Up the Environment**: Eduvize requires several dependencies, including Python, Node.js, and Docker. Refer to the `SETUP.md` file for detailed installation instructions.
-
-3. **Explore the Codebase**: Familiarize yourself with the project structure. Key directories include:
-
-   - `src/`: Contains the core application code for frontend, backend, and playground systems
-     - `src/client/`: Houses the React-based frontend
-     - `src/backend/`: Contains the Python API and related packages
-     - `src/playground/`: Contains the code for the interactive development environment
-   - `scripts/`: Utilities for deployment and other administrative tasks.
-   - `assets/`: Contains extra content used throughout the system
-     - `assets/email/`: Email templates (MJML)
-   - `kubernetes/`: Kubernetes resources and the Eduvize Helm Chart
+2. **Set Up the Environment**: Check out [SETUP.md](#SETUP.md) for more information about getting the platform running in your local development environment.
 
 4. **Start Contributing**: Check out the `issues` section for tasks that need attention. Whether you're interested in squashing bugs, adding new features, or improving documentation, there's plenty to do.
 
 ### Technical Details
 
-- **Backend**: Built with Python (FastAPI & Socket.IO), the backend is responsible for managing user and course data, executing AI tasks, and integrating with other external APIs. The AI components leverage OpenAI GPT models.
-- **Frontend**: The frontend is developed using React and TypeScript, it communicates with the backend using RESTful APIs.
-- **Database**: Eduvize uses PostgreSQL for persistent data storage, with SQLAlchemy as the ORM layer. Redis is employed for caching and real-time processing needs.
-- **Deployment**: The platform is designed to be deployed on Kubernetes, with Helm charts provided for effortless installation.
+Take a look at the `docs/` directory for technical information including architecture, primary user flows, and data flow.
 
 ### Why  Contribute?
 
