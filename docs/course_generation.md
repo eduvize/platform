@@ -3,8 +3,7 @@
 The course creation process starts with the user describing basic information regarding what they would like to learn. This information is used to generate follow-up questions that are more geared toward learning specifics around their relationship to the subject and more concrete details of what they would like to focus on. Once the user submits answers, a rough course outline is created along with a cover image and it is saved to the database. Afterwards, a message is produced to Kafka where a separate *course generation job* consumes it and works to fill out individual lesson content one module at a time. The user is able to see progress in real-time from their course catalog and, once fully generated, view the course.
 
 Here is an illustration of this process:
-
-![diagram-export-8-31-2024-9_28_20-AM](C:\Users\camer\Downloads\eraser-export-export-8-31-2024-9_28_20-AM\diagram-export-8-31-2024-9_28_20-AM.png)
+![diagram-export-8-31-2024-9_28_20-AM](https://github.com/user-attachments/assets/83c01617-6519-4626-b7e8-3f947e4d3c45)
 
 ## The Anatomy of a Course
 
