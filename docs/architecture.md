@@ -18,8 +18,6 @@ Eduvize is divided up into several high level components and is designed to run 
 - **Postgres**: Primary database engine 
 - **Redis**: Caching layer for both key/value pairs and a backend for Socket.IO when operating multiple replicas
 
-![Blank diagram - Page 1 (2)](C:\Users\camer\Downloads\Blank diagram - Page 1 (2).png)
-
 ## Frontend
 
 The frontend is a React single page application built with [Vite](https://vitejs.dev/). The primary UI framework is [Mantine](https://mantine.dev/).
