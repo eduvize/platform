@@ -1,17 +1,46 @@
 ![Eduvize Logo](https://github.com/user-attachments/assets/30ac9425-b080-42ce-8c98-ef0a0eed8b3b)
 ## Introduction
-**Eduvize** is an open-source platform built to enhance developers' skills using AI-driven personalized learning. By contributing to Eduvize, you'll be helping to create a tool that empowers users to stay ahead in the rapidly evolving tech landscape through a tailored, interactive experience.
+**Eduvize** is an open-source platform built to enhance developers' skills using AI-driven personalized learning. By contributing to Eduvize, you'll be helping to create a tool that empowers engineers to stay ahead in the rapidly evolving tech landscape through a tailored, interactive experience.
+
+You can access the live platform by going to [eduvize.dev](https://eduvize.dev).
 
 ## Project Overview
 
 Eduvize is more than just a learning platform—it's a developer's companion designed to provide a hands-on, practical approach to mastering modern software development skills. The platform leverages AI to generate personalized content, allowing users to focus on what they need to grow, whether that's understanding new frameworks, improving coding proficiency, or exploring advanced concepts in software engineering.
 
-### Core  Concepts
+### Tech Stack
 
-- **User Profiles**: When users first join Eduvize, they start by creating a detailed profile that captures their hobbies, education, professional experience, and technical background. This includes information on the technologies they've worked with, self-assessed proficiency levels, and areas where they feel they need improvement. This comprehensive profile enables Eduvize to tailor learning paths and recommendations, providing a clear, personalized roadmap for skill development.
-- **Personal AI Tutors**: Eduvize harnesses the power of generative AI to analyze user profiles and recommend personalized learning paths. Once a user completes their profile, the AI processes the data to identify potential learning opportunities tailored to their unique needs. This information is then used to create a personal AI tutor that guides the user through customized courses and exercises, ensuring a targeted and effective learning experience.
-- **Interactive Code Challenges**: A key aspect of the Eduvize experience is its capability to generate and evaluate code challenges in real-time. To achieve this, the platform relies on robust, scalable systems that support live code execution and provide meaningful feedback. Sandbox environments are integrated into the backend, allowing users to write and run code during exercises and projects. Throughout this process, the personal AI tutor is embedded to offer guidance, making the coding experience interactive and supportive.
-- **Open-Source Ethos**: By contributing to Eduvize, you're not just improving a product—you're participating in a community-driven project that values transparency, collaboration, and continuous learning. The open-source nature of Eduvize allows for rapid iteration and improvement, driven by feedback and contributions from developers around the world.
+#### Frontend
+
+- **Language**: TypeScript
+- **Framework**: React
+- **Build Tooling**: Vite
+- **Core Dependencies**:
+  - **Mantine** - UI Library
+  - **Monaco** - IDE library, the same one that powers VSCode
+  - **react-router-dom** - In-app routing
+  - **react-markdown** - Markdown rendering library
+  - **xterm.js** - Library for rendering realistic terminal interfaces
+
+#### Backend
+
+- **Language**: Python
+- **Framework**: FastAPI
+- **Core Dependencies**:
+  - **SQLModel** - Abstraction over Pydantic and SQLAlchemy for database and ORM procedures
+  - **Socket.IO** - Websocket abstraction library
+  - **PDF2Image** - Library for converting PDF files to images
+  - **OpenAI** - Library for interfacing with the OpenAI API
+  - **Confluent Kafka** - Library for creating consumers and producers
+  - **Boto3** - Library supporting the Amazon S3 object storage protocol
+
+
+#### Infrastructure
+
+- **Apache Kafka**: A real-time messaging service for streaming events across backend services
+- **MinIO**: An open source object storage service replicating most of Amazon S3's capabilities
+- **Postgres**: DBMS
+- **Redis**: Cache
 
 ### Getting Started
 
