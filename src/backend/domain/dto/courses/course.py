@@ -19,5 +19,6 @@ class CourseListingDto(CourseBase):
     title: str
     description: str
     cover_image_url: str
+    progress: int
     is_generating: bool
     generation_progress: int

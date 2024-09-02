@@ -18,6 +18,7 @@ interface CourseListingProps extends CourseListingDto {
 export const CourseListing = ({
     title,
     cover_image_url,
+    progress,
     is_generating,
     generation_progress,
     onClick,
@@ -75,7 +76,7 @@ export const CourseListing = ({
                         bottom="0"
                         left="0"
                         w="100%"
-                        value={50}
+                        value={progress}
                     />
                 )}
             </Card>
