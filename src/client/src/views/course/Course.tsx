@@ -4,6 +4,7 @@ import { Space } from "@mantine/core";
 import { useCourse } from "@context/course/hooks";
 import { useDocumentTitle } from "@mantine/hooks";
 import { Lesson, CourseOverview } from "@organisms";
+import { ChatProvider } from "@context/chat";
 
 const Component = () => {
     const params = useParams();
@@ -26,7 +27,9 @@ export const Course = () => {
 
     return (
         <CourseProvider courseId={params.course_id as string}>
-            <Component />
+            <ChatProvider>
+                <Component />
+            </ChatProvider>
 
             <Space h="xl" />
         </CourseProvider>

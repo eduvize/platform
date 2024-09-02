@@ -13,6 +13,7 @@ import {
 } from "@mantine/core";
 import { useWindowScroll } from "@mantine/hooks";
 import { ReadingMaterial } from "@molecules";
+import { Chat } from "@organisms";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -101,6 +102,12 @@ export const Lesson = ({ courseId, lessonId }: LessonProps) => {
                             <ReadingMaterial>
                                 {sections[section].content}
                             </ReadingMaterial>
+                        </Card>
+
+                        <Space h="xs" />
+
+                        <Card withBorder>
+                            <Chat height="250px" />
                         </Card>
 
                         <Space h="sm" />
