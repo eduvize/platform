@@ -180,7 +180,7 @@ CREATE TABLE IF NOT EXISTS course_modules (
     course_id UUID NOT NULL REFERENCES courses(id),
     title TEXT NOT NULL,
     description TEXT NOT NULL,
-    order INT NOT NULL
+    "order" INT NOT NULL
 );
 
 -- Create table for Lessons
@@ -189,7 +189,7 @@ CREATE TABLE IF NOT EXISTS course_lessons (
     module_id UUID NOT NULL REFERENCES course_modules(id),
     title TEXT NOT NULL,
     description TEXT NOT NULL,
-    order INT NOT NULL
+    "order" INT NOT NULL
 );
 
 -- Add the current_lesson_id column to the courses table
@@ -202,7 +202,7 @@ CREATE TABLE IF NOT EXISTS course_lesson_sections (
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     content TEXT NOT NULL,
-    order INT NOT NULL
+    "order" INT NOT NULL
 );
 
 -- Create table for Chat Sessions
