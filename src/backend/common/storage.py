@@ -11,7 +11,6 @@ from config import get_s3_access_key, get_s3_avatar_bucket, get_s3_endpoint, get
 
 class StoragePurpose(Enum):
     AVATAR = 1
-    INSTRUCTOR_ASSET = 2
     COURSE_ASSET = 3
     
 storage_resource = boto3.resource(
@@ -38,8 +37,6 @@ def get_bucket(purpose: StoragePurpose) -> Tuple[Bucket, str]:
     """
     if purpose == StoragePurpose.AVATAR:
         return storage_resource.Bucket(get_s3_avatar_bucket()), "avatars"
-    elif purpose == StoragePurpose.INSTRUCTOR_ASSET:
-        return storage_resource.Bucket(get_s3_avatar_bucket()), "instructor-assets"
     elif purpose == StoragePurpose.COURSE_ASSET:
         return storage_resource.Bucket(get_s3_avatar_bucket()), "course-assets"
     

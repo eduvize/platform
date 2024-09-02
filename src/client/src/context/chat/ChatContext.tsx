@@ -1,12 +1,11 @@
 import { ChatApi } from "@api";
-import { useCurrentUser, useInstructor } from "@context/user/hooks";
+import { useCurrentUser } from "@context/user/hooks";
 import { Center, Loader } from "@mantine/core";
 import { ChatMessageDto } from "@models/dto";
 import { ReactNode, useEffect, useState } from "react";
 import { createContext } from "use-context-selector";
 
 type Context = {
-    remotePartyAvatarUrl: string | null;
     localPartyAvatarUrl: string | null;
     messages: ChatMessageDto[];
     pendingTools: string[];
@@ -16,7 +15,6 @@ type Context = {
 };
 
 const defaultValue: Context = {
-    remotePartyAvatarUrl: null,
     localPartyAvatarUrl: null,
     messages: [],
     pendingTools: [],
@@ -34,7 +32,6 @@ interface ChatProviderProps {
 export const ChatProvider = ({ children }: ChatProviderProps) => {
     const [localUser] = useCurrentUser();
 
-    const [instructor] = useInstructor();
     const [pendingToolNames, setPendingToolNames] = useState<string[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
     const [toolResults, setToolResults] = useState<Record<string, any | null>>(
@@ -44,25 +41,10 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     const [messages, setMessages] = useState<ChatMessageDto[]>([]);
 
     useEffect(() => {
-        if (!localUser || !instructor) return;
+        if (!localUser) return;
 
-        ChatApi.getHistory().then((history) => {
-            setMessages([
-                {
-                    is_user: false,
-                    content: `Hello, ${localUser.profile.first_name}! Welcome to Eduvize - I'm ${instructor.name}, your instructor.
-Now that you've completed the onboarding process, let's get started with planning your first few courses!`,
-                    create_at_utc: new Date().toISOString(),
-                },
-                {
-                    is_user: false,
-                    content: `Is there anywhere you'd like to start, or would you like me to help identify a good starting point for you?`,
-                    create_at_utc: new Date().toISOString(),
-                },
-                ...history,
-            ]);
-        });
-    }, [localUser, instructor]);
+        ChatApi.getHistory().then(setMessages);
+    }, [localUser]);
 
     useEffect(() => {
         if (receiveBuffer === "") return;
@@ -162,7 +144,7 @@ Now that you've completed the onboarding process, let's get started with plannin
         );
     };
 
-    if (!instructor || !localUser) {
+    if (!localUser) {
         return (
             <Center h="100%">
                 <Loader size="lg" type="dots" />
@@ -173,7 +155,6 @@ Now that you've completed the onboarding process, let's get started with plannin
     return (
         <ChatContext.Provider
             value={{
-                remotePartyAvatarUrl: instructor.avatar_url,
                 localPartyAvatarUrl: localUser.profile?.avatar_url,
                 messages,
                 pendingTools: pendingToolNames,

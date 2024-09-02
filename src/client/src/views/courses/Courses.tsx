@@ -1,6 +1,4 @@
-import { Container, Grid, List, ScrollArea, Stack } from "@mantine/core";
-import { InstructorSetup } from "./cta";
-import { useInstructor } from "@context/user/hooks";
+import { Grid, List, ScrollArea, Stack } from "@mantine/core";
 import { CoursePlanner } from "@views/course-planner";
 import {
     NavLink,
@@ -11,7 +9,6 @@ import {
 } from "react-router-dom";
 import classes from "./Courses.module.css";
 import { useEffect } from "react";
-import { useCourses } from "@context/course/hooks";
 import { CourseList } from "@organisms";
 
 interface NavItemProps {
@@ -22,20 +19,12 @@ interface NavItemProps {
 export const Courses = () => {
     const navigate = useNavigate();
     const isMainScreen = useMatch("/dashboard/courses");
-    const [instructor] = useInstructor();
 
     useEffect(() => {
         if (!isMainScreen) return;
 
         navigate("/dashboard/courses/active");
     }, [isMainScreen]);
-
-    if (!instructor?.is_approved)
-        return (
-            <Container size="xs" p="xl">
-                <InstructorSetup />
-            </Container>
-        );
 
     const NavItem = ({ to, label }: NavItemProps) => {
         return (

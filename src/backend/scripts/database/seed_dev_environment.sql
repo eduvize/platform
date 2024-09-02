@@ -150,16 +150,6 @@ CREATE TABLE IF NOT EXISTS user_profiles_disciplines (
     notes TEXT
 );
 
--- Create table for instructor
-CREATE TABLE IF NOT EXISTS user_instructors (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id),
-    name TEXT NOT NULL,
-    avatar_url TEXT NOT NULL,
-    is_approved BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at_utc TIMESTAMP NOT NULL DEFAULT now()
-);
-
 -- Create table for Course
 CREATE TABLE IF NOT EXISTS courses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
