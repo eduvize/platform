@@ -6,7 +6,7 @@ from domain.schema.profile import UserProfileHobby, UserProfileStudent, UserProf
 import uuid
 
 UserIdentifiers = Literal["id", "username", "email", "verification_code"]
-UserIncludes = Literal["profile", "instructor"]
+UserIncludes = Literal["profile"]
 
 class UserBase(SQLModel):
     username: str                           = Field(unique=True)
@@ -27,7 +27,6 @@ class User(UserBase, table=True):
     
     profile: "UserProfile"                                          = Relationship(back_populates="user")
     external_auth: Optional["UserExternalAuth"]                     = Relationship(back_populates="user")
-    instructor: Optional["schema.instructor.instructor.Instructor"] = Relationship(back_populates="user")
     courses: list["schema.courses.course.Course"]                   = Relationship(back_populates="user")
     
 class UserExternalAuth(SQLModel, table=True):

@@ -53,7 +53,7 @@ class ChatService:
         user_id: str,
         payload: SendChatMessage
     ) -> AsyncGenerator[CompletionChunk, None]:
-        user = await self.user_service.get_user("id", user_id, ["profile.*", "instructor"])
+        user = await self.user_service.get_user("id", user_id, ["profile.*"])
         
         if not user:
             raise ValueError("User not found")
