@@ -69,7 +69,7 @@ export const Lesson = ({ courseId, lessonId }: LessonProps) => {
                     </Grid.Col>
                 )}
 
-                <Grid.Col span="auto">
+                <Grid.Col span={sections.length === 1 ? 12 : 9}>
                     <Stack>
                         <Group justify="space-between">
                             <Stack gap={0}>
