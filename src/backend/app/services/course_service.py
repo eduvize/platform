@@ -189,7 +189,34 @@ class CourseService:
         if user is None:
             raise ValueError("User not found")
         
-        return self.course_repo.get_courses(user.id)
+        courses = self.course_repo.get_courses(user.id)
+        
+        def calculate_progress(course: Course) -> int:
+            total_lessons = self.course_repo.get_lesson_count(course.id)
+            current_lesson = next((
+                lesson
+                for module in course.modules
+                for lesson in module.lessons
+                if lesson.id == course.current_lesson_id
+            ), None)
+            
+            if current_lesson is None:
+                return 0
+            
+            return int((current_lesson.order / total_lessons) * 100)
+        
+        return [
+            CourseListingDto.model_construct(
+                id=course.id,
+                title=course.title,
+                description=course.description,
+                cover_image_url=course.cover_image_url,
+                progress=calculate_progress(course),
+                is_generating=course.is_generating,
+                generation_progress=course.generation_progress
+            )
+            for course in courses
+        ]
         
     async def get_course(
         self,

@@ -201,13 +201,31 @@ class CourseRepository:
             query = (
                 select(Course)
                 .where(Course.user_id == user_id)
+                .options(
+                    joinedload(Course.modules)
+                    .joinedload(Module.lessons)
+                    .joinedload(Lesson.sections)
+                )
                 .order_by(Course.created_at_utc, Course.title)
             )
             
-            resultset = session.exec(query)
+            resultset = session.exec(query).unique()
             courses = resultset.all()
             
             return courses
+        
+    def get_lesson_count(self, course_id: uuid.UUID) -> int:
+        with Session(engine) as session:
+            query = (
+                select(Lesson.id)
+                .join(Module, Lesson.module_id == Module.id)
+                .where(Module.course_id == course_id)
+            )
+            
+            resultset = session.exec(query)
+            lessons = resultset.all()
+            
+            return len(lessons)
         
     def get_course(self, user_id: uuid.UUID, course_id: uuid.UUID) -> Optional[Course]:
         with Session(engine) as session:
