@@ -1,3 +1,4 @@
+import { ChatProvider, useChat } from "@context/chat";
 import { useCourse, useLesson } from "@context/course/hooks";
 import {
     Button,
@@ -11,7 +12,6 @@ import {
     Stepper,
     Text,
 } from "@mantine/core";
-import { useWindowScroll } from "@mantine/hooks";
 import { ReadingMaterial } from "@molecules";
 import { Chat } from "@organisms";
 import { useEffect, useState } from "react";
@@ -22,13 +22,14 @@ interface LessonProps {
     lessonId: string;
 }
 
-export const Lesson = ({ courseId, lessonId }: LessonProps) => {
+export const Component = ({ courseId, lessonId }: LessonProps) => {
     const navigate = useNavigate();
+    const { purge: purgeChatSession } = useChat();
     const {
         markSectionCompleted,
         course: { lesson_index },
     } = useCourse();
-    const [scroll, scrollTo] = useWindowScroll();
+    const [isChatUsed, setIsChatUsed] = useState(false);
     const { title, description, sections, order } = useLesson(lessonId);
     const [section, setSection] = useState(lessonId ? lesson_index : 0);
 
@@ -37,6 +38,9 @@ export const Lesson = ({ courseId, lessonId }: LessonProps) => {
         document
             .getElementById("root")!
             .scrollTo({ top: 0, behavior: "smooth" });
+
+        purgeChatSession();
+        setIsChatUsed(false);
     }, [section]);
 
     const handleNextSection = () => {
@@ -107,7 +111,11 @@ export const Lesson = ({ courseId, lessonId }: LessonProps) => {
                         <Space h="xs" />
 
                         <Card withBorder>
-                            <Chat height="250px" />
+                            <Chat
+                                height={isChatUsed ? "500px" : "120px"}
+                                greetingMessage="Have any questions about this section, or want to expand on any detail? Ask away!"
+                                onMessageData={() => setIsChatUsed(true)}
+                            />
                         </Card>
 
                         <Space h="sm" />
@@ -151,5 +159,13 @@ export const Lesson = ({ courseId, lessonId }: LessonProps) => {
                 </Grid.Col>
             </Grid>
         </Container>
+    );
+};
+
+export const Lesson = ({ courseId, lessonId }: LessonProps) => {
+    return (
+        <ChatProvider prompt="lesson" resourceId={lessonId}>
+            <Component courseId={courseId} lessonId={lessonId} />
+        </ChatProvider>
     );
 };

@@ -27,9 +27,7 @@ export const Course = () => {
 
     return (
         <CourseProvider courseId={params.course_id as string}>
-            <ChatProvider>
-                <Component />
-            </ChatProvider>
+            <Component />
 
             <Space h="xl" />
         </CourseProvider>
