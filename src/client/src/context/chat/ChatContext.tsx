@@ -2,6 +2,7 @@ import { ChatApi } from "@api";
 import { useCurrentUser } from "@context/user/hooks";
 import { Center, Loader } from "@mantine/core";
 import { ChatMessageDto } from "@models/dto";
+import { ChatPromptType } from "@models/enums";
 import { ReactNode, useEffect, useState } from "react";
 import { createContext } from "use-context-selector";
 
@@ -11,7 +12,9 @@ type Context = {
     pendingTools: string[];
     toolResults: Record<string, any | null>;
     isProcessing: boolean;
+    setGreeting: (greeting: string) => void;
     sendMessage: (message: string) => void;
+    reset: () => void;
 };
 
 const defaultValue: Context = {
@@ -20,16 +23,24 @@ const defaultValue: Context = {
     pendingTools: [],
     toolResults: {},
     isProcessing: false,
+    setGreeting: () => {},
     sendMessage: () => {},
+    reset: () => {},
 };
 
 export const ChatContext = createContext<Context>(defaultValue);
 
 interface ChatProviderProps {
+    prompt: ChatPromptType;
+    resourceId?: string;
     children: ReactNode;
 }
 
-export const ChatProvider = ({ children }: ChatProviderProps) => {
+export const ChatProvider = ({
+    prompt,
+    resourceId,
+    children,
+}: ChatProviderProps) => {
     const [localUser] = useCurrentUser();
 
     const [pendingToolNames, setPendingToolNames] = useState<string[]>([]);
@@ -38,13 +49,41 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         {}
     );
     const [receiveBuffer, setReceiveBuffer] = useState<string>("");
+    const [sessionId, setSessionId] = useState<string | null>(null);
+    const [greeting, setGreeting] = useState<string>("");
     const [messages, setMessages] = useState<ChatMessageDto[]>([]);
 
-    useEffect(() => {
-        if (!localUser) return;
+    const handleSetup = () => {
+        ChatApi.createSession(prompt, resourceId).then(({ session_id }) => {
+            setSessionId(session_id);
 
-        ChatApi.getHistory().then(setMessages);
-    }, [localUser]);
+            if (greeting) {
+                setMessages([
+                    {
+                        is_user: false,
+                        content: greeting,
+                        create_at_utc: new Date().toISOString(),
+                    },
+                ]);
+            }
+        });
+    };
+
+    useEffect(() => {
+        handleSetup();
+    }, []);
+
+    useEffect(() => {
+        if (greeting) {
+            setMessages([
+                {
+                    is_user: false,
+                    content: greeting,
+                    create_at_utc: new Date().toISOString(),
+                },
+            ]);
+        }
+    }, [greeting]);
 
     useEffect(() => {
         if (receiveBuffer === "") return;
@@ -91,7 +130,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     }, [toolResults]);
 
     const handleSendMessage = (message: string) => {
-        if (isProcessing) return;
+        if (isProcessing || !sessionId) return;
 
         setIsProcessing(true);
 
@@ -108,6 +147,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         let completedToolCalls: Record<string, any> = {};
 
         ChatApi.sendMessage(
+            sessionId,
             { message },
             (chunk) => {
                 if (chunk.text) {
@@ -144,10 +184,10 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         );
     };
 
-    if (!localUser) {
+    if (!sessionId || !localUser) {
         return (
-            <Center h="100%">
-                <Loader size="lg" type="dots" />
+            <Center>
+                <Loader type="dots" />
             </Center>
         );
     }
@@ -160,7 +200,9 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                 pendingTools: pendingToolNames,
                 toolResults,
                 isProcessing,
+                setGreeting: setGreeting,
                 sendMessage: handleSendMessage,
+                reset: handleSetup,
             }}
         >
             {children}

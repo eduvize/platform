@@ -6,3 +6,4 @@ export * from "./ChatTool";
 export * from "./CurrentSubjectExperience";
 export * from "./CourseMotivation";
 export * from "./CourseMaterial";
+export * from "./ChatPromptType";
