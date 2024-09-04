@@ -10,7 +10,35 @@ from common.database import engine
 
 logger = logging.getLogger("ChatRepository")
 
-class ChatRepository:    
+class ChatRepository:
+    def create_chat_session(
+        self,
+        user_id: uuid.UUID,
+        prompt_type: str,
+        resource_id: Optional[uuid.UUID] = None
+    ) -> ChatSession:
+        """
+        Creates a new chat session
+
+        Args:
+            user_id (uuid.UUID): The user that owns the chat session
+
+        Returns:
+            ChatSession: The created chat session
+        """
+        
+        with Session(engine) as session:
+            chat_session = ChatSession(
+                user_id=user_id,
+                prompt_type=prompt_type,
+                resource_id=resource_id
+            )
+            session.add(chat_session)
+            session.commit()
+            session.refresh(chat_session)
+            
+            return chat_session
+    
     def add_chat_message(
         self, 
         session_id: uuid.UUID,
@@ -59,6 +87,24 @@ class ChatRepository:
             session.add(tool_call)
             session.commit()
         
+    def get_session(
+        self,
+        session_id: uuid.UUID
+    ) -> Optional[ChatSession]:
+        """
+        Gets a chat session by ID
+        
+        Args:
+            session_id (uuid.UUID): The ID of the chat session to get
+            
+        Returns:
+            Optional[ChatSession]: The chat session, if found
+        """
+        
+        with Session(engine) as session:
+            query = select(ChatSession).where(ChatSession.id == session_id)
+            return session.exec(query).unique().first()
+        
     def get_chat_messages(
         self,
         session_id: uuid.UUID
@@ -91,168 +137,3 @@ class ChatRepository:
             messages.reverse()
             
             return messages
-    
-    def get_session_by_curriculum(
-        self,
-        user_id: uuid.UUID,
-        curriculum_id: uuid.UUID
-    ) -> uuid.UUID:
-        """
-        Gets the chat session for a user and given curriculum
-
-        Args:
-            user_id (uuid.UUID): The user to get the session for
-            curriculum_id (uuid.UUID): The curriculum to get the session for
-        
-        Returns:
-            Optional[uuid.UUID]: The ID of the chat session or None
-        """
-        
-        with Session(engine) as session:
-            query = select(ChatSession).where(
-                ChatSession.user_id == user_id,
-                ChatSession.curriculum_id == curriculum_id
-            )
-        
-            result = session.exec(query).first()
-            
-            if result:
-                return result.id
-            else:
-                # Create a new session if one does not exist
-                logger.info(f"Creating new chat session for user {user_id} and curriculum {curriculum_id}")
-                chat_session = ChatSession(
-                    user_id=user_id,
-                    curriculum_id=curriculum_id
-                )
-                session.add(chat_session)
-                session.commit()
-                session.refresh(chat_session)
-                
-                logger.info(f"Created new chat session with ID {chat_session.id}")
-                
-                return chat_session.id
-        
-    def get_session_by_lesson(
-        self,
-        user_id: uuid.UUID,
-        lesson_id: uuid.UUID
-    ) -> uuid.UUID:
-        """
-        Gets the chat session for a user and given lesson
-
-        Args:
-            user_id (uuid.UUID): The user to get the session for
-            lesson_id (uuid.UUID): The lesson to get the session for
-
-        Returns:
-            Optional[uuid.UUID]: The ID of the chat session or None
-        """
-        
-        with Session(engine) as session:
-            query = select(ChatSession).where(
-                ChatSession.user_id == user_id,
-                ChatSession.lesson_id == lesson_id
-            )
-        
-            result = session.exec(query).first()
-            
-            if result:
-                return result.id
-            else:
-                # Create a new session if one does not exist
-                logger.info(f"Creating new chat session for user {user_id} and lesson {lesson_id}")
-                chat_session = ChatSession(
-                    user_id=user_id,
-                    lesson_id=lesson_id
-                )
-                session.add(chat_session)
-                session.commit()
-                session.refresh(chat_session)
-                
-                logger.info(f"Created new chat session with ID {chat_session.id}")
-                
-                return chat_session.id
-            
-    def get_session_by_exercise(
-        self,
-        user_id: uuid.UUID,
-        exercise_id: uuid.UUID
-    ) -> uuid.UUID:
-        """
-        Gets the chat session for a user and given exercise
-
-        Args:
-            user_id (uuid.UUID): The user to get the session for
-            exercise_id (uuid.UUID): The exercise to get the session for
-
-        Returns:
-            Optional[uuid.UUID]: The ID of the chat session or None
-        """
-        
-        with Session(engine) as session:
-            query = select(ChatSession).where(
-                ChatSession.user_id == user_id,
-                ChatSession.exercise_id == exercise_id
-            )
-        
-            result = session.exec(query).first()
-            
-            if result:
-                return result.id
-            else:
-                # Create a new session if one does not exist
-                logger.info(f"Creating new chat session for user {user_id} and exercise {exercise_id}")
-                chat_session = ChatSession(
-                    user_id=user_id,
-                    exercise_id=exercise_id
-                )
-                session.add(chat_session)
-                session.commit()
-                session.refresh(chat_session)
-                
-                logger.info(f"Created new chat session with ID {chat_session.id}")
-                
-                return chat_session.id
-            
-    def get_default_session(
-        self,
-        user_id: uuid.UUID
-    ) -> uuid.UUID:
-        """
-        Gets the default chat session for a user
-
-        Args:
-            user_id (uuid.UUID): The user to get the session for
-
-        Returns:
-            Optional[uuid.UUID]: The ID of the chat session or None
-        """
-        
-        logger.info(f"Getting default chat session for user {user_id}")
-        
-        with Session(engine) as session:
-            query = select(ChatSession).where(
-                ChatSession.user_id == user_id,
-                ChatSession.curriculum_id == None,
-                ChatSession.lesson_id == None,
-                ChatSession.exercise_id == None
-            )
-        
-            result = session.exec(query).first()
-            
-            if result:
-                return result.id
-            else:
-                # Create a new session if one does not exist
-                logger.info(f"Creating new default chat session for user {user_id}")
-                chat_session = ChatSession(
-                    user_id=user_id
-                )
-                session.add(chat_session)
-                session.commit()
-                session.refresh(chat_session)
-                
-                logger.info(f"Created new chat session with ID {chat_session.id}")
-                
-                return chat_session.id
