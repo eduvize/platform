@@ -227,6 +227,21 @@ class CourseRepository:
             
             return len(lessons)
         
+    def get_lesson(self, lesson_id: uuid.UUID) -> Optional[Lesson]:
+        with Session(engine) as session:
+            query = (
+                select(Lesson)
+                .where(Lesson.id == lesson_id)
+                .options(
+                    joinedload(Lesson.sections)
+                )
+            )
+            
+            resultset = session.exec(query)
+            lesson = resultset.first()
+            
+            return lesson
+        
     def get_course(self, user_id: uuid.UUID, course_id: uuid.UUID) -> Optional[Course]:
         with Session(engine) as session:
             query = (
