@@ -4,6 +4,7 @@ import { Space } from "@mantine/core";
 import { useCourse } from "@context/course/hooks";
 import { useDocumentTitle } from "@mantine/hooks";
 import { Lesson, CourseOverview } from "@organisms";
+import { ChatProvider } from "@context/chat";
 
 const Component = () => {
     const params = useParams();

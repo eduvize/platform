@@ -4,3 +4,4 @@ from .resume_scan import ResumeScannerPrompt
 from .assertion import AssertionPrompt
 from .course_planning import GetAdditionalInputsPrompt
 from .course_generation import GenerateCourseOutlinePrompt, GenerateModuleContentPrompt
+from .lesson_discussion import LessonDiscussionPrompt

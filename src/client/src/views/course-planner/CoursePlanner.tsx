@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChatProvider } from "@context/chat";
 import {
     Box,
     Button,
@@ -24,7 +23,7 @@ enum Step {
     Generation = 2,
 }
 
-const Component = () => {
+export const CoursePlanner = () => {
     const navigate = useNavigate();
     const form = useForm<CoursePlan>({
         initialValues: {
@@ -206,9 +205,3 @@ const Component = () => {
         </Stack>
     );
 };
-
-export const CoursePlanner = () => (
-    <ChatProvider>
-        <Component />
-    </ChatProvider>
-);

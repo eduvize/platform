@@ -5,3 +5,4 @@ export * from "./ProfileUpdatePayload";
 export * from "./AssertionResult";
 export * from "./ChatMessagePayload";
 export * from "./PlaygroundCreationResponse";
+export * from "./CreateSessionResponse";

@@ -199,9 +199,8 @@ CREATE TABLE IF NOT EXISTS course_lesson_sections (
 CREATE TABLE IF NOT EXISTS chat_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id),
-    curriculum_id UUID,
-    lesson_id UUID,
-    exercise_id UUID,
+    prompt_type TEXT NOT NULL,
+    resource_id UUID,
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
 
