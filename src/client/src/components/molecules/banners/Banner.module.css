@@ -1,0 +1,86 @@
+.card {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    border-width: 2px;
+    border-style: solid;
+    color: #fff;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    transition: box-shadow 0.3s;
+}
+
+.card:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.card.danger {
+    background: linear-gradient(135deg, #e26666, #d32f2f);
+    color: #fff;
+}
+
+.card.warning {
+    background: linear-gradient(135deg, #fff176, #fbc02d);
+    color: #333; /* Darker gray for better readability */
+}
+
+.card.info {
+    background: linear-gradient(135deg, #64b5f6, #1976d2);
+    color: #fff;
+}
+
+.button {
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.5); /* Match button outline with the card's background */
+    color: rgba(255, 255, 255, 0.9);
+    border-radius: 6px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff; /* A light hover effect */
+}
+
+.button.danger {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid #fff;
+    color: #fff;
+}
+
+.button.danger:hover {
+    background-color: #fff;
+    color: var(--mantine-color-red-8);
+}
+
+.button.info {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid #fff;
+    color: #fff;
+}
+
+.button.info:hover {
+    background-color: #fff;
+    color: var(--mantine-color-blue-8);
+}
+
+.button.warning {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid #3b3b3b;
+    color: #3b3b3b;
+}
+
+.button.warning:hover {
+    background-color: #fff;
+    color: var(--mantine-color-yellow-6);
+}
+
+.icon.danger {
+    color: #fff;
+}
+
+.icon.warning {
+}
+
+.icon.info {
+    color: #fff;
+}
