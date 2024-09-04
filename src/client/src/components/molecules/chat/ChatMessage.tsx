@@ -1,17 +1,17 @@
 import { useMemo } from "react";
 import { Bubble } from "@atoms";
-import { useChatAvatar } from "@context/chat/hooks";
 import { useCurrentUser } from "@context/user/hooks";
-import { Avatar, Flex, Grid, Stack, Text } from "@mantine/core";
+import { Avatar, Flex, Grid, Group, Stack } from "@mantine/core";
 import Markdown from "react-markdown";
 import { ChatMessageDto } from "@models/dto";
 import classes from "./ChatMessage.module.css";
+import avatar from "./avatar.png";
 
 interface ChatMessageProps extends ChatMessageDto {}
 
 export const ChatMessage = ({ is_user, content }: ChatMessageProps) => {
     const [localUser] = useCurrentUser();
-    const avatarUrl = useChatAvatar(is_user ? "local" : "remote");
+    const avatarUrl = is_user ? localUser?.profile.avatar_url : avatar;
 
     const initials = useMemo(() => {
         if (!is_user) return "";
@@ -23,12 +23,14 @@ export const ChatMessage = ({ is_user, content }: ChatMessageProps) => {
     }, [localUser]);
 
     let parts = [
-        <Grid.Col span={1}>
-            <Avatar radius="50%" size="lg" src={avatarUrl}>
-                {initials}
-            </Avatar>
+        <Grid.Col span={0.8}>
+            <Group justify={is_user ? "flex-end" : "flex-start"}>
+                <Avatar radius="50%" size="md" src={avatarUrl}>
+                    {initials}
+                </Avatar>
+            </Group>
         </Grid.Col>,
-        <Grid.Col span={10}>
+        <Grid.Col span="auto">
             <Flex
                 align="center"
                 justify={is_user ? "flex-end" : "flex-start"}
@@ -37,7 +39,6 @@ export const ChatMessage = ({ is_user, content }: ChatMessageProps) => {
                 <Bubble
                     tipSide={is_user ? "right" : "left"}
                     bg={is_user ? "blue" : "gray"}
-                    mr={is_user ? "sm" : undefined}
                 >
                     <Markdown className={classes.message}>{content}</Markdown>
                 </Bubble>

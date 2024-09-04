@@ -60,31 +60,31 @@ Build and push the `backend/api.Dockerfile` image to a repository that is access
 
 **Image**: Set the `image` field to the repository and tag you want to use for the API
 
-##### Environment Variables
+Environment Variables
 
-| Name                 | Description                                                  |
-| -------------------- | ------------------------------------------------------------ |
-| PUBLIC_UI_URL        | The public address to the frontend                           |
-| PUBLIC_URL           | The public address to the API                                |
-| DASHBOARD_ENDPOINT   | The path segment name for the frontend dashboard             |
+| Name                 | Description                                                        |
+| -------------------- | ------------------------------------------------------------------ |
+| PUBLIC_UI_URL        | The public address to the frontend                                 |
+| PUBLIC_URL           | The public address to the API                                      |
+| DASHBOARD_ENDPOINT   | The path segment name for the frontend dashboard                   |
 | NOREPLY_ADDRESS      | The email address to use as the `From` address when sending emails |
-| AUTH_REDIRECT_URL    | The public address to the authentication screen              |
-| S3_ACCESS_KEY        | The MinIO root username                                      |
-| S3_SECRET_KEY        | The MinIO root password                                      |
-| OPENAI_KEY           | The API key to use for OpenAI transactions                   |
-| MAILGUN_API_KEY      | The API key to use for Mailgun transactions                  |
-| GITHUB_CLIENT_ID     | The OAuth client ID to use for Github authentication         |
-| GITHUB_CLIENT_SECRET | The OAuth client secret to use for Github authentication     |
-| GOOGLE_CLIENT_ID     | The OAuth client ID to use for Google authentication         |
-| GOOGLE_CLIENT_SECRET | The OAuth client secret to use for Google authentication     |
+| AUTH_REDIRECT_URL    | The public address to the authentication screen                    |
+| S3_ACCESS_KEY        | The MinIO root username                                            |
+| S3_SECRET_KEY        | The MinIO root password                                            |
+| OPENAI_KEY           | The API key to use for OpenAI transactions                         |
+| MAILGUN_API_KEY      | The API key to use for Mailgun transactions                        |
+| GITHUB_CLIENT_ID     | The OAuth client ID to use for Github authentication               |
+| GITHUB_CLIENT_SECRET | The OAuth client secret to use for Github authentication           |
+| GOOGLE_CLIENT_ID     | The OAuth client ID to use for Google authentication               |
+| GOOGLE_CLIENT_SECRET | The OAuth client secret to use for Google authentication           |
 
 #### Course Generator
 
-Build and push the `backend/jobs/Dockerfile` image with the build argument `JOB_NAME` set to `course-generator` to a repository that is accessible within your cluster.
+Build and push the `backend/jobs/Dockerfile` image with the build argument `JOB_NAME` set to `course_generator` to a repository that is accessible within your cluster.
 
 **Image:**: Set the `image` field to the repository and tag you want to use
 
-##### Environment Variables
+Environment Variables
 
 | Name       | Description                                |
 | ---------- | ------------------------------------------ |
@@ -118,13 +118,13 @@ This maps the secret keys used to sign json web tokens for both users and playgr
 
 #### Private Registry
 
-If you're using a private registry hosted within your cluster for docker images, set `enabled` to `true`. You'll need to make a Secret with the credentials ([read this](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/) for more info) so Kubernetes knows how to authenticate. 
+If you're using a private registry hosted within your cluster for docker images, set `enabled` to `true`. You'll need to make a Secret with the credentials ([read this](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/) for more info) so Kubernetes knows how to authenticate.
 
 ### Step 3. Deploy Eduvize
 
 Navigate to the `kubernetes/eduvize` folder in this repository and simply run the following command:
 
-```shell
+```plaintext
 helm install eduvize . --namespace {YOUR_NAMESPACE}
 ```
 

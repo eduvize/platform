@@ -27,7 +27,7 @@ services:
       context: .
       dockerfile: jobs/Dockerfile
       args:
-        JOB_NAME: course-generator
+        JOB_NAME: course_generator
     env_file:
       - .env
     environment:

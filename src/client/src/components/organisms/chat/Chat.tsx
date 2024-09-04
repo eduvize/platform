@@ -1,16 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { ChatMessage, PendingTool } from "@molecules";
-import {
-    useChatMessages,
-    usePendingTools,
-    useToolResults,
-} from "@context/chat/hooks";
+import { useChat, usePendingTools, useToolResults } from "@context/chat/hooks";
 import { Box, Input, ScrollArea, Stack } from "@mantine/core";
 
 interface ChatProps {
     height: string;
+    greetingMessage?: string;
     toolDescriptionMap?: Record<string, string>;
     onTool?: (name: string, data: any) => void;
+    onMessageData?: () => void;
 }
 
 /**
@@ -18,12 +16,18 @@ interface ChatProps {
  * in a common format. Tools are handled by consumers of the chat component, where the toolDescriptionMap is used to provide
  * a user-friendly description of the tool being processed, and onTool is used to handle the results of tools.
  */
-export const Chat = ({ height, toolDescriptionMap, onTool }: ChatProps) => {
+export const Chat = ({
+    height,
+    greetingMessage,
+    toolDescriptionMap,
+    onTool,
+    onMessageData,
+}: ChatProps) => {
     const viewport = useRef<HTMLDivElement>(null);
     const isAtBottomRef = useRef(true);
     const pendingToolNames = usePendingTools();
     const toolResults = useToolResults();
-    const { messages, sendMessage, processing } = useChatMessages();
+    const { messages, sendMessage, processing } = useChat(greetingMessage);
     const [message, setMessage] = useState("");
 
     const handleScrollToBottom = () => {
@@ -40,6 +44,10 @@ export const Chat = ({ height, toolDescriptionMap, onTool }: ChatProps) => {
     useEffect(() => {
         if (isAtBottomRef.current) {
             handleScrollToBottom();
+        }
+
+        if ((greetingMessage && messages.length > 1) || messages.length > 2) {
+            onMessageData?.();
         }
     }, [messages.map((x) => x.content)]);
 
@@ -64,10 +72,13 @@ export const Chat = ({ height, toolDescriptionMap, onTool }: ChatProps) => {
                             viewport.current!.clientHeight >=
                         viewport.current!.scrollHeight;
                 }}
+                style={{
+                    transition: "height 0.2s",
+                }}
             >
                 <Stack
-                    gap="xl"
-                    mt="md"
+                    gap="md"
+                    m="md"
                     pb={pendingToolNames.length ? "xl" : undefined}
                 >
                     {messages.map((message) => (

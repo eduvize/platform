@@ -1,5 +1,3 @@
-import { ChatSessionDto } from "@models/dto";
-
-export interface ChatMessagePayload extends ChatSessionDto {
+export interface ChatMessagePayload {
     message: string;
 }
