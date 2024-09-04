@@ -80,26 +80,28 @@ export const Courses = () => {
             <Grid.Col span="auto">
                 <ScrollArea.Autosize h="calc(100vh - 75px)">
                     {!is_profile_complete && (
-                        <Container size="sm" mt="xl" mb="xl">
-                            <Stack>
-                                <Banner
-                                    icon={<IconAlertTriangle />}
-                                    title="Your profile is incomplete"
-                                    description={`
+                        <Banner
+                            saveKey="profile_complete_banner_courses"
+                            w="sm"
+                            icon={<IconAlertTriangle />}
+                            title="You haven't completed your profile"
+                            description={`
 In order to get the most out of the platform, it's recommended you complete your profile.
 
 We leverage this information to provide you with the best possible experience, including personalized course recommendations and more.
 `}
-                                    variant="warning"
-                                    actions={[
-                                        {
-                                            label: "Go to profile",
-                                            href: "/dashboard/profile",
-                                        },
-                                    ]}
-                                />
-                            </Stack>
-                        </Container>
+                            variant="warning"
+                            actions={[
+                                {
+                                    label: "Dismiss",
+                                    dismiss: true,
+                                },
+                                {
+                                    label: "Go to profile",
+                                    href: "/dashboard/profile",
+                                },
+                            ]}
+                        />
                     )}
 
                     <Routes>
