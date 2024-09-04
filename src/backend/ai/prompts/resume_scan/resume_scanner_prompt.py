@@ -56,7 +56,7 @@ Ex: If the resume says "May 2020", you will use "2020-05-01" or "2020-05-31" res
             student = UserProfileStudentDto.model_construct(
                 schools=[
                     UserProfileSchoolDto.model_construct(
-                        school_name=school.name,
+                        school_name=school.school_name,
                         focus=school.focus,
                         start_date=school.start_month,
                         end_date=school.end_month,
