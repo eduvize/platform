@@ -1,10 +1,10 @@
-from datetime import date
 import uuid
+from datetime import date
 from domain.dto.profile.professional import UserProfileProfessionalDto
 from domain.dto.profile.student import UserProfileStudentDto
 from domain.dto.profile.hobby import HobbyReason, UserProfileHobbyDto
-from domain.enums.user_enums import UserLearningCapacity, UserSkillType, UserDiscipline
-from domain.dto.profile import UserProfileDto, UserSkillDto
+from domain.enums.user_enums import UserSkillType, UserDiscipline
+from domain.dto.profile import UserProfileDto
 
 PROFICIENCY_MAPPING = {
     1: "a beginner",
@@ -44,8 +44,16 @@ def get_user_profile_text(user_profile: UserProfileDto):
     Returns:
         str: The string representation of the user profile
     """
+    # Name
+    if user_profile.first_name and user_profile.last_name:
+        name_str = f"{user_profile.first_name} {user_profile.last_name}"
+    elif user_profile.first_name:
+        name_str = user_profile.first_name
+    else:
+        name_str = "Unnamed Individual"
+
+    # Build out the tech stack section
     stack_parts = []
-    
     for discipline in user_profile.disciplines:
         start_str = f"I'm {PROFICIENCY_MAPPING.get(discipline.proficiency, 'familiar')} with {DISCIPLINE_MAPPING.get(discipline.discipline_type, 'Unknown')}"
         
@@ -53,9 +61,14 @@ def get_user_profile_text(user_profile: UserProfileDto):
             stack_parts.append(f"{start_str}. {discipline.notes}")
         else:
             stack_parts.append(start_str)
+
+    if len(stack_parts) == 0:
+        stack_str = "I have not provided any information about my tech stack"
+    else:
+        stack_segments = "\n- ".join(stack_parts)
+        stack_str = f"- {stack_segments}"
     
-    stack_str = "\n- ".join(stack_parts)
-    
+    # Build out the years of experience section
     if user_profile.professional:
         total_professional_yoe = sum([
             ((employer.end_date if not employer.is_current else date.today()) - employer.start_date).days / 365
@@ -68,17 +81,26 @@ def get_user_profile_text(user_profile: UserProfileDto):
     yoe_str = f"I have {int(total_professional_yoe)} years of professional experience" if total_professional_yoe > 0 else "I do not have any professional experience in the field"
     
     basic_info = f"""
-# {user_profile.first_name} {user_profile.last_name}
-{user_profile.bio}
+# {name_str}
+{user_profile.bio if user_profile.bio else "No bio provided"}
 
 {yoe_str}
 ## Stack
-- {stack_str}
+{stack_str}
 """
 
-    hobby_text = get_hobby_text(user_profile.hobby) if user_profile.hobby else ""
-    education_text = get_education_text(user_profile.student) if user_profile.student else ""
-    professional_text = get_professional_text(user_profile.professional) if user_profile.professional else ""
+    hobby_text = get_hobby_text(user_profile.hobby) if user_profile.hobby else """
+## Programming for fun
+I have not provided any information about my hobby projects    
+"""
+    education_text = get_education_text(user_profile.student) if user_profile.student else """
+## Education
+I have not provided any information about my education    
+"""
+    professional_text = get_professional_text(user_profile.professional) if user_profile.professional else """
+## Professional Experience
+I have not provided any information about my professional experience    
+"""
     skills_text = get_skills_text(user_profile)
     
     return f"""

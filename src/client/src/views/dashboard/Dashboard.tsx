@@ -3,27 +3,19 @@ import { UserProvider } from "@context/user";
 import { useOnboarding } from "@context/user/hooks";
 import { Profile } from "@views/profile";
 import { Header } from "./sections";
-import { SetupCta, VerificationCta } from "./cta";
-import { ReactNode, useEffect } from "react";
+import { VerificationCta } from "./cta";
+import { useEffect } from "react";
 import { Container } from "@mantine/core";
 import { Courses } from "@views/courses";
 import { Course } from "@views/course";
 
 const CallToActionOrView = ({ children }: { children: React.ReactNode }) => {
-    const isProfile = useMatch("/dashboard/profile");
-    const { is_profile_complete, is_verified } = useOnboarding();
+    const { is_verified } = useOnboarding();
 
-    let preCheckComponent: ReactNode | null = null;
     if (!is_verified) {
-        preCheckComponent = <VerificationCta />;
-    } else if (!is_profile_complete && !isProfile) {
-        preCheckComponent = <SetupCta />;
-    }
-
-    if (preCheckComponent) {
         return (
             <Container size="md" p="xl">
-                {preCheckComponent}
+                <VerificationCta />
             </Container>
         );
     }

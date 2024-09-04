@@ -1,4 +1,4 @@
-import { Grid, List, ScrollArea, Stack } from "@mantine/core";
+import { Container, Grid, List, ScrollArea, Stack, Text } from "@mantine/core";
 import { CoursePlanner } from "@views/course-planner";
 import {
     NavLink,
@@ -10,6 +10,9 @@ import {
 import classes from "./Courses.module.css";
 import { useEffect } from "react";
 import { CourseList } from "@organisms";
+import { useOnboarding } from "@context/user/hooks";
+import { Banner } from "@molecules";
+import { IconAlertTriangle } from "@tabler/icons-react";
 
 interface NavItemProps {
     to: string;
@@ -18,6 +21,7 @@ interface NavItemProps {
 
 export const Courses = () => {
     const navigate = useNavigate();
+    const { is_profile_complete } = useOnboarding();
     const isMainScreen = useMatch("/dashboard/courses");
 
     useEffect(() => {
@@ -75,6 +79,31 @@ export const Courses = () => {
 
             <Grid.Col span="auto">
                 <ScrollArea.Autosize h="calc(100vh - 75px)">
+                    {!is_profile_complete && (
+                        <Banner
+                            saveKey="profile_complete_banner_courses"
+                            w="sm"
+                            icon={<IconAlertTriangle />}
+                            title="You haven't completed your profile"
+                            description={`
+In order to get the most out of the platform, it's recommended you complete your profile.
+
+We leverage this information to provide you with the best possible experience, including personalized course recommendations and more.
+`}
+                            variant="warning"
+                            actions={[
+                                {
+                                    label: "Dismiss",
+                                    dismiss: true,
+                                },
+                                {
+                                    label: "Go to profile",
+                                    href: "/dashboard/profile",
+                                },
+                            ]}
+                        />
+                    )}
+
                     <Routes>
                         <Route
                             path="active"
