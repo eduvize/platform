@@ -5,9 +5,8 @@ from sqlmodel import Field, Relationship, SQLModel
 import domain.schema as schema
 
 class ChatSessionBase(SQLModel):
-    curriculum_id: Optional[uuid.UUID]      = Field(default=None, foreign_key="curriculums.id")
-    lesson_id: Optional[uuid.UUID]          = Field(default=None, foreign_key="lessons.id")
-    exercise_id: Optional[uuid.UUID]        = Field(default=None, foreign_key="exercises.id")
+    prompt_type: str                        = Field(nullable=False)
+    resource_id: Optional[uuid.UUID]        = Field(default=None)
     created_at_utc: datetime                = Field(default_factory=datetime.utcnow, nullable=False)
 
 class ChatSession(ChatSessionBase, table=True):
