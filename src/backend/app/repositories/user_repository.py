@@ -22,7 +22,13 @@ class UserRepository:
     """
     Handles all primary data access for user records in the database
     """
-    async def create_user(self, email_address: str, username: str, password_hash: Optional[str]) -> User:
+    async def create_user(
+        self, 
+        email_address: str, 
+        username: str, 
+        password_hash: Optional[str],
+        set_email_validated: bool = False
+    ) -> User:
         """
         Creates a new ueer record in the database
 
@@ -37,7 +43,8 @@ class UserRepository:
         user = User(
             email=email_address, 
             username=username, 
-            password_hash=password_hash
+            password_hash=password_hash,
+            pending_verification=not set_email_validated
         )
         user.profile = UserProfile()
         

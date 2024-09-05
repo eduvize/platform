@@ -1,11 +1,11 @@
 import asyncio
 import os
 from typing import List
-import uuid
 
 from fastapi import Depends, UploadFile
 from mimetypes import guess_extension, guess_type
 
+from config import is_email_validation_enabled
 from app.services.user_onboarding_service import UserOnboardingService
 from domain.enums.auth import OAuthProvider
 from domain.dto.profile import UserProfileDto
@@ -28,10 +28,12 @@ class UserService:
     
     onboarding_service: UserOnboardingService
     user_repo: UserRepository
+    is_email_validation_enabled: bool
     
     def __init__(self, user_onboarding_service: UserOnboardingService = Depends(UserOnboardingService), user_repo: UserRepository = Depends(UserRepository)):
         self.onboarding_service = user_onboarding_service
         self.user_repo = user_repo
+        self.is_email_validation_enabled = is_email_validation_enabled()
 
     async def create_user(self, email_address: str, username: str, password_hash: str) -> User:
         """
@@ -63,11 +65,13 @@ class UserService:
         user = await self.user_repo.create_user(
             email_address=email_address, 
             username=username, 
-            password_hash=password_hash
+            password_hash=password_hash,
+            set_email_validated=not self.is_email_validation_enabled
         )
         
         # Begin onboarding with verification
-        await self.onboarding_service.send_verification_email(user.id)
+        if self.is_email_validation_enabled:
+            await self.onboarding_service.send_verification_email(user.id)
         
         return user
     
@@ -104,7 +108,8 @@ class UserService:
         user = await self.user_repo.create_user(
             email_address=email_address,
             username=username,
-            password_hash=None
+            password_hash=None,
+            set_email_validated=True
         )
         
         await self.user_repo.create_external_auth(
@@ -117,9 +122,6 @@ class UserService:
             user_id=user.id,
             avatar_url=avatar_url
         )
-        
-        # Verify the user since they authenticated with an external provider
-        await self.user_repo.mark_verified(user.id)
         
         return user
     

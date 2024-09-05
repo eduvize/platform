@@ -12,6 +12,7 @@ services:
       - POSTGRES_HOST=database
       - REDIS_HOST=redis
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - REQUIRE_EMAIL_VALIDATION=false
     depends_on:
       - database
       - redis
