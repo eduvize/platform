@@ -23,7 +23,7 @@ def get_live_reload() -> Boolean:
     return str_value.lower() == "true"
 
 def is_email_validation_enabled() -> bool:
-    return os.getenv("REQUIRE_EMAIL_VALIDATION", "false").lower() == "true"
+    return os.getenv("REQUIRE_EMAIL_VALIDATION", "true").lower() == "true"
 
 # AWS
 def get_aws_access_key() -> str:
