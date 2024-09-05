@@ -123,9 +123,6 @@ class UserService:
             avatar_url=avatar_url
         )
         
-        # Verify the user since they authenticated with an external provider
-        await self.user_repo.mark_verified(user.id)
-        
         return user
     
     async def get_user(self, by: UserIdentifiers, value: str, include: List[UserIncludes] = ["profile.*"]) -> User:
