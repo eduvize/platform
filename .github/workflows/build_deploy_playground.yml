@@ -1,0 +1,79 @@
+name: Build and Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/playground/**"
+
+jobs:
+  build:
+    name: Build and Deploy Services
+    runs-on: ubuntu-latest
+
+    env:
+      REGISTRY_NAME: ${{ secrets.REGISTRY_NAME }}
+      DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      KUBECONFIG_DATA: ${{ secrets.KUBECONFIG_DATA }}
+      RELEASE_NAMESPACE: ${{ secrets.RELEASE_NAMESPACE || 'eduvize' }} # Default to 'eduvize' if not set
+      REGISTRY_PREFIX: ${{ secrets.REGISTRY_PREFIX || '' }} # Default to empty string if not set
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Debug Docker Registry Info
+        run: |
+          echo "Registry Name: $REGISTRY_NAME"
+          echo "Registry Username: $REGISTRY_USERNAME"
+          echo "Registry Prefix: $REGISTRY_PREFIX"
+
+      - name: Log in to Private Registry
+        run: |
+          echo "$REGISTRY_PASSWORD" | docker login $REGISTRY_NAME -u "$REGISTRY_USERNAME" --password-stdin
+
+      - name: Build and Push Playground Image
+        run: |
+          if grep -q '^src/playground/' changed_files.txt; then
+            IMAGE_NAME="${REGISTRY_PREFIX:+${REGISTRY_PREFIX}/}playground-controller:latest"
+            echo "Building $REGISTRY_NAME/$IMAGE_NAME"
+            docker build -f src/playground/Dockerfile -t $REGISTRY_NAME/$IMAGE_NAME src/playground
+            docker push $REGISTRY_NAME/$IMAGE_NAME
+          fi
+
+      - name: Install kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/kubectl
+          kubectl version --client
+
+      - name: Install Helm
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          helm version
+
+      - name: Setup kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          echo "$KUBECONFIG_DATA" | base64 -d > $HOME/.kube/config
+          kubectl config view
+
+      - name: Helm Upgrade
+        run: |
+          NAMESPACE="$RELEASE_NAMESPACE"
+          helm upgrade --install eduvize kubernetes/eduvize \
+            --values kubernetes/eduvize/values.yaml \
+            --set ingress.hostname=$DOMAIN_NAME \
+            --namespace $NAMESPACE \
+            --dry-run \
+            --debug
