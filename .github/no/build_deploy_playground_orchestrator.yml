@@ -1,4 +1,4 @@
-name: Build and Deploy
+name: Build and Deploy Playground Orchestrator
 
 on:
   workflow_dispatch:
@@ -6,27 +6,27 @@ on:
     branches:
       - main
     paths:
-      - "src/playground/**"
+      - "src/playground-orchestrator/**"
+      - "kubernetes/eduvize/templates/deployments/playground-orchestrator-*.yaml"
+      - "kubernetes/eduvize/templates/role-bindings/playground-orchestrator-*.yaml"
+      - "kubernetes/eduvize/templates/roles/playground-orchestrator-*.yaml"
+      - "kubernetes/eduvize/templates/service-accounts/playground-orchestrator-*.yaml"
 
 jobs:
-  build:
-    name: Build and Deploy Services
+  build-and-deploy:
     runs-on: ubuntu-latest
 
-    env:
+    env: # env should be within the job block, not before
       REGISTRY_NAME: ${{ secrets.REGISTRY_NAME }}
-      DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
       REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
       REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
+      RELEASE_NAMESPACE: ${{ secrets.RELEASE_NAMESPACE || 'eduvize' }}
       KUBECONFIG_DATA: ${{ secrets.KUBECONFIG_DATA }}
-      RELEASE_NAMESPACE: ${{ secrets.RELEASE_NAMESPACE || 'eduvize' }} # Default to 'eduvize' if not set
-      REGISTRY_PREFIX: ${{ secrets.REGISTRY_PREFIX || '' }} # Default to empty string if not set
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -35,20 +35,18 @@ jobs:
         run: |
           echo "Registry Name: $REGISTRY_NAME"
           echo "Registry Username: $REGISTRY_USERNAME"
-          echo "Registry Prefix: $REGISTRY_PREFIX"
 
       - name: Log in to Private Registry
         run: |
-          echo "$REGISTRY_PASSWORD" | docker login $REGISTRY_NAME -u "$REGISTRY_USERNAME" --password-stdin
+          echo "$REGISTRY_PASSWORD" | docker login "$REGISTRY_NAME" -u "$REGISTRY_USERNAME" --password-stdin
 
-      - name: Build and Push Playground Image
+      - name: Build and Push Playground Orchestrator Image
         run: |
-          if grep -q '^src/playground/' changed_files.txt; then
-            IMAGE_NAME="${REGISTRY_PREFIX:+${REGISTRY_PREFIX}/}playground-controller:latest"
-            echo "Building $REGISTRY_NAME/$IMAGE_NAME"
-            docker build -f src/playground/Dockerfile -t $REGISTRY_NAME/$IMAGE_NAME src/playground
-            docker push $REGISTRY_NAME/$IMAGE_NAME
-          fi
+          REGISTRY_PREFIX=${{ secrets.REGISTRY_PREFIX || '' }}
+          IMAGE_NAME="${REGISTRY_PREFIX:+${REGISTRY_PREFIX}/}playground-orchestrator:latest"
+          echo "Building ${REGISTRY_NAME}/$IMAGE_NAME"
+          docker build -f src/backend/api.Dockerfile -t ${REGISTRY_NAME}/$IMAGE_NAME src/backend
+          docker push ${REGISTRY_NAME}/$IMAGE_NAME
 
       - name: Install kubectl
         run: |
@@ -70,7 +68,7 @@ jobs:
 
       - name: Helm Upgrade
         run: |
-          NAMESPACE="$RELEASE_NAMESPACE"
+          NAMESPACE="${{ secrets.RELEASE_NAMESPACE || 'eduvize' }}"
           helm upgrade --install eduvize kubernetes/eduvize \
             --values kubernetes/eduvize/values.yaml \
             --set ingress.hostname=$DOMAIN_NAME \
