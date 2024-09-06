@@ -21,7 +21,7 @@ env:
 
 jobs:
   deploy-client:
-    uses: cameron5906/eduvize-ai/.github/templates/build_deploy.yml@main
+    uses: ./.github/workflows/reusable_build_deploy.yml
     with:
       image_name: "app"
       dockerfile: "src/client/Dockerfile"
