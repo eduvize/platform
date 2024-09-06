@@ -61,7 +61,11 @@ jobs:
 
       - name: Build and Push Image
         run: |
-          IMAGE_REPO="${inputs.registry_prefix:+${{ inputs.REGISTRY_PREFIX }}/}${{ inputs.IMAGE_NAME }}:latest"
+          if [ -n "${{ inputs.REGISTRY_PREFIX }}" ]; then
+            IMAGE_REPO="${{ inputs.REGISTRY_PREFIX }}/${{ inputs.IMAGE_NAME }}:latest"
+          else
+            IMAGE_REPO="${{ inputs.IMAGE_NAME }}:latest"
+          fi
           echo "Building ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO}"
           docker build -f ${{ inputs.DOCKERFILE }} -t ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO} ${{ inputs.BUILD_CONTEXT }}
           docker push ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO}
