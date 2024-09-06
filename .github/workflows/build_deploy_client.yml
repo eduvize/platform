@@ -1,4 +1,4 @@
-name: Trigger Client Deployment
+name: Client Build and Deploy
 
 on:
   workflow_dispatch:
@@ -15,8 +15,7 @@ jobs:
   deploy-client:
     uses: ./.github/workflows/reusable_build_deploy.yml
     with:
-      image_name: "app"
-      dockerfile: "src/client/Dockerfile"
-      build_context: "src/client"
-      domain_name: "eduvize.dev"
+      IMAGE_NAME: "app"
+      DOCKERFILE: "src/client/Dockerfile"
+      BUILD_CONTEXT: "src/client"
     secrets: inherit

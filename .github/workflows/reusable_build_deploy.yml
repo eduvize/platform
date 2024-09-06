@@ -1,45 +1,43 @@
-name: Build and Deploy
+name: Reusable Build and Deploy
 
 on:
   workflow_call:
     inputs:
-      image_name:
+      IMAGE_NAME:
         type: string
         description: "The name of the image"
         required: true
-        default: "app"
-      dockerfile:
+      DOCKERFILE:
         type: string
         description: "Path to the Dockerfile"
         required: true
-        default: "src/client/Dockerfile"
-      build_context:
+      BUILD_CONTEXT:
         type: string
         description: "The build context for Docker"
         required: true
-        default: "src/client"
-      registry_prefix:
+      REGISTRY_PREFIX:
         type: string
         description: "The registry prefix"
         required: false
         default: "eduvize"
-      domain_name:
+      DOMAIN_NAME:
         type: string
         description: "The domain name for ingress"
-        required: true
-      release_namespace:
+        required: false
+        default: "eduvize.dev"
+      RELEASE_NAMESPACE:
         type: string
         description: "The Kubernetes namespace for release"
         required: false
         default: "eduvize"
     secrets:
-      registry_name:
+      REGISTRY_NAME:
         required: true
-      registry_username:
+      REGISTRY_USERNAME:
         required: true
-      registry_password:
+      REGISTRY_PASSWORD:
         required: true
-      kubeconfig_data:
+      KUBECONFIG_DATA:
         required: true
 
 jobs:
@@ -55,19 +53,18 @@ jobs:
 
       - name: Debug Docker Registry Info
         run: |
-          echo "Registry Name: ${{ secrets.registry_name }}"
-          echo "Registry Username: ${{ secrets.registry_username }}"
+          echo "Registry Name: ${{ secrets.REGISTRY_NAME }}"
 
       - name: Log in to Private Registry
         run: |
-          echo "${{ secrets.registry_password }}" | docker login "${{ secrets.registry_name }}" -u "${{ secrets.registry_username }}" --password-stdin
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login "${{ secrets.REGISTRY_NAME }}" -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
 
       - name: Build and Push Image
         run: |
-          IMAGE_REPO="${{ inputs.registry_prefix:+${{ inputs.registry_prefix }}/ }}${{ inputs.image_name }}:latest"
-          echo "Building ${{ secrets.registry_name }}/${IMAGE_REPO}"
-          docker build -f ${{ inputs.dockerfile }} -t ${{ secrets.registry_name }}/${IMAGE_REPO} ${{ inputs.build_context }}
-          docker push ${{ secrets.registry_name }}/${IMAGE_REPO}
+          IMAGE_REPO="${inputs.registry_prefix:+${{ inputs.REGISTRY_PREFIX }}/}${{ inputs.IMAGE_NAME }}:latest"
+          echo "Building ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO}"
+          docker build -f ${{ inputs.DOCKERFILE }} -t ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO} ${{ inputs.BUILD_CONTEXT }}
+          docker push ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO}
 
       - name: Install kubectl
         run: |
@@ -84,13 +81,13 @@ jobs:
       - name: Setup kubectl
         run: |
           mkdir -p $HOME/.kube
-          echo "${{ secrets.kubeconfig_data }}" | base64 -d > $HOME/.kube/config
+          echo "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > $HOME/.kube/config
           kubectl config view
 
       - name: Helm Upgrade
         run: |
           helm upgrade --install eduvize kubernetes/eduvize \
             --values kubernetes/eduvize/values.yaml \
-            --set ingress.hostname=${{ inputs.domain_name }} \
-            --namespace ${{ inputs.release_namespace }} \
+            --set ingress.hostname=${{ inputs.DOMAIN_NAME }} \
+            --namespace ${{ inputs.RELEASE_NAMESPACE }} \
             --debug
