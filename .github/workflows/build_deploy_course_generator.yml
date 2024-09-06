@@ -1,0 +1,20 @@
+name: Course Generator - Build and Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/backend/**"
+      - "kubernetes/eduvize/templates/deployments/course-generation-*.yaml"
+
+jobs:
+  deploy-course-generator:
+    uses: ./.github/workflows/reusable_build_deploy.yml
+    with:
+      IMAGE_NAME: "course-generator"
+      DOCKERFILE: "src/backend/jobs/Dockerfile"
+      BUILD_CONTEXT: "src/backend"
+      BUILD_ARGS: "JOB_NAME=course_generator"
+    secrets: inherit

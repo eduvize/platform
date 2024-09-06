@@ -1,0 +1,21 @@
+name: API - Build and Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/backend/**"
+      - "kubernetes/eduvize/templates/deployments/api-*.yaml"
+      - "kubernetes/eduvize/templates/ingress/api-*.yaml"
+      - "kubernetes/eduvize/templates/services/api-*.yaml"
+
+jobs:
+  deploy-client:
+    uses: ./.github/workflows/reusable_build_deploy.yml
+    with:
+      IMAGE_NAME: "api"
+      DOCKERFILE: "src/backend/api.Dockerfile"
+      BUILD_CONTEXT: "src/backend"
+    secrets: inherit

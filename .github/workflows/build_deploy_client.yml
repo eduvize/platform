@@ -1,4 +1,4 @@
-name: Client Build and Deploy
+name: Frontend - Build and Deploy
 
 on:
   workflow_dispatch:

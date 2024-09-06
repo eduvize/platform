@@ -1,0 +1,19 @@
+name: Playground Orchestrator - Build and Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/playground-orchestrator/**"
+      - "kubernetes/eduvize/templates/deployments/playground-orchestrator-*.yaml"
+
+jobs:
+  deploy-client:
+    uses: ./.github/workflows/reusable_build_deploy.yml
+    with:
+      IMAGE_NAME: "playground-orchestrator"
+      DOCKERFILE: "src/playground-orchestrator/Dockerfile"
+      BUILD_CONTEXT: "src/playground-orchestrator"
+    secrets: inherit
