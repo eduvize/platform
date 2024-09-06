@@ -1,6 +1,7 @@
 name: Trigger Client Deployment
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
