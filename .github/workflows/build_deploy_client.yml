@@ -11,14 +11,6 @@ on:
       - "kubernetes/eduvize/templates/ingress/app-*.yaml"
       - "kubernetes/eduvize/templates/services/app-*.yaml"
 
-env:
-  REGISTRY_NAME: ${{ secrets.REGISTRY_NAME }}
-  REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
-  REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-  DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
-  RELEASE_NAMESPACE: ${{ secrets.RELEASE_NAMESPACE || 'eduvize' }}
-  KUBECONFIG_DATA: ${{ secrets.KUBECONFIG_DATA }}
-
 jobs:
   deploy-client:
     uses: ./.github/workflows/reusable_build_deploy.yml
@@ -26,6 +18,5 @@ jobs:
       image_name: "app"
       dockerfile: "src/client/Dockerfile"
       build_context: "src/client"
-      registry_prefix: "eduvize"
-      domain_name: ${{ env.DOMAIN_NAME }}
+      domain_name: "eduvize.dev"
     secrets: inherit
