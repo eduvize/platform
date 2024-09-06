@@ -15,6 +15,11 @@ on:
         type: string
         description: "The build context for Docker"
         required: true
+      BUILD_ARGS:
+        type: string
+        description: "The build arguments for Docker"
+        required: false
+        default: ""
       REGISTRY_PREFIX:
         type: string
         description: "The registry prefix"
@@ -66,8 +71,16 @@ jobs:
           else
             IMAGE_REPO="${{ inputs.IMAGE_NAME }}:latest"
           fi
+            
+          # Build Args
+          if [ -n "${{ inputs.BUILD_ARGS }}" ]; then
+            BUILD_ARGS_STR="--build-arg ${{ inputs.BUILD_ARGS }}"
+          else
+            BUILD_ARGS_STR=""
+          fi
+            
           echo "Building ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO}"
-          docker build -f ${{ inputs.DOCKERFILE }} -t ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO} ${{ inputs.BUILD_CONTEXT }}
+          docker build $BUILD_ARGS_STR -f ${{ inputs.DOCKERFILE }} -t ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO} ${{ inputs.BUILD_CONTEXT }}
           docker push ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO}
 
       - name: Install kubectl
