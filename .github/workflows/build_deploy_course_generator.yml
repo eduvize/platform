@@ -10,11 +10,21 @@ on:
       - "kubernetes/eduvize/templates/deployments/course-generation-*.yaml"
 
 jobs:
-  deploy-course-generator:
-    uses: ./.github/workflows/reusable_build_deploy.yml
+  build-push-course-generator:
+    name: Build and Push Course Generator Image
+    uses: ./.github/workflows/reusable_build_push.yml
     with:
       IMAGE_NAME: "course-generator"
       DOCKERFILE: "src/backend/jobs/Dockerfile"
       BUILD_CONTEXT: "src/backend"
       BUILD_ARGS: "JOB_NAME=course_generator"
     secrets: inherit
+
+  deploy-course-generator:
+    name: Deploy Course Generator
+    uses: ./.github/workflows/reusable_helm_deploy.yml
+    with:
+      DEPLOYMENT_NAME: "eduvize-course-generator"
+      DOMAIN_NAME: "eduvize.dev"
+    secrets: inherit
+    needs: build-push-course-generator
