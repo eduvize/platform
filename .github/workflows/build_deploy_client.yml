@@ -12,6 +12,14 @@ on:
       - "kubernetes/eduvize/templates/services/app-*.yaml"
 
 jobs:
+  write-environment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write Environment File
+        run: |
+          mkdir -p src/client
+          echo "${{ secrets.CLIENT_ENVIRONMENT }}" > src/client/.env.prod
+
   deploy-client:
     uses: ./.github/workflows/reusable_build_deploy.yml
     with:
