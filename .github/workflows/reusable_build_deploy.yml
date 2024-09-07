@@ -35,6 +35,11 @@ on:
         description: "The Kubernetes namespace for release"
         required: false
         default: "eduvize"
+      ENVIRONMENT_FILE_PATH:
+        type: string
+        description: "Path to the environment file"
+        required: false
+        default: ""
     secrets:
       REGISTRY_NAME:
         required: true
@@ -44,6 +49,8 @@ on:
         required: true
       KUBECONFIG_DATA:
         required: true
+      CLIENT_ENVIRONMENT:
+        required: false
 
 jobs:
   build-and-deploy:
@@ -52,6 +59,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Write Environment File
+        if: ${{ inputs.ENVIRONMENT_FILE_PATH }}
+        run: |
+          echo "${{ secrets.CLIENT_ENVIRONMENT }}" > ${{ inputs.ENVIRONMENT_FILE_PATH }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
