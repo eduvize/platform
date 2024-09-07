@@ -12,8 +12,9 @@ on:
       - "kubernetes/eduvize/templates/services/app-*.yaml"
 
 jobs:
-  deploy-client:
-    uses: ./.github/workflows/reusable_build_deploy.yml
+  build-push-client:
+    name: Build and Push Client Image
+    uses: ./.github/workflows/reusable_build_push.yml
     with:
       IMAGE_NAME: "app"
       DOCKERFILE: "src/client/Dockerfile"
@@ -21,3 +22,12 @@ jobs:
       BUILD_ARGS: "MODE=prod"
       ENVIRONMENT_FILE_PATH: "src/client/.env.prod"
     secrets: inherit
+
+  deploy-client:
+    name: Deploy Client
+    uses: ./.github/workflows/reusable_helm_deploy.yml
+    with:
+      DEPLOYMENT_NAME: "eduvize"
+      DOMAIN_NAME: "eduvize.dev"
+    secrets: inherit
+    needs: build-push-client

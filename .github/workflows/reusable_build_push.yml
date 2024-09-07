@@ -25,16 +25,6 @@ on:
         description: "The registry prefix"
         required: false
         default: "eduvize"
-      DOMAIN_NAME:
-        type: string
-        description: "The domain name for ingress"
-        required: false
-        default: "eduvize.dev"
-      RELEASE_NAMESPACE:
-        type: string
-        description: "The Kubernetes namespace for release"
-        required: false
-        default: "eduvize"
       ENVIRONMENT_FILE_PATH:
         type: string
         description: "Path to the environment file"
@@ -46,8 +36,6 @@ on:
       REGISTRY_USERNAME:
         required: true
       REGISTRY_PASSWORD:
-        required: true
-      KUBECONFIG_DATA:
         required: true
       CLIENT_ENVIRONMENT:
         required: false
@@ -94,29 +82,3 @@ jobs:
           echo "Building ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO}"
           docker build $BUILD_ARGS_STR -f ${{ inputs.DOCKERFILE }} -t ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO} ${{ inputs.BUILD_CONTEXT }}
           docker push ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO}
-
-      - name: Install kubectl
-        run: |
-          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          chmod +x kubectl
-          sudo mv kubectl /usr/local/bin/kubectl
-          kubectl version --client
-
-      - name: Install Helm
-        run: |
-          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-          helm version
-
-      - name: Setup kubectl
-        run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > $HOME/.kube/config
-          kubectl config view
-
-      - name: Helm Upgrade
-        run: |
-          helm upgrade --install eduvize kubernetes/eduvize \
-            --values kubernetes/eduvize/values.yaml \
-            --set ingress.hostname=${{ inputs.DOMAIN_NAME }} \
-            --namespace ${{ inputs.RELEASE_NAMESPACE }} \
-            --debug

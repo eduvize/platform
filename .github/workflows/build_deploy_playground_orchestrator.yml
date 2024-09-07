@@ -10,10 +10,20 @@ on:
       - "kubernetes/eduvize/templates/deployments/playground-orchestrator-*.yaml"
 
 jobs:
-  deploy-client:
-    uses: ./.github/workflows/reusable_build_deploy.yml
+  build-push-playground-orchestrator:
+    name: Build and Push Playground Orchestrator Image
+    uses: ./.github/workflows/reusable_build_push.yml
     with:
       IMAGE_NAME: "playground-orchestrator"
       DOCKERFILE: "src/playground-orchestrator/Dockerfile"
       BUILD_CONTEXT: "src/playground-orchestrator"
     secrets: inherit
+
+  deploy-playground-orchestrator:
+    name: Deploy Playground Orchestrator
+    uses: ./.github/workflows/reusable_helm_deploy.yml
+    with:
+      DEPLOYMENT_NAME: "eduvize-playground-orchestrator"
+      DOMAIN_NAME: "eduvize.dev"
+    secrets: inherit
+    needs: build-push-playground-orchestrator

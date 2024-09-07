@@ -1,0 +1,63 @@
+name: Helm Deploy
+
+on:
+  workflow_call:
+    inputs:
+      DEPLOYMENT_NAME:
+        type: string
+        description: "The name of the deployment to restart"
+        required: false
+        default: ""
+      DOMAIN_NAME:
+        type: string
+        description: "The domain name for ingress"
+        required: true
+      RELEASE_NAMESPACE:
+        type: string
+        description: "The Kubernetes namespace for release"
+        required: false
+        default: "eduvize"
+      VALUES_FILE_PATH:
+        type: string
+        description: "Path to the Helm values file"
+        required: false
+        default: "kubernetes/eduvize/values.yaml"
+    secrets:
+      KUBECONFIG_DATA:
+        required: true
+
+jobs:
+  kube-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/kubectl
+          kubectl version --client
+
+      - name: Install Helm
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          helm version
+
+      - name: Setup kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > $HOME/.kube/config
+          kubectl config view
+
+      - name: Helm Upgrade
+        run: |
+          helm upgrade --install eduvize kubernetes/eduvize \
+            --values ${{ inputs.VALUES_FILE_PATH }} \
+            --set ingress.hostname=${{ inputs.DOMAIN_NAME }} \
+            --namespace ${{ inputs.RELEASE_NAMESPACE }} \
+            --debug
+
+      - name: Restart Deployment
+        if: ${{ inputs.DEPLOYMENT_NAME }}
+        run: |
+          kubectl rollout restart deployment/${{ inputs.DEPLOYMENT_NAME }} --namespace ${{ inputs.RELEASE_NAMESPACE }}
