@@ -18,4 +18,5 @@ jobs:
       IMAGE_NAME: "app"
       DOCKERFILE: "src/client/Dockerfile"
       BUILD_CONTEXT: "src/client"
+      BUILD_ARGS: "MODE=prod"
     secrets: inherit
