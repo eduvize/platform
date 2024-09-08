@@ -13,13 +13,14 @@ class ValidationService:
     
     async def perform_assertion(self, statement: str) -> AssertionResult:
         prompt = AssertionPrompt()
-        assertion, reason = prompt.get_assertion(statement=statement)
         
         cache_key = _get_cache_key(statement)
         existing_result = get_key(cache_key)
         
         if existing_result:
             return AssertionResult(**json.loads(existing_result))
+        
+        assertion, reason = prompt.get_assertion(statement=statement)
         
         result = AssertionResult(
             assertion=assertion, 
