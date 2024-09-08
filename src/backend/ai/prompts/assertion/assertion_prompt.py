@@ -1,6 +1,5 @@
 from typing import Tuple
 from ai.prompts import BasePrompt
-from .models import AssertionResult
 from .provide_assertion_tool import ProvideAssertionTool
 
 

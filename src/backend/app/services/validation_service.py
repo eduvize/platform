@@ -1,9 +1,9 @@
 import json
 from fastapi import Depends
 from ai.prompts import AssertionPrompt
-from app.routing.contracts import AssertionResult
-from app.services import UserService
+from .user_service import UserService
 from common.cache import get_key, set_key
+from domain.dto.ai.assertion_result import AssertionResultDto
 
 class ValidationService:
     user_service: UserService
@@ -11,17 +11,18 @@ class ValidationService:
     def __init__(self, user_service: UserService = Depends(UserService)):
         self.user_service = user_service
     
-    async def perform_assertion(self, statement: str) -> AssertionResult:
+    async def perform_assertion(self, statement: str) -> AssertionResultDto:
         prompt = AssertionPrompt()
-        assertion, reason = prompt.get_assertion(statement=statement)
         
         cache_key = _get_cache_key(statement)
         existing_result = get_key(cache_key)
         
         if existing_result:
-            return AssertionResult(**json.loads(existing_result))
+            return AssertionResultDto(**json.loads(existing_result))
         
-        result = AssertionResult(
+        assertion, reason = prompt.get_assertion(statement=statement)
+        
+        result = AssertionResultDto(
             assertion=assertion, 
             reason=reason
         )

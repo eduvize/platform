@@ -30,6 +30,21 @@ on:
         description: "Path to the environment file"
         required: false
         default: ""
+      RUN_TESTS:
+        type: boolean
+        description: "Run unit tests"
+        required: false
+        default: false
+      PUBLISH_TEST_RESULTS:
+        type: boolean
+        description: "Publish test results"
+        required: false
+        default: false
+      SHOULD_PUSH_IMAGE:
+        type: boolean
+        description: "Push the image to the registry"
+        required: false
+        default: true
     secrets:
       REGISTRY_NAME:
         required: true
@@ -66,10 +81,16 @@ jobs:
 
       - name: Build and Push Image
         run: |
-          if [ -n "${{ inputs.REGISTRY_PREFIX }}" ]; then
-            IMAGE_REPO="${{ inputs.REGISTRY_PREFIX }}/${{ inputs.IMAGE_NAME }}:latest"
+          if [ ${{ inputs.RUN_TESTS }} = true ]; then
+            TAG="test-${{ github.sha}}"
           else
-            IMAGE_REPO="${{ inputs.IMAGE_NAME }}:latest"
+            TAG="${{ github.sha }}"
+          fi
+
+          if [ -n "${{ inputs.REGISTRY_PREFIX }}" ]; then
+            IMAGE_REPO="${{ inputs.REGISTRY_PREFIX }}/${{ inputs.IMAGE_NAME }}:${TAG}"
+          else
+            IMAGE_REPO="${{ inputs.IMAGE_NAME }}:${TAG}"
           fi
             
           # Build Args
@@ -78,7 +99,44 @@ jobs:
           else
             BUILD_ARGS_STR=""
           fi
+
+          # Testing environment variable
+          if [ ${{ inputs.RUN_TESTS }} = true ]; then
+            ADDITIONAL_ARGS_STR="--build-arg RUN_TESTS=1"
+          else
+            ADDITIONAL_ARGS_STR=""
+          fi
             
           echo "Building ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO}"
-          docker build $BUILD_ARGS_STR -f ${{ inputs.DOCKERFILE }} -t ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO} ${{ inputs.BUILD_CONTEXT }}
-          docker push ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO}
+          docker build $BUILD_ARGS_STR $ADDITIONAL_ARGS_STR -f ${{ inputs.DOCKERFILE }} -t ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO} ${{ inputs.BUILD_CONTEXT }}
+
+          if [ ${{ inputs.SHOULD_PUSH_IMAGE }} = true ]; then
+            docker push ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO}
+          fi
+      - name: Retrieve Test Results
+        if: ${{ inputs.RUN_TESTS && inputs.PUBLISH_TEST_RESULTS }}
+        run: |
+          if [ -n "${{ inputs.REGISTRY_PREFIX }}" ]; then
+            IMAGE_REPO="${{ inputs.REGISTRY_PREFIX }}/${{ inputs.IMAGE_NAME }}:test-${{ github.sha }}"
+          else
+            IMAGE_REPO="${{ inputs.IMAGE_NAME }}:test-${{ github.sha }}"
+          fi
+
+          docker create --name test-container ${{ secrets.REGISTRY_NAME }}/${IMAGE_REPO}
+
+      - name: Copy Test Results from Container
+        if: ${{ inputs.RUN_TESTS && inputs.PUBLISH_TEST_RESULTS }}
+        run: |
+          docker cp test-container:/app/test-results.xml test-results.xml
+
+      - name: Upload Test Results
+        if: ${{ inputs.RUN_TESTS && inputs.PUBLISH_TEST_RESULTS }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: test-results.xml
+
+      - name: Clean up Test Container
+        if: ${{ inputs.RUN_TESTS && inputs.PUBLISH_TEST_RESULTS }}
+        run: |
+          docker rm test-container

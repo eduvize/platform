@@ -25,6 +25,8 @@ jobs:
     name: Deploy API
     uses: ./.github/workflows/reusable_helm_deploy.yml
     with:
+      IMAGE_NAME: "api"
+      IMAGE_VALUES_PATH: "api.image"
       DEPLOYMENT_NAME: "eduvize-api"
       DOMAIN_NAME: "eduvize.dev"
     secrets: inherit

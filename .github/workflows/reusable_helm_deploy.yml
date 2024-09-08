@@ -22,7 +22,22 @@ on:
         description: "Path to the Helm values file"
         required: false
         default: "kubernetes/eduvize/values.yaml"
+      IMAGE_VALUES_PATH:
+        type: string
+        description: "Path to the image in the Helm values file"
+        required: true
+      IMAGE_NAME:
+        type: string
+        description: "The name of the image"
+        required: true
+      REGISTRY_PREFIX:
+        type: string
+        description: "The registry prefix"
+        required: false
+        default: "eduvize"
     secrets:
+      REGISTRY_NAME:
+        required: true
       KUBECONFIG_DATA:
         required: true
 
@@ -54,9 +69,16 @@ jobs:
 
       - name: Helm Upgrade
         run: |
+          if [ -n "${{ inputs.REGISTRY_PREFIX }}" ]; then
+            IMAGE_REPO="${{ inputs.REGISTRY_PREFIX }}/${{ inputs.IMAGE_NAME }}:${{ github.sha }}"
+          else
+            IMAGE_REPO="${{ inputs.IMAGE_NAME }}:${{ github.sha }}"
+          fi
+
           helm upgrade --install eduvize kubernetes/eduvize \
             --values ${{ inputs.VALUES_FILE_PATH }} \
             --set ingress.hostname=${{ inputs.DOMAIN_NAME }} \
+            --set ${{ inputs.IMAGE_VALUES_PATH }}=${{ secrets.REGISTRY_NAME }}/$IMAGE_REPO \
             --namespace ${{ inputs.RELEASE_NAMESPACE }} \
             --debug
 

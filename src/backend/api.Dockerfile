@@ -27,6 +27,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 ENV PORT=80
+ARG RUN_TESTS=0
+
+# If RUN_TESTS is set to 1, run tests
+RUN if [ "$RUN_TESTS" = "1" ]; then pip install pytest; fi
+RUN if [ "$RUN_TESTS" = "1" ]; then pip install pytest_asyncio; fi
+RUN if [ "$RUN_TESTS" = "1" ]; then PYTHONPATH=/app pytest --junitxml=test-results.xml --disable-warnings; fi
 
 # Make port 80 available to the world outside this container
 EXPOSE 80

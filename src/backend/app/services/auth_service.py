@@ -8,7 +8,7 @@ from common.cache import add_to_set_with_expiration, is_in_set_with_expiration
 from app.utilities.oauth import exchange_github_code_for_token, get_github_user_info, exchange_google_code_for_token, get_google_user_info
 from app.utilities.jwt import decode_token
 from domain.enums.auth import OAuthProvider
-from ..services.user_service import UserService
+from .user_service import UserService
 from ..utilities.jwt import create_token
 
 TOKEN_BLACKLIST_SET = "stale_tokens"
@@ -134,8 +134,7 @@ class AuthService:
         if not user:
             raise ValueError("Invalid user")
         
-        decoded_token = decode_token(refresh_token, get_token_secret())
-        expires_at = int(decoded_token["exp"])
+        expires_at = int(payload["exp"])
         remaining_seconds = expires_at - int(time())
         
         add_to_set_with_expiration(

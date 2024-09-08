@@ -1,0 +1,38 @@
+name: Client - Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/client/**"
+
+jobs:
+  build-push-client:
+    name: Build and Test Client Image
+    uses: ./.github/workflows/reusable_build_push.yml
+    with:
+      IMAGE_NAME: "app"
+      DOCKERFILE: "src/client/Dockerfile"
+      BUILD_CONTEXT: "src/client"
+      RUN_TESTS: true
+      SHOULD_PUSH_IMAGE: false
+    secrets: inherit
+
+  comment-on-failure:
+    name: Comment on PR if tests fail
+    needs: build-push-client
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post failure comment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.payload.pull_request.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ The frontend build and test job failed. Please check the logs for more details.'
+            })
