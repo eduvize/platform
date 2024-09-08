@@ -78,7 +78,7 @@ jobs:
           helm upgrade --install eduvize kubernetes/eduvize \
             --values ${{ inputs.VALUES_FILE_PATH }} \
             --set ingress.hostname=${{ inputs.DOMAIN_NAME }} \
-            --set ${{ inputs.IMAGE_VALUES_PATH }}=$IMAGE_REPO \
+            --set ${{ inputs.IMAGE_VALUES_PATH }}=${{ secrets.REGISTRY_NAME }}/$IMAGE_REPO \
             --namespace ${{ inputs.RELEASE_NAMESPACE }} \
             --debug
 
