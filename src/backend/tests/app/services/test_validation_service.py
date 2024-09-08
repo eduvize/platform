@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 from app.services.validation_service import ValidationService
-from app.routing.contracts import AssertionResult
+from domain.dto.ai.assertion_result import AssertionResultDto
 
 @pytest.fixture
 def mock_user_service():
@@ -25,7 +25,7 @@ async def test_perform_assertion_with_cache_hit(mock_get_key, mock_set_key, mock
     3. Ensure the prompt is not called.
     """
     # Mock data
-    cached_result = AssertionResult(assertion=True, reason="Correct").model_dump_json()
+    cached_result = AssertionResultDto(assertion=True, reason="Correct").model_dump_json()
     mock_get_key.return_value = cached_result
     mock_prompt_instance = MagicMock()
     mock_assertion_prompt.return_value = mock_prompt_instance
