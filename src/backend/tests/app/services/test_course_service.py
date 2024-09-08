@@ -62,7 +62,8 @@ lesson = Lesson(id=uuid.uuid4(), sections=[])
 profile_dto = UserProfileDto(first_name="John", last_name="Doe")
 
 @pytest.fixture
-def course_service():
+@patch("app.services.course_service.OpenAI", autospec=True)
+def course_service(mock_openai):
     user_service = MagicMock()
     course_repo = MagicMock()
     return CourseService(user_service=user_service, course_repo=course_repo)
@@ -232,21 +233,19 @@ async def test_get_course(course_service):
     
     assert result == course
 
-@patch("app.services.course_service.OpenAI", autospec=True)
-def test_generate_cover_image(mock_openai, course_service):
+def test_generate_cover_image(course_service):
     """
     Tests generate_cover_image method:
     1. Should generate an image using OpenAI and return the URL.
     """
     # Mock OpenAI response
-    course_service.openai = mock_openai_instance = MagicMock()
-    mock_openai_instance.images = MagicMock()
-    mock_openai_instance.images.generate = MagicMock()
-    mock_openai_instance.images.generate.return_value = MagicMock(data=[MagicMock(url="generated_image_url")])
+    course_service.openai.images = MagicMock()
+    course_service.openai.images.generate = MagicMock()
+    course_service.openai.images.generate.return_value = MagicMock(data=[MagicMock(url="generated_image_url")])
     
     result = course_service.generate_cover_image(subject="Python")
     
-    mock_openai_instance.images.generate.assert_called_once_with(
+    course_service.openai.images.generate.assert_called_once_with(
         model="dall-e-3",
         prompt="Icon of Python, dark background, cinema 4d, isomorphic",
         size="1024x1024",
