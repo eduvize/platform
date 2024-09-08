@@ -4,15 +4,16 @@ from typing import List, Optional, Union
 from config import get_redis_host
 from time import time
 
-redis_host = get_redis_host()
-if ":" in redis_host:
-    host, port = redis_host.split(":")
-    port = int(port)
-else:
-    host = redis_host
-    port = 6379
     
 def _get_client():
+    redis_host = get_redis_host()
+    if ":" in redis_host:
+        host, port = redis_host.split(":")
+        port = int(port)
+    else:
+        host = redis_host
+        port = 6379
+        
     return redis.Redis(host=host, port=port)
 
 def set_key(

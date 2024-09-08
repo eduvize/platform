@@ -1,7 +1,7 @@
 import os
 import uvicorn
 from dotenv import load_dotenv
-from app import socket_app
+from app.main import socket_app
 
 load_dotenv()
 

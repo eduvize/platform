@@ -5,9 +5,11 @@ from app.services.auth_service import AuthService
 from domain.enums.auth import OAuthProvider
 from domain.schema.user import User
 
-@patch("app.services.auth_service.AuthService._generate_tokens", autospec=True)
 @pytest.mark.asyncio
-async def test_authenticate(mock_generate_tokens):
+@patch("app.services.auth_service.is_in_set_with_expiration", autospec=True)
+@patch("app.services.auth_service.add_to_set_with_expiration", autospec=True)
+@patch("app.services.auth_service.AuthService._generate_tokens", autospec=True)
+async def test_authenticate(mock_generate_tokens, mock_add_to_set_with_expiration, mock_is_in_set_with_expiration):
     """
     Tests the authenticate method:
     1. Retrieves the user from the user service
@@ -34,10 +36,12 @@ async def test_authenticate(mock_generate_tokens):
     assert result == ("access_token", "refresh_token", 3600)
 
 
+@patch("app.services.auth_service.is_in_set_with_expiration", autospec=True)
+@patch("app.services.auth_service.add_to_set_with_expiration", autospec=True)
 @patch("app.services.auth_service.AuthService._generate_tokens", autospec=True)
 @patch("app.services.auth_service.AuthService._get_password_hash", autospec=True)
 @pytest.mark.asyncio
-async def test_register(mock_get_password_hash, mock_generate_tokens):
+async def test_register(mock_get_password_hash, mock_generate_tokens, mock_add_to_set_with_expiration, mock_is_in_set_with_expiration):
     """
     Tests the register method:
     1. Hashes the password
@@ -63,11 +67,12 @@ async def test_register(mock_get_password_hash, mock_generate_tokens):
     assert result == ("access_token", "refresh_token", 3600)
 
 
+@patch("app.services.auth_service.is_in_set_with_expiration", autospec=True)
 @patch("app.services.auth_service.get_token_secret", return_value="mock_secret")
 @patch("app.services.auth_service.decode_token", autospec=True)
 @patch("app.services.auth_service.add_to_set_with_expiration", autospec=True)
 @pytest.mark.asyncio
-async def test_logout(mock_add_to_set_with_expiration, mock_decode_token, mock_get_token_secret):
+async def test_logout(mock_add_to_set_with_expiration, mock_decode_token, mock_get_token_secret, mock_is_in_set_with_expiration):
     """
     Tests the logout method:
     1. Calls decode_token to decode both access and refresh tokens
@@ -126,11 +131,13 @@ async def test_refresh_access(mock_is_in_set_with_expiration, mock_add_to_set_wi
     assert result == ("new_access_token", "new_refresh_token", 3600)
 
 
+@patch("app.services.auth_service.is_in_set_with_expiration", autospec=True)
+@patch("app.services.auth_service.add_to_set_with_expiration", autospec=True)
 @patch("app.services.auth_service.exchange_github_code_for_token", autospec=True)
 @patch("app.services.auth_service.get_github_user_info", autospec=True)
 @patch("app.services.auth_service.AuthService._generate_tokens", autospec=True)
 @pytest.mark.asyncio
-async def test_complete_oauth_code_flow_github(mock_generate_tokens, mock_get_github_user_info, mock_exchange_github_code_for_token):
+async def test_complete_oauth_code_flow_github(mock_generate_tokens, mock_get_github_user_info, mock_exchange_github_code_for_token, mock_add_to_set_with_expiration, mock_is_in_set_with_expiration):
     """
     Tests the complete_oauth_code_flow method for GitHub:
     1. Calls exchange_github_code_for_token to get the access token
@@ -163,7 +170,9 @@ async def test_complete_oauth_code_flow_github(mock_generate_tokens, mock_get_gi
     assert result == ("access_token", "refresh_token", 3600)
 
 
-def test_verify_password():
+@patch("app.services.auth_service.is_in_set_with_expiration", autospec=True)
+@patch("app.services.auth_service.add_to_set_with_expiration", autospec=True)
+def test_verify_password(mock_add_to_set_with_expiration, mock_is_in_set_with_expiration):
     """
     Tests the _verify_password method:
     1. Correctly verifies the password using the crypto_context
@@ -181,7 +190,9 @@ def test_verify_password():
     assert result is True
 
 
-def test_get_password_hash():
+@patch("app.services.auth_service.is_in_set_with_expiration", autospec=True)
+@patch("app.services.auth_service.add_to_set_with_expiration", autospec=True)
+def test_get_password_hash(mock_add_to_set_with_expiration, mock_is_in_set_with_expiration):
     """
     Tests the _get_password_hash method:
     1. Hashes the password using the crypto_context

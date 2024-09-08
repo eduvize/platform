@@ -3,7 +3,7 @@ import logging
 from typing import AsyncGenerator, Generator, List, Optional
 from fastapi import Depends
 from ai.common import BaseChatMessage, BaseToolCallWithResult, ChatRole
-from app.services import UserService
+from .user_service import UserService
 from app.repositories import ChatRepository, CourseRepository
 from domain.schema.chat.chat_message import ChatMessage
 from domain.schema.chat.chat_session import ChatSession

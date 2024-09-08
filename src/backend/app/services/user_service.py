@@ -1,18 +1,16 @@
 import asyncio
 import os
 from typing import List
-
 from fastapi import Depends, UploadFile
 from mimetypes import guess_extension, guess_type
-
 from config import is_email_validation_enabled
-from app.services.user_onboarding_service import UserOnboardingService
 from domain.enums.auth import OAuthProvider
 from domain.dto.profile import UserProfileDto
 from common.storage import StoragePurpose, get_public_object_url, upload_object, import_from_url
 from domain.schema.user import User, UserIdentifiers, UserIncludes
 from app.utilities.string_generation import generate_random_string
 from app.repositories import UserRepository
+from .user_onboarding_service import UserOnboardingService
 
 class UserCreationError(Exception):
     def __repr__(self):

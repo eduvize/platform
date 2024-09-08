@@ -1,9 +1,8 @@
-import logging
 from typing import Optional
 import uuid
 from fastapi import Depends
 from openai import OpenAI
-from app.services import UserService
+from .user_service import UserService
 from app.repositories import CourseRepository
 from app.utilities.profile import get_user_profile_text
 from common.messaging.topics import Topic
