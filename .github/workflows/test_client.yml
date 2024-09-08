@@ -1,0 +1,20 @@
+name: Client - Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/client/**"
+
+jobs:
+  build-push-api:
+    name: Build and Test Client Image
+    uses: ./.github/workflows/reusable_build_push.yml
+    with:
+      IMAGE_NAME: "app"
+      DOCKERFILE: "src/client/Dockerfile"
+      BUILD_CONTEXT: "src/client"
+      RUN_TESTS: true
+    secrets: inherit

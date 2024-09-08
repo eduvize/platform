@@ -1,0 +1,21 @@
+name: Course Generator - Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/backend/jobs/course_generator/**"
+
+jobs:
+  build-push-api:
+    name: Build and Test Course Generator Image
+    uses: ./.github/workflows/reusable_build_push.yml
+    with:
+      IMAGE_NAME: "course-generator"
+      DOCKERFILE: "src/backend/jobs/Dockerfile"
+      BUILD_CONTEXT: "src/backend"
+      BUILD_ARGS: "JOB_NAME=course_generator"
+      RUN_TESTS: true
+    secrets: inherit

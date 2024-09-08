@@ -23,6 +23,8 @@ jobs:
     name: Deploy Playground Orchestrator
     uses: ./.github/workflows/reusable_helm_deploy.yml
     with:
+      IMAGE_NAME: "playground-orchestrator"
+      IMAGE_VALUES_PATH: "playground.orchestratorImage"
       DEPLOYMENT_NAME: "eduvize-playground-orchestrator"
       DOMAIN_NAME: "eduvize.dev"
     secrets: inherit

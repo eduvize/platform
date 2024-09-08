@@ -24,6 +24,8 @@ jobs:
     name: Deploy Course Generator
     uses: ./.github/workflows/reusable_helm_deploy.yml
     with:
+      IMAGE_NAME: "course-generator"
+      IMAGE_VALUES_PATH: "course_generator.image"
       DEPLOYMENT_NAME: "eduvize-course-generator"
       DOMAIN_NAME: "eduvize.dev"
     secrets: inherit
