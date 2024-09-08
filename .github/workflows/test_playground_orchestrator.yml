@@ -17,4 +17,5 @@ jobs:
       DOCKERFILE: "src/playground-orchestrator/Dockerfile"
       BUILD_CONTEXT: "src/playground-orchestrator"
       RUN_TESTS: true
+      SHOULD_PUSH_IMAGE: false
     secrets: inherit

@@ -18,4 +18,5 @@ jobs:
       BUILD_CONTEXT: "src/backend"
       BUILD_ARGS: "JOB_NAME=course_generator"
       RUN_TESTS: true
+      SHOULD_PUSH_IMAGE: false
     secrets: inherit

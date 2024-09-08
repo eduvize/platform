@@ -17,4 +17,5 @@ jobs:
       DOCKERFILE: "src/client/Dockerfile"
       BUILD_CONTEXT: "src/client"
       RUN_TESTS: true
+      SHOULD_PUSH_IMAGE: false
     secrets: inherit
