@@ -1,5 +1,7 @@
 .courseCard {
     transition: transform 0.4s;
+    width: 20em !important;
+    height: 20em !important;
 }
 
 .courseCard:hover {
