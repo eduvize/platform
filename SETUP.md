@@ -96,6 +96,12 @@ To start up the Eduvize backend environment, navigate to `src/backend` and simpl
 docker-compose up -d
 ```
 
+Note that when you make changes to the backend codebase, you'll want to run it this way:
+
+```plaintext
+docker-compose up --build -d
+```
+
 To shut it down:
 
 ```plaintext
