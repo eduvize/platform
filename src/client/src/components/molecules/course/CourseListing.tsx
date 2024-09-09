@@ -54,8 +54,6 @@ export const CourseListing = ({
                 withBorder
                 className={classes.courseCard}
                 pos="relative"
-                w="18vw"
-                h="20vh"
                 bg={`url(${cover_image_url}) center / cover`}
                 onClick={onClick}
             >
