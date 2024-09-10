@@ -73,7 +73,11 @@ const router = createBrowserRouter([
     },
     {
         path: "/playground-test",
-        element: <PlaygroundTest />,
+        element: (
+            <AuthorizedRoute>
+                <PlaygroundTest />
+            </AuthorizedRoute>
+        ),
     },
 ]);
 

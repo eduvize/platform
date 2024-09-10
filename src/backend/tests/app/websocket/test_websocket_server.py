@@ -78,21 +78,27 @@ async def test_connect_missing_session_id(mock_decode_token, mock_get_key, mock_
 
 @pytest.mark.asyncio
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
-async def test_disconnect_user(mock_socket_server):
+@patch("app.websocket.websocket_server.delete_key", autospec=True)
+async def test_disconnect_user(mock_delete_key, mock_socket_server):
     """
     Test user disconnection and ensure correct events are triggered.
+    1. Emit user_disconnected event to the session room.
+    2. Deletion of the user connected key.
     """
     mock_session = AsyncMock()
     mock_session.__aenter__.return_value = {
         "session_id": "session123",
         "user_id": "user456"
     }
+    cache_key = socket_server.get_user_connected_cache_key("session123")
     
     mock_socket_server.session.return_value = mock_session
 
     await socket_server.disconnect(sid="user123")
+    
 
     mock_socket_server.emit.assert_called_once_with("user_disconnected", room="session123")
+    mock_delete_key.assert_called_once_with(cache_key)
 
 @pytest.mark.asyncio
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
