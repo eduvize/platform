@@ -1,12 +1,16 @@
+import logging
+import time
 import socketio
 import threading
-from .config import get_backend_socketio_endpoint, get_max_wait_time
+from .config import get_backend_socketio_endpoint, get_self_destruct_enabled
 from .shell import Shell
 from .orchestration import mark_for_deletion
 
-endpoint = get_backend_socketio_endpoint()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 client = socketio.Client()
-shell = Shell(client)
+shell = None
 user_connection_timer = None
 
 def start_user_connection_timer():
@@ -37,7 +41,8 @@ def connect():
 def disconnect():
     print("Disconnected from server")
     
-    mark_for_deletion()
+    if get_self_destruct_enabled():
+        mark_for_deletion()
         
 @client.event
 def terminal_input(t_input: str):
@@ -68,24 +73,60 @@ def terminal_resize(data: dict):
 
 @client.event
 def user_connected():
-    print("User connected")
+    logger.info("User connected")
     
     cancel_user_connection_timer()
     
 @client.event
 def user_disconnected():
-    print("User disconnected")
+    logger.info("User disconnected")
     
-    mark_for_deletion()
+    if get_self_destruct_enabled():
+        mark_for_deletion()
+        
+    shell.terminate()
+    client.shutdown()
 
-def connect_to_server(token: str):
-    client.connect(
-        url=endpoint,
-        headers={
-            "Authorization": f"Bearer {token}"
-        }
-    )
-
-    client.wait()
+def connect_to_server(token: str, max_retries: int = 3, retry_delay: int = 5):
+    """
+    Attempts to connect to the server, retrying on failure up to `max_retries` times with a delay of `retry_delay` seconds.
     
-start_user_connection_timer()
+    Args:
+        token (str): The authorization token to connect to the server.
+        max_retries (int): The maximum number of retries before giving up. Defaults to 3.
+        retry_delay (int): The delay in seconds between retries. Defaults to 5.
+    """
+    
+    global client, shell
+    
+    endpoint = get_backend_socketio_endpoint()
+    shell = Shell(client)
+    
+    attempt = 0
+    while attempt < max_retries:
+        try:
+            print(f"Attempt {attempt + 1} to connect to the server.")
+            client.connect(
+                url=endpoint,
+                headers={
+                    "Authorization": f"Bearer {token}"
+                }
+            )
+            print("Connection successful!")
+            
+            if get_self_destruct_enabled():
+                start_user_connection_timer()
+                
+            client.wait()  # Blocks the main thread, ensuring client remains connected
+            
+            break  # Exit the loop if connection is successful
+
+        except Exception as e:
+            attempt += 1
+            print(f"Connection attempt {attempt} failed: {e}")
+            
+            if attempt < max_retries:
+                print(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                print("Max retries reached. Could not connect to the server.")
