@@ -5,19 +5,24 @@ import struct
 import subprocess
 import termios
 import threading
+from typing import Optional
 import socketio
 import pty
 import pwd
+import signal
 
 logger = logging.getLogger("Shell")
 
 class Shell:
-    client: socketio.Client
-    process: subprocess.Popen
+    terminated: bool
+    client: Optional[socketio.Client]
+    process_pid: int
+    master_fd: int
 
     def __init__(self, client: socketio.Client):
         self.client = client
         self.stop_signal = threading.Event()
+        self.terminated = False
 
     def start(self):
         logger.info("Starting shell process")
@@ -25,7 +30,7 @@ class Shell:
         def read(fd):
             while not self.stop_signal.is_set():
                 output = os.read(fd, 1024)  # Read from PTY master
-                if output:
+                if output and not self.terminated:
                     self.client.emit('terminal_output', output.decode('utf-8', errors='replace'))
 
         pid, fd = pty.fork()
@@ -41,26 +46,26 @@ class Shell:
 
             os.execv('/bin/bash', ['/bin/bash', '-i'])
         else:  # Parent process
-            self.process = fd
+            self.process_pid = pid  # Store the child PID for later termination
             self.master_fd = fd
             self.output_thread = threading.Thread(target=read, args=(fd,))
             self.output_thread.start()
 
     def terminate(self):
+        self.terminated = True
         self.stop_signal.set()
-        if self.process:
-            self.process.terminate()
-            self.process.wait()
+        if hasattr(self, 'process_pid'):
+            logger.info(f"Terminating process with PID {self.process_pid}")
+            os.kill(self.process_pid, signal.SIGTERM)  # Kill the child process
+
         if self.output_thread.is_alive():
             self.output_thread.join()
 
     def send_input(self, t_input: str):
-        if self.process:
+        if self.master_fd:
             logger.info(f"Received input from client: {t_input}")
-            os.write(self.process, t_input.encode('utf-8'))  # Write to PTY
-            # Echo input back to xterm.js immediately
-            #self.client.emit('terminal_output', t_input)
-            
+            os.write(self.master_fd, t_input.encode('utf-8'))  # Write to PTY
+
     def resize(self, rows: int, columns: int):
         if self.master_fd:
             fcntl.ioctl(
@@ -73,9 +78,10 @@ class Shell:
         logger.info("Beginning to stream output")
 
         while not self.stop_signal.is_set():
-            output = self.process.stdout.read(1)  # Read one byte at a time
-            if output:
+            output = self.master_fd.read(1)  # Read one byte at a time
+            if output and not self.terminated:
                 self.client.emit('terminal_output', output.decode('utf-8', errors='replace'))
 
     def _emit_output(self, line: bytes):
-        self.client.emit('terminal_output', line.decode('utf-8', errors='replace'))
+        if not self.terminated:
+            self.client.emit('terminal_output', line.decode('utf-8', errors='replace'))
