@@ -19,6 +19,7 @@ RUN chroot /userland-scaffold apt-get update && chroot /userland-scaffold apt-ge
 RUN chmod +x /userland-scaffold/bin/bash
 
 COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# Set the entrypoint to use chroot
-ENTRYPOINT ["/entrypoint.sh"]
+# Use CMD to run the entrypoint script and then sleep indefinitely
+CMD ["/bin/bash", "-c", "/entrypoint.sh && sleep infinity"]

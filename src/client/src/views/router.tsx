@@ -1,6 +1,4 @@
-import { useAuthenticated } from "../context";
 import { Authentication } from "./authentication";
-import { Dashboard } from "./dashboard";
 import { Home } from "./home";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 

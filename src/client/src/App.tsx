@@ -10,6 +10,7 @@ import "./App.css";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 import "@mantine/notifications/styles.css";
+import { PlaygroundTest } from "@views/playground-test";
 
 const AuthorizedRoute = ({ children }: { children: React.ReactNode }) => {
     const isAuthenticated = useAuthenticated();
@@ -69,6 +70,14 @@ const router = createBrowserRouter([
                 ],
             },
         ],
+    },
+    {
+        path: "/playground-test",
+        element: (
+            <AuthorizedRoute>
+                <PlaygroundTest />
+            </AuthorizedRoute>
+        ),
     },
 ]);
 

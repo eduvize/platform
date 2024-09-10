@@ -37,6 +37,18 @@ def set_key(
         client.setex(key, expiration_delta, value)
     else:
         client.set(key, value)
+        
+def delete_key(key: str):
+    """
+    Deletes a key from the Redis cache
+
+    Args:
+        key (str): The key to delete
+    """
+    
+    client = _get_client()
+    
+    client.delete(key)
     
 def get_key(key: str) -> Optional[str]:
     """

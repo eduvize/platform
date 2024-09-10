@@ -13,6 +13,8 @@ services:
       - REDIS_HOST=redis
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - REQUIRE_EMAIL_VALIDATION=false
+      - PLAYGROUND_TOKEN_SECRET=devkey123
+      - OVERRIDE_PLAYGROUND_SESSION_ID=fakeplaygroundsessionid
     depends_on:
       - database
       - redis
@@ -40,6 +42,38 @@ services:
       - database
     networks:
       - app-tier
+
+  playground-controller:
+    build:
+      context: ../playground
+      dockerfile: Dockerfile
+    environment:
+      - HOSTNAME=playground-controller
+      - BACKEND_SOCKETIO_ENDPOINT=http://api:8000
+      - JWT_SIGNING_KEY=devkey123
+      - SESSION_ID=fakeplaygroundsessionid
+      - PURGE_DATA_ON_DISCONNECT=true
+      - ENABLE_SELF_DESTRUCT=false
+    depends_on:
+      - api
+    networks:
+      - app-tier
+    volumes:
+      - playground_shared:/userland
+      - playground_hidden:/playground
+
+  playground-environment:
+    build:
+      context: ../playground
+      dockerfile: environment.Dockerfile
+    depends_on:
+      - api
+      - playground-controller
+    networks:
+      - app-tier
+    volumes:
+      - playground_shared:/userland
+      - playground_hidden:/playground
 
   redis:
     image: redis:6
@@ -111,3 +145,5 @@ networks:
 volumes:
   postgres_data:
   s3_data:
+  playground_hidden:
+  playground_shared:
