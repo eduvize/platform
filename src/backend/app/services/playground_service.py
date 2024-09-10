@@ -1,6 +1,6 @@
 from typing import Tuple
 from fastapi import Depends
-from config import get_playground_token_secret
+from config import get_playground_token_secret, get_playground_session_id_override
 from app.utilities.jwt import create_token
 from app.repositories import PlaygroundRepository
 
@@ -24,7 +24,8 @@ class PlaygroundService:
         Returns:
             Tuple[str, str]: The session ID and token for authorization
         """
-        session_id = await self.playground_repo.create_playground_session("basic")
+        session_override = get_playground_session_id_override()
+        session_id = await self.playground_repo.create_playground_session("basic") if session_override is None else session_override
         
         signing_key = get_playground_token_secret()
         token = create_token(
