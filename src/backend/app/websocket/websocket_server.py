@@ -2,7 +2,7 @@ import logging
 from typing import Optional
 from socketio import AsyncServer
 from app.utilities.jwt import decode_token, InvalidJWTToken
-from common.cache import set_key, get_key
+from common.cache import set_key, get_key, delete_key
 from config import get_playground_token_secret
 
 logging.basicConfig(level=logging.INFO)
@@ -89,10 +89,16 @@ async def disconnect(sid: str):
         if user_id is not None:
             logger.info(f"User {user_id} disconnected")
             await socket_server.emit("user_disconnected", room=session_id) # Notify the instance
+            
+            # delete the user connected key
+            delete_key(get_user_connected_cache_key(session_id))
         
         if instance_hostname is not None and session_id is not None:
             logger.info(f"Instance {instance_hostname} disconnected")
             await socket_server.emit("instance_disconnected", room=session_id) # Notify the user
+            
+            # delete the liveness key
+            delete_key(get_liveness_cache_key(session_id))
 
 @socket_server.event
 async def terminal_input(sid: str, t_input: str):
