@@ -76,6 +76,7 @@ jobs:
           fi
 
           helm upgrade --install eduvize kubernetes/eduvize \
+            --reuse-values \
             --values ${{ inputs.VALUES_FILE_PATH }} \
             --set ingress.hostname=${{ inputs.DOMAIN_NAME }} \
             --set ${{ inputs.IMAGE_VALUES_PATH }}=${{ secrets.REGISTRY_NAME }}/$IMAGE_REPO \
