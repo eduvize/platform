@@ -2,20 +2,24 @@ import { memo, useEffect, useRef, useState } from "react";
 import io, { Socket } from "socket.io-client";
 import { createContext } from "use-context-selector";
 import { PlaygroundApi } from "@api";
+import { PlaygroundEnvironment } from "@models/dto";
 const SocketIOEndpoint = import.meta.env.VITE_SOCKETIO_ENDPOINT;
 
 type Context = {
     sendInput: (command: string) => void;
     resize: (rows: number, columns: number) => void;
+    create: (type: "file" | "directory", path: string) => void;
     output: string | null;
     isConnected: boolean;
     isReady: boolean;
     isReconnecting: boolean;
+    environment?: PlaygroundEnvironment;
 };
 
 const defaultValue: Context = {
     sendInput: () => {},
     resize: () => {},
+    create: () => {},
     output: null,
     isConnected: false,
     isReady: false,
@@ -40,6 +44,7 @@ export const PlaygroundProvider = memo(
         const [isReconnecting, setIsReconnecting] = useState(false);
         const [isInstanceReady, setIsInstanceReady] = useState(false);
         const [output, setOutput] = useState<null | string>(null);
+        const [environment, setEnvironment] = useState<PlaygroundEnvironment>();
 
         useEffect(() => {
             PlaygroundApi.createSession().then(({ session_id, token }) => {
@@ -93,6 +98,13 @@ export const PlaygroundProvider = memo(
                 clientRef.current.on("terminal_output", (data) => {
                     setOutput(data);
                 });
+
+                clientRef.current.on(
+                    "environment",
+                    (data: PlaygroundEnvironment) => {
+                        setEnvironment(data);
+                    }
+                );
             });
 
             return () => {
@@ -121,15 +133,25 @@ export const PlaygroundProvider = memo(
             clientRef.current.emit("terminal_resize", { rows, columns });
         };
 
+        const handleCreate = (type: "file" | "directory", path: string) => {
+            if (!clientRef.current || !isInstanceReady) {
+                return;
+            }
+
+            clientRef.current.emit("create", { type, path });
+        };
+
         return (
             <PlaygroundContext.Provider
                 value={{
                     sendInput: handleSendInput,
                     resize: handleResize,
+                    create: handleCreate,
                     output,
                     isConnected,
                     isReady: isInstanceReady,
                     isReconnecting,
+                    environment,
                 }}
             >
                 {children}
