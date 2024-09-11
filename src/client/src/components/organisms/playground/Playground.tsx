@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { useCommandLine, usePlaygroundState } from "@context/playground/hooks";
+import {
+    useCommandLine,
+    usePlaygroundConnectivity,
+} from "@context/playground/hooks";
 import {
     Card,
     Text,
@@ -23,7 +26,7 @@ export const Playground = ({ hideTerminal }: PlaygroundProps) => {
     const viewport = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<Terminal | null>(null);
     const fitAddonRef = useRef<FitAddon>(new FitAddon());
-    const { connected, ready, reconnecting } = usePlaygroundState();
+    const { connected, ready, reconnecting } = usePlaygroundConnectivity();
     const { sendInput, resize, output } = useCommandLine();
     const [showTerminal, setShowTerminal] = useState(!hideTerminal);
 

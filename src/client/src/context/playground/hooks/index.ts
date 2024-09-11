@@ -1,2 +1,2 @@
 export * from "./useCommandLine";
-export * from "./usePlaygroundState";
+export * from "./usePlaygroundConnectivity";
