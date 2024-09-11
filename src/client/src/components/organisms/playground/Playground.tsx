@@ -1,16 +1,31 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCommandLine, usePlaygroundState } from "@context/playground/hooks";
-import { Card, Text, Stack, Center, Loader } from "@mantine/core";
+import {
+    Card,
+    Text,
+    Stack,
+    Center,
+    Loader,
+    Grid,
+    Group,
+    Box,
+} from "@mantine/core";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "./Playground.css";
+import { FileEditor, FileExplorer } from "@molecules";
 
-export const Playground = () => {
+interface PlaygroundProps {
+    hideTerminal?: boolean;
+}
+
+export const Playground = ({ hideTerminal }: PlaygroundProps) => {
     const viewport = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<Terminal | null>(null);
     const fitAddonRef = useRef<FitAddon>(new FitAddon());
     const { connected, ready, reconnecting } = usePlaygroundState();
     const { sendInput, resize, output } = useCommandLine();
+    const [showTerminal, setShowTerminal] = useState(!hideTerminal);
 
     useEffect(() => {
         if (!connected || reconnecting) {
@@ -61,9 +76,9 @@ export const Playground = () => {
         handleScrollToBottom();
     }, [output]);
 
-    return (
-        <Card withBorder mih="400px">
-            {(!connected || !ready || reconnecting) && (
+    if (!connected || !ready || reconnecting) {
+        return (
+            <Card withBorder mih="400px">
                 <Center pos="absolute" left="0" top="0" w="100%" h="100%">
                     <Stack align="center">
                         <Loader type="bars" size="lg" />
@@ -81,11 +96,28 @@ export const Playground = () => {
                         </Text>
                     </Stack>
                 </Center>
-            )}
+            </Card>
+        );
+    }
 
-            {connected && ready && !reconnecting && (
-                <div ref={viewport} style={{ height: "400px" }} />
-            )}
+    return (
+        <Card withBorder p={0}>
+            <Grid>
+                <Grid.Col span={12}>
+                    <Group h="400px" wrap="nowrap" align="flex-start">
+                        <FileExplorer w="200px" />
+                        <FileEditor />
+                    </Group>
+                </Grid.Col>
+
+                {showTerminal && (
+                    <Grid.Col span="auto">
+                        <Box p="sm">
+                            <div ref={viewport} style={{ height: "200px" }} />
+                        </Box>
+                    </Grid.Col>
+                )}
+            </Grid>
         </Card>
     );
 };
