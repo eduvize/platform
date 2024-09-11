@@ -22,14 +22,11 @@ on:
         description: "Path to the Helm values file"
         required: false
         default: "kubernetes/eduvize/values.yaml"
-      IMAGE_VALUES_PATH:
+      IMAGE_TAG:
         type: string
-        description: "Path to the image in the Helm values file"
-        required: true
-      IMAGE_NAME:
-        type: string
-        description: "The name of the image"
-        required: true
+        description: "The tag of the image (environment based)"
+        required: false
+        default: "latest"
       REGISTRY_PREFIX:
         type: string
         description: "The registry prefix"
@@ -69,17 +66,14 @@ jobs:
 
       - name: Helm Upgrade
         run: |
-          if [ -n "${{ inputs.REGISTRY_PREFIX }}" ]; then
-            IMAGE_REPO="${{ inputs.REGISTRY_PREFIX }}/${{ inputs.IMAGE_NAME }}:${{ github.sha }}"
-          else
-            IMAGE_REPO="${{ inputs.IMAGE_NAME }}:${{ github.sha }}"
-          fi
-
           helm upgrade --install eduvize kubernetes/eduvize \
-            --reuse-values \
             --values ${{ inputs.VALUES_FILE_PATH }} \
             --set ingress.hostname=${{ inputs.DOMAIN_NAME }} \
-            --set ${{ inputs.IMAGE_VALUES_PATH }}=${{ secrets.REGISTRY_NAME }}/$IMAGE_REPO \
+            --set frontend.image=${{ secrets.REGISTRY_NAME }}/${{ inputs.REGISTRY_PREFIX }}/app:${{ inputs.IMAGE_TAG }} \
+            --set api.image=${{ secrets.REGISTRY_NAME }}/${{ inputs.REGISTRY_PREFIX }}/api:${{ inputs.IMAGE_TAG }} \
+            --set course_generator.image=${{ secrets.REGISTRY_NAME }}/${{ inputs.REGISTRY_PREFIX }}/course-generator:${{ inputs.IMAGE_TAG }} \
+            --set playground.controllerImage=${{ secrets.REGISTRY_NAME }}/${{ inputs.REGISTRY_PREFIX }}/playground-controller:${{ inputs.IMAGE_TAG }} \
+            --set playground.orchestratorImage=${{ secrets.REGISTRY_NAME }}/${{ inputs.REGISTRY_PREFIX }}/playground-orchestrator:${{ inputs.IMAGE_TAG }} \
             --namespace ${{ inputs.RELEASE_NAMESPACE }} \
             --debug
 

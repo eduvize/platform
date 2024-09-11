@@ -7,6 +7,11 @@ on:
         type: string
         description: "The name of the image"
         required: true
+      IMAGE_TAG:
+        type: string
+        description: "The tag of the image (environment based)"
+        required: false
+        default: "latest"
       DOCKERFILE:
         type: string
         description: "Path to the Dockerfile"
@@ -84,7 +89,7 @@ jobs:
           if [ ${{ inputs.RUN_TESTS }} = true ]; then
             TAG="test-${{ github.sha}}"
           else
-            TAG="${{ github.sha }}"
+            TAG="${{ inputs.IMAGE_TAG }}"
           fi
 
           if [ -n "${{ inputs.REGISTRY_PREFIX }}" ]; then
