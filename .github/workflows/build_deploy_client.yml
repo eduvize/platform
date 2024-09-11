@@ -27,8 +27,6 @@ jobs:
     name: Deploy Client
     uses: ./.github/workflows/reusable_helm_deploy.yml
     with:
-      IMAGE_NAME: "app"
-      IMAGE_VALUES_PATH: "frontend.image"
       DEPLOYMENT_NAME: "eduvize"
       DOMAIN_NAME: "eduvize.dev"
     secrets: inherit
