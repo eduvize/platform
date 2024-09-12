@@ -131,6 +131,76 @@ async def terminal_resize(sid: str, data: dict):
         logger.info(f"Resizing terminal for session {session_id} to {data['rows']}x{data['columns']}")
         
         await socket_server.emit("terminal_resize", data, room=session_id)
+        
+@socket_server.event
+async def create(sid: str, data: dict):
+    async with socket_server.session(sid) as session:
+        session_id = session.get("session_id", None)
+        
+        if session_id is None:
+            return
+        
+        logger.info(f"Creating new filesystem entry in session {session_id}: {data['type']}, {data['path']}")
+        
+        await socket_server.emit("create", data, room=session_id)
+        
+@socket_server.event
+async def environment(sid: str, data: dict):
+    async with socket_server.session(sid) as session:
+        session_id = session.get("session_id", None)
+        instance_hostname = session.get("instance_hostname", None)
+        
+        if session_id is None:
+            return
+        
+        if instance_hostname is None:
+            return # This event is only for instances
+        
+        logger.info(f"Updating environment for session {session_id} on instance {instance_hostname}")
+        
+        await socket_server.emit("environment", data, room=session_id)
+        
+@socket_server.event
+async def open_file(sid: str, data: dict):
+    async with socket_server.session(sid) as session:
+        session_id = session.get("session_id", None)
+        
+        if session_id is None:
+            return
+        
+        path = data.get("path", None)
+        
+        logger.info(f"Opening file {path} in session {session_id}")
+        
+        await socket_server.emit("open_file", data, room=session_id)
+    
+@socket_server.event
+async def save_file(sid: str, data: dict):
+    async with socket_server.session(sid) as session:
+        session_id = session.get("session_id", None)
+        
+        if session_id is None:
+            return
+        
+        path = data.get("path", None)
+        
+        logger.info(f"Saving file {path} in session {session_id}")
+        
+        await socket_server.emit("save_file", data, room=session_id)
+        
+@socket_server.event
+async def file_content(sid: str, data: dict):
+    async with socket_server.session(sid) as session:
+        session_id = session.get("session_id", None)
+        
+        if session_id is None:
+            return
+        
+        path = data.get("path", None)
+        
+        logger.info(f"Sending file content to user for {path} in session {session_id}")
+        
+        await socket_server.emit("file_content", data, room=session_id)
     
 def get_liveness_cache_key(session_id: str) -> str:
     """
