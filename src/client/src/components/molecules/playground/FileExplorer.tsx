@@ -1,37 +1,46 @@
-import { Group, Tree, Text } from "@mantine/core";
+import { usePlaygroundFilesystem } from "@context/playground/hooks";
+import { Group, Tree, Text, useTree } from "@mantine/core";
+import { FilesystemEntry } from "@models/dto";
 import { IconChevronDown } from "@tabler/icons-react";
+import { useEffect, useMemo } from "react";
 
 interface FileExplorerProps {
     w?: number | string;
 }
 
 export const FileExplorer = ({ w }: FileExplorerProps) => {
-    const data = [
-        {
-            label: "src",
-            value: "/src",
-            children: [
-                {
-                    label: "app",
-                    value: "/src/app",
-                    children: [
-                        {
-                            label: "main.py",
-                            value: "/src/app/main.py",
-                        },
-                        {
-                            label: "config.py",
-                            value: "/src/app/config.py",
-                        },
-                    ],
-                },
-                {
-                    label: "run.py",
-                    value: "/src/run.py",
-                },
-            ],
-        },
-    ];
+    const tree = useTree();
+    const { entries, createDirectory, createFile, openFile, openFiles } =
+        usePlaygroundFilesystem();
+
+    useEffect(() => {
+        tree.clearSelected();
+
+        for (const path of openFiles) {
+            tree.select(path);
+        }
+    }, [openFiles]);
+
+    const data = useMemo(() => {
+        function makeDirectoryEntry(entry: FilesystemEntry): any {
+            return {
+                label: `dir:${entry.name}`,
+                value: entry.path,
+                children: entry.children?.map(makeDirectoryEntry) ?? [],
+            };
+        }
+
+        return entries.map((entry) => {
+            if (entry.type === "directory") {
+                return makeDirectoryEntry(entry);
+            }
+
+            return {
+                label: `file:${entry.name}`,
+                value: entry.path,
+            };
+        });
+    }, [entries]);
 
     return (
         <Tree
@@ -41,8 +50,21 @@ export const FileExplorer = ({ w }: FileExplorerProps) => {
             levelOffset={23}
             selectOnClick
             renderNode={({ node, expanded, hasChildren, elementProps }) => (
-                <Group gap={5} {...elementProps}>
-                    {hasChildren && (
+                <Group
+                    gap={5}
+                    {...elementProps}
+                    onClick={(evt) => {
+                        elementProps.onClick?.(evt);
+
+                        if (`${node.label}`.startsWith("dir:")) {
+                            tree.toggleExpanded(node.value);
+                            return;
+                        }
+
+                        openFile(node.value);
+                    }}
+                >
+                    {`${node.label}`.startsWith("dir:") && (
                         <IconChevronDown
                             size={12}
                             style={{
@@ -54,7 +76,7 @@ export const FileExplorer = ({ w }: FileExplorerProps) => {
                     )}
 
                     <Text c="gray" size="sm">
-                        {node.label}
+                        {`${node.label}`.split(":")[1]}
                     </Text>
                 </Group>
             )}

@@ -16,7 +16,7 @@ import {
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "./Playground.css";
-import { FileEditor, FileExplorer } from "@molecules";
+import { FileEditor, FileExplorer, OpenFiles } from "@molecules";
 
 interface PlaygroundProps {
     hideTerminal?: boolean;
@@ -109,7 +109,7 @@ export const Playground = ({ hideTerminal }: PlaygroundProps) => {
                 <Grid.Col span={12}>
                     <Group h="400px" wrap="nowrap" align="flex-start">
                         <FileExplorer w="200px" />
-                        <FileEditor />
+                        <OpenFiles />
                     </Group>
                 </Grid.Col>
 
