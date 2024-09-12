@@ -5,7 +5,7 @@ def reinitialize_environment():
     try:
         script_path = "/playground/entrypoint.sh"
         
-        result = subprocess.run([script_path], capture_output=True, text=True, check=True, timeout=10)
+        result = subprocess.run([script_path], capture_output=True, text=True, check=True, timeout=60)
         
         logging.info("Script output (stdout):")
         logging.info(result.stdout)
