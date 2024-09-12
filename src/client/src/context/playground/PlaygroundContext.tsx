@@ -9,21 +9,27 @@ type Context = {
     sendInput: (command: string) => void;
     resize: (rows: number, columns: number) => void;
     create: (type: "file" | "directory", path: string) => void;
+    openFile: (path: string) => void;
+    setFileContent: (path: string, content: string) => void;
     output: string | null;
     isConnected: boolean;
     isReady: boolean;
     isReconnecting: boolean;
     environment?: PlaygroundEnvironment;
+    openFiles: Record<string, string>;
 };
 
 const defaultValue: Context = {
     sendInput: () => {},
     resize: () => {},
     create: () => {},
+    openFile: () => {},
+    setFileContent: () => {},
     output: null,
     isConnected: false,
     isReady: false,
     isReconnecting: false,
+    openFiles: {},
 };
 
 export const PlaygroundContext = createContext<Context>(defaultValue);
@@ -45,6 +51,7 @@ export const PlaygroundProvider = memo(
         const [isInstanceReady, setIsInstanceReady] = useState(false);
         const [output, setOutput] = useState<null | string>(null);
         const [environment, setEnvironment] = useState<PlaygroundEnvironment>();
+        const [openFiles, setOpenFiles] = useState<Record<string, string>>({});
 
         useEffect(() => {
             PlaygroundApi.createSession().then(({ session_id, token }) => {
@@ -105,6 +112,13 @@ export const PlaygroundProvider = memo(
                         setEnvironment(data);
                     }
                 );
+
+                clientRef.current.on(
+                    "file_content",
+                    ({ path, content }: { path: string; content: string }) => {
+                        setOpenFiles((prev) => ({ ...prev, [path]: content }));
+                    }
+                );
             });
 
             return () => {
@@ -141,17 +155,38 @@ export const PlaygroundProvider = memo(
             clientRef.current.emit("create", { type, path });
         };
 
+        const handleOpenFile = (path: string) => {
+            if (!clientRef.current || !isInstanceReady) {
+                return;
+            }
+
+            clientRef.current.emit("open_file", { path });
+        };
+
+        const handleSetFileContent = (path: string, content: string) => {
+            if (!clientRef.current || !isInstanceReady) {
+                return;
+            }
+
+            clientRef.current.emit("save_file", { path, content });
+
+            setOpenFiles((prev) => ({ ...prev, [path]: content }));
+        };
+
         return (
             <PlaygroundContext.Provider
                 value={{
                     sendInput: handleSendInput,
                     resize: handleResize,
                     create: handleCreate,
+                    openFile: handleOpenFile,
                     output,
                     isConnected,
                     isReady: isInstanceReady,
                     isReconnecting,
                     environment,
+                    openFiles,
+                    setFileContent: handleSetFileContent,
                 }}
             >
                 {children}

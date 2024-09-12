@@ -4,12 +4,16 @@ import { FilesystemEntry } from "@models/dto";
 
 interface UsePlaygroundFilesystemReturn {
     entries: FilesystemEntry[];
+    openFiles: string[];
+    openFile: (path: string) => void;
     createFile: (path: string) => void;
     createDirectory: (path: string) => void;
 }
 
 export const usePlaygroundFilesystem = (): UsePlaygroundFilesystemReturn => {
     const create = useContextSelector(PlaygroundContext, (v) => v.create);
+    const openFile = useContextSelector(PlaygroundContext, (v) => v.openFile);
+    const openFiles = useContextSelector(PlaygroundContext, (v) => v.openFiles);
     const entries =
         useContextSelector(
             PlaygroundContext,
@@ -18,6 +22,8 @@ export const usePlaygroundFilesystem = (): UsePlaygroundFilesystemReturn => {
 
     return {
         entries,
+        openFiles: Object.keys(openFiles),
+        openFile,
         createFile: (path: string) => create("file", path),
         createDirectory: (path: string) => create("directory", path),
     };
