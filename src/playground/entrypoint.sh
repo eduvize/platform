@@ -3,12 +3,13 @@
 # Check if /playground/userland-scaffold exists, if not, create it
 if [ ! -d /playground/userland-scaffold ]; then
     echo "Creating /userland-scaffold..."
-    rsync -a --exclude='/dev/*' /userland-scaffold/ /playground/userland-scaffold/
+    cp -a /userland-scaffold/. /playground/userland-scaffold/
 fi
 
 # Copy the entrypoint.sh script to the shared volume
 echo "Copying entrypoint.sh to shared playground volume..."
-cp /entrypoint.sh /playground/entrypoint.sh
+
+cp -f /entrypoint.sh /playground/entrypoint.sh
 chmod +x /playground/entrypoint.sh
 
 # If /userland exists, remove it
@@ -22,6 +23,7 @@ fi
 
 # Copy the debootstrap environment into the shared volume
 echo "Copying debootstrap environment to /userland..."
+sync
 cp -a /playground/userland-scaffold/. /userland/
 cp -a /usr/share/terminfo /userland/usr/share/
 
@@ -46,6 +48,9 @@ chroot /userland chown -R root:root /
 chroot /userland chown -R user:user /home/user  # Allow user to write in their home directory
 chroot /userland chmod -R 0777 /home/user  # Ensure the user can write
 chroot /userland chmod -R 0755 /
+
+# Install python3, pip3, and nano packages
+chroot /userland apt-get update -y && chroot /userland apt-get install -y python3 nano
 
 echo "This is a sandbox environment for your Eduvize course.
 You can use this environment to run commands and programs
