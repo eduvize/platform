@@ -2,7 +2,6 @@ import fcntl
 import logging
 import os
 import struct
-import subprocess
 import termios
 import threading
 from typing import Optional
@@ -10,6 +9,8 @@ import socketio
 import pty
 import pwd
 import signal
+from .filesystem import DirectoryMonitor
+from .environment import get_environment_snapshot
 
 logger = logging.getLogger("Shell")
 
@@ -18,13 +19,22 @@ class Shell:
     client: Optional[socketio.Client]
     process_pid: int
     master_fd: int
+    directory_monitor: DirectoryMonitor
 
     def __init__(self, client: socketio.Client):
         self.client = client
         self.stop_signal = threading.Event()
         self.terminated = False
+        self.directory_monitor = DirectoryMonitor(
+            directory="/userland/home/user", 
+            callback=lambda: 
+                self.client.emit("environment", get_environment_snapshot())
+        )
 
     def start(self):
+        logger.info("Starting directory monitor")
+        self.directory_monitor.start_watching()
+        
         logger.info("Starting shell process")
 
         def read(fd):
@@ -50,8 +60,14 @@ class Shell:
             self.master_fd = fd
             self.output_thread = threading.Thread(target=read, args=(fd,))
             self.output_thread.start()
+            
+            # Send the first state of the environment
+            self.client.emit("environment", get_environment_snapshot())
 
     def terminate(self):
+        # Stop monitoring the directory
+        self.directory_monitor.stop_watching()
+        
         self.terminated = True
         self.stop_signal.set()
         if hasattr(self, 'process_pid'):
