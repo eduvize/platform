@@ -10,8 +10,10 @@ type Context = {
     resize: (rows: number, columns: number) => void;
     create: (type: "file" | "directory", path: string) => void;
     openFile: (path: string) => void;
+    closeFile: (path: string) => void;
     setFileContent: (path: string, content: string) => void;
-    output: string | null;
+    subscribeToOutput: (callback: (output: string) => void) => void;
+    unsubscribeFromOutput: (callback: (output: string) => void) => void;
     isConnected: boolean;
     isReady: boolean;
     isReconnecting: boolean;
@@ -24,8 +26,10 @@ const defaultValue: Context = {
     resize: () => {},
     create: () => {},
     openFile: () => {},
+    closeFile: () => {},
     setFileContent: () => {},
-    output: null,
+    subscribeToOutput: () => {},
+    unsubscribeFromOutput: () => {},
     isConnected: false,
     isReady: false,
     isReconnecting: false,
@@ -46,10 +50,10 @@ export const PlaygroundProvider = memo(
             rows: 0,
             columns: 0,
         });
+        const subscribersRef = useRef<((output: string) => void)[]>([]);
         const [isConnected, setIsConnected] = useState(false);
         const [isReconnecting, setIsReconnecting] = useState(false);
         const [isInstanceReady, setIsInstanceReady] = useState(false);
-        const [output, setOutput] = useState<null | string>(null);
         const [environment, setEnvironment] = useState<PlaygroundEnvironment>();
         const [openFiles, setOpenFiles] = useState<Record<string, string>>({});
 
@@ -103,7 +107,7 @@ export const PlaygroundProvider = memo(
                 });
 
                 clientRef.current.on("terminal_output", (data) => {
-                    setOutput(data);
+                    subscribersRef.current.forEach((cb) => cb(data));
                 });
 
                 clientRef.current.on(
@@ -163,6 +167,17 @@ export const PlaygroundProvider = memo(
             clientRef.current.emit("open_file", { path });
         };
 
+        const handleCloseFile = (path: string) => {
+            if (!clientRef.current || !isInstanceReady) {
+                return;
+            }
+
+            setOpenFiles((prev) => {
+                const { [path]: _, ...rest } = prev;
+                return rest;
+            });
+        };
+
         const handleSetFileContent = (path: string, content: string) => {
             if (!clientRef.current || !isInstanceReady) {
                 return;
@@ -180,7 +195,13 @@ export const PlaygroundProvider = memo(
                     resize: handleResize,
                     create: handleCreate,
                     openFile: handleOpenFile,
-                    output,
+                    closeFile: handleCloseFile,
+                    subscribeToOutput: (callback) =>
+                        subscribersRef.current.push(callback),
+                    unsubscribeFromOutput: (callback) =>
+                        (subscribersRef.current = subscribersRef.current.filter(
+                            (cb) => cb !== callback
+                        )),
                     isConnected,
                     isReady: isInstanceReady,
                     isReconnecting,
