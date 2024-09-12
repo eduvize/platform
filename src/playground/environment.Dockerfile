@@ -10,10 +10,10 @@ RUN apt-get update && apt-get install -y \
     rsync
 
 # Set up a debootstrap environment
-RUN debootstrap --variant=minbase --include=bash,netbase focal /userland-scaffold
+RUN debootstrap --variant=buildd focal /userland-scaffold
 
-# Install nano into the debootstrap environment
-RUN chroot /userland-scaffold apt-get update && chroot /userland-scaffold apt-get install -y nano
+# Add the Ubuntu focal universe repository to the debootstrap environment
+RUN chroot /userland-scaffold sh -c 'echo "deb http://archive.ubuntu.com/ubuntu focal main universe" > /etc/apt/sources.list'
 
 # Make bash executable in the debootstrap environment
 RUN chmod +x /userland-scaffold/bin/bash
