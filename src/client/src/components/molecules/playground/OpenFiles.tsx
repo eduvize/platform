@@ -1,12 +1,13 @@
 import { usePlaygroundFilesystem } from "@context/playground/hooks";
-import { Tabs } from "@mantine/core";
+import { Group, Tabs, Tooltip, Text, ActionIcon } from "@mantine/core";
 import Markdown from "react-markdown";
 import { FileEditor } from "./FileEditor";
 import { useEffect, useRef, useState } from "react";
+import { IconX } from "@tabler/icons-react";
 
 export const OpenFiles = () => {
     const openedRef = useRef<string[]>([]);
-    const { openFiles } = usePlaygroundFilesystem();
+    const { openFiles, closeFile } = usePlaygroundFilesystem();
     const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
     useEffect(() => {
@@ -18,14 +19,39 @@ export const OpenFiles = () => {
         if (opened.length) {
             setSelectedFile(opened[0]);
 
-            openedRef.current = openFiles;
+            openedRef.current = [...openFiles];
         }
     }, [openFiles]);
+
+    useEffect(() => {
+        setTimeout(() => {
+            if (!openedRef.current.includes(selectedFile || "")) {
+                setSelectedFile("__welcome__");
+            }
+        }, 1);
+    }, [openFiles, selectedFile]);
 
     const FileTab = ({ path }: { path: string }) => {
         const fileName = path.split("/").pop();
 
-        return <Tabs.Tab value={path}>{fileName}</Tabs.Tab>;
+        return (
+            <Tabs.Tab value={path}>
+                <Group align="center" gap="xs">
+                    <Tooltip label={path} position="bottom">
+                        <Text>{fileName}</Text>
+                    </Tooltip>
+                    <ActionIcon
+                        size={12}
+                        variant="transparent"
+                        c="gray"
+                        pt={1}
+                        onClick={() => closeFile(path)}
+                    >
+                        <IconX />
+                    </ActionIcon>
+                </Group>
+            </Tabs.Tab>
+        );
     };
 
     return (

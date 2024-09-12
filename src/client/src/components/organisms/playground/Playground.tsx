@@ -12,23 +12,32 @@ import {
     Grid,
     Group,
     Box,
+    Flex,
 } from "@mantine/core";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "./Playground.css";
-import { FileEditor, FileExplorer, OpenFiles } from "@molecules";
+import { FileExplorer, OpenFiles } from "@molecules";
 
 interface PlaygroundProps {
     hideTerminal?: boolean;
+    height?: number | string;
 }
 
-export const Playground = ({ hideTerminal }: PlaygroundProps) => {
+export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
     const viewport = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<Terminal | null>(null);
     const fitAddonRef = useRef<FitAddon>(new FitAddon());
     const { connected, ready, reconnecting } = usePlaygroundConnectivity();
-    const { sendInput, resize, output } = useCommandLine();
+    const { sendInput, resize, subscribe, unsubscribe } = useCommandLine();
     const [showTerminal, setShowTerminal] = useState(!hideTerminal);
+
+    const heightProperty =
+        typeof height === "number"
+            ? `${height}px`
+            : typeof height === "string"
+            ? height
+            : "400px";
 
     useEffect(() => {
         if (!connected || reconnecting) {
@@ -44,7 +53,10 @@ export const Playground = ({ hideTerminal }: PlaygroundProps) => {
             return;
         }
 
-        terminalRef.current = new Terminal();
+        terminalRef.current = new Terminal({
+            cursorBlink: true,
+            macOptionIsMeta: true,
+        });
 
         terminalRef.current.loadAddon(fitAddonRef.current);
         terminalRef.current.open(viewport.current!);
@@ -64,6 +76,23 @@ export const Playground = ({ hideTerminal }: PlaygroundProps) => {
         resize(rows, cols);
     }, [connected, ready, reconnecting]);
 
+    useEffect(() => {
+        // Subscribe to output
+        const handleOutput = (output: string) => {
+            if (!terminalRef.current) return;
+
+            terminalRef.current.write(output);
+
+            handleScrollToBottom();
+        };
+
+        subscribe(handleOutput);
+
+        return () => {
+            unsubscribe(handleOutput);
+        };
+    }, []);
+
     const handleScrollToBottom = () => {
         viewport.current?.scrollTo({
             top: viewport.current.scrollHeight,
@@ -71,17 +100,9 @@ export const Playground = ({ hideTerminal }: PlaygroundProps) => {
         });
     };
 
-    useEffect(() => {
-        if (!terminalRef.current || !output) return;
-
-        terminalRef.current.write(output);
-
-        handleScrollToBottom();
-    }, [output]);
-
     if (!connected || !ready || reconnecting) {
         return (
-            <Card withBorder mih="400px">
+            <Card withBorder mih={heightProperty}>
                 <Center pos="absolute" left="0" top="0" w="100%" h="100%">
                     <Stack align="center">
                         <Loader type="bars" size="lg" />
@@ -107,19 +128,38 @@ export const Playground = ({ hideTerminal }: PlaygroundProps) => {
         <Card withBorder p={0}>
             <Grid>
                 <Grid.Col span={12}>
-                    <Group h="400px" wrap="nowrap" align="flex-start">
-                        <FileExplorer w="200px" />
-                        <OpenFiles />
+                    <Group
+                        gap="xs"
+                        h={heightProperty}
+                        wrap="nowrap"
+                        align="flex-start"
+                    >
+                        <Box bg="dark" h="100%">
+                            <FileExplorer w="200px" />
+                        </Box>
+
+                        <Flex direction="column" w="100%" h="100%">
+                            <Flex flex={1} w="100%">
+                                <OpenFiles />
+                            </Flex>
+
+                            {showTerminal && (
+                                <Flex h="120px" mb="xs" w="100%">
+                                    <div
+                                        ref={viewport}
+                                        style={{
+                                            height: "100%",
+                                            width: "100%",
+                                            borderTop:
+                                                "1px solid var(--mantine-color-gray-7)",
+                                            padding: "4px",
+                                        }}
+                                    />
+                                </Flex>
+                            )}
+                        </Flex>
                     </Group>
                 </Grid.Col>
-
-                {showTerminal && (
-                    <Grid.Col span="auto">
-                        <Box p="sm">
-                            <div ref={viewport} style={{ height: "200px" }} />
-                        </Box>
-                    </Grid.Col>
-                )}
             </Grid>
         </Card>
     );
