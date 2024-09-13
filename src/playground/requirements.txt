@@ -4,3 +4,4 @@ requests
 kubernetes
 pydantic
 PyJWT
+watchdog

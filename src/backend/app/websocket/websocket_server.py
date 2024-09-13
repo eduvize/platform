@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Literal, Optional, Tuple
 from socketio import AsyncServer
 from app.utilities.jwt import decode_token, InvalidJWTToken
 from common.cache import set_key, get_key, delete_key
@@ -81,56 +81,128 @@ async def connect(sid: str, environment_data: dict, extra: Optional[dict] = None
 
 @socket_server.event
 async def disconnect(sid: str):
+    client_type, session_id = await get_connection_information(sid)
+    
+    if client_type and session_id:
+        if client_type == "instance":
+            logger.info(f"Instance {session_id} disconnected")
+            await socket_server.emit("instance_disconnected", room=session_id, skip_sid=sid)
+            delete_key(get_liveness_cache_key(session_id))
+            
+        if client_type == "user":
+            logger.info(f"User {session_id} disconnected")
+            await socket_server.emit("user_disconnected", room=session_id, skip_sid=sid)
+            delete_key(get_user_connected_cache_key(session_id))
+
+@socket_server.event
+async def terminal_input(sid: str, t_input: str):
+    client_type, session_id = await get_connection_information(sid)
+    
+    if client_type == "user" and session_id:
+        logger.info(f"Received terminal input from {client_type} {session_id}: {t_input}")
+        
+        await socket_server.emit("terminal_input", t_input, room=session_id, skip_sid=sid)
+    
+@socket_server.event
+async def terminal_output(sid: str, output: str):
+    client_type, session_id = await get_connection_information(sid)
+    
+    if client_type == "instance" and session_id:
+        logger.info(f"Sending terminal output to {client_type} {session_id}: {output}")
+        
+        await socket_server.emit("terminal_output", output, room=session_id, skip_sid=sid)
+    
+@socket_server.event
+async def terminal_resize(sid: str, data: dict):
+    client_type, session_id = await get_connection_information(sid)
+    
+    if client_type == "user" and session_id:
+        logger.info(f"Resizing terminal for {client_type} {session_id} to {data['rows']}x{data['columns']}")
+        
+        await socket_server.emit("terminal_resize", data, room=session_id, skip_sid=sid)
+    
+@socket_server.event
+async def create(sid: str, data: dict):
+    client_type, session_id = await get_connection_information(sid)
+    
+    if client_type == "user" and session_id:
+        logger.info(f"Creating new filesystem entry for {client_type} {session_id}: {data['type']}, {data['path']}")
+        
+        await socket_server.emit("create", data, room=session_id, skip_sid=sid)
+    
+@socket_server.event
+async def rename(sid: str, data: dict):
+    client_type, session_id = await get_connection_information(sid)
+    
+    if client_type == "user" and session_id:
+        logger.info(f"Renaming filesystem entry for {client_type} {session_id}: {data['path']}, {data['new_path']}")
+        
+        await socket_server.emit("rename", data, room=session_id, skip_sid=sid)
+        
+@socket_server.event
+async def delete(sid: str, data: dict):
+    client_type, session_id = await get_connection_information(sid)
+    
+    if client_type == "user" and session_id:
+        logger.info(f"Deleting filesystem entry for {client_type} {session_id}: {data['path']}")
+        
+        await socket_server.emit("delete", data, room=session_id, skip_sid=sid)
+        
+@socket_server.event
+async def environment(sid: str, data: dict):
+    client_type, session_id = await get_connection_information(sid)
+    
+    if client_type == "instance" and session_id:
+        logger.info(f"Updating environment for {client_type} {session_id}")
+        
+        await socket_server.emit("environment", data, room=session_id, skip_sid=sid)
+        
+@socket_server.event
+async def open_file(sid: str, data: dict):
+    client_type, session_id = await get_connection_information(sid)
+    
+    if client_type == "user" and session_id:
+        logger.info(f"Opening file {data['path']} for {client_type} {session_id}")
+        
+        await socket_server.emit("open_file", data, room=session_id, skip_sid=sid)
+    
+@socket_server.event
+async def save_file(sid: str, data: dict):
+    client_type, session_id = await get_connection_information(sid)
+    
+    if client_type == "user" and session_id:
+        logger.info(f"Saving file {data['path']} for {client_type} {session_id}")
+        
+        await socket_server.emit("save_file", data, room=session_id, skip_sid=sid)
+    
+@socket_server.event
+async def file_content(sid: str, data: dict):
+    client_type, session_id = await get_connection_information(sid)
+    
+    if client_type == "instance" and session_id:
+        logger.info(f"Sending file content to user for {data['path']} in session {session_id}")
+        
+        await socket_server.emit("file_content", data, room=session_id, skip_sid=sid)
+        
+async def get_connection_information(sid: str) -> Tuple[Literal["user", "instance", None], Optional[str]]:
+    """
+    Gets the client type and session ID associated with a socket connection.
+
+    Returns:
+        Tuple[Literal["user", "instance", None], str]: The client type and session ID.
+    """
     async with socket_server.session(sid) as session:
         session_id = session.get("session_id", None)
         user_id = session.get("user_id", None)
         instance_hostname = session.get("instance_hostname", None)
         
         if user_id is not None:
-            logger.info(f"User {user_id} disconnected")
-            await socket_server.emit("user_disconnected", room=session_id) # Notify the instance
-            
-            # delete the user connected key
-            delete_key(get_user_connected_cache_key(session_id))
+            return "user", session_id
         
-        if instance_hostname is not None and session_id is not None:
-            logger.info(f"Instance {instance_hostname} disconnected")
-            await socket_server.emit("instance_disconnected", room=session_id) # Notify the user
-            
-            # delete the liveness key
-            delete_key(get_liveness_cache_key(session_id))
-
-@socket_server.event
-async def terminal_input(sid: str, t_input: str):
-    async with socket_server.session(sid) as session:
-        session_id = session.get("session_id", None)
+        if instance_hostname is not None:
+            return "instance", session_id
         
-        if session_id is None:
-            return
-
-        await socket_server.emit("terminal_input", t_input, room=session_id)
-        
-@socket_server.event
-async def terminal_output(sid: str, output: str):
-    async with socket_server.session(sid) as session:
-        session_id = session.get("session_id", None)
-        
-        if session_id is None:
-            return
-
-        await socket_server.emit("terminal_output", output, room=session_id)
-        
-@socket_server.event
-async def terminal_resize(sid: str, data: dict):
-    async with socket_server.session(sid) as session:
-        session_id = session.get("session_id", None)
-        
-        if session_id is None:
-            return
-        
-        logger.info(f"Resizing terminal for session {session_id} to {data['rows']}x{data['columns']}")
-        
-        await socket_server.emit("terminal_resize", data, room=session_id)
+        return None, session_id
     
 def get_liveness_cache_key(session_id: str) -> str:
     """

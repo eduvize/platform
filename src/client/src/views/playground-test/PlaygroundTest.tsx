@@ -4,7 +4,7 @@ import { Playground } from "@organisms";
 export const PlaygroundTest = () => {
     return (
         <PlaygroundProvider>
-            <Playground />
+            <Playground height="600px" />
         </PlaygroundProvider>
     );
 };

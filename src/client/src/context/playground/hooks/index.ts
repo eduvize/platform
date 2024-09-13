@@ -1,2 +1,4 @@
 export * from "./useCommandLine";
-export * from "./usePlaygroundState";
+export * from "./usePlaygroundConnectivity";
+export * from "./usePlaygroundFilesystem";
+export * from "./useFile";
