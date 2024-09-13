@@ -15,6 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 
 interface FileExplorerProps {
     w?: number | string;
+    onSelect?: (type: "file" | "directory", path: string) => void;
 }
 
 interface EntryData {
@@ -27,7 +28,7 @@ interface RenameData extends EntryData {
     newName: string;
 }
 
-export const FileExplorer = ({ w }: FileExplorerProps) => {
+export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
     const tree = useTree();
     const { showContextMenu } = useContextMenu();
     const {
@@ -51,7 +52,7 @@ export const FileExplorer = ({ w }: FileExplorerProps) => {
     }, [openFiles.length]);
 
     const handleAddFile = (dir: string) => {
-        if (newEntry) return;
+        tree.expand(dir);
 
         setNewEntry({
             type: "file",
@@ -61,7 +62,7 @@ export const FileExplorer = ({ w }: FileExplorerProps) => {
     };
 
     const handleAddDirectory = (dir: string) => {
-        if (newEntry) return;
+        tree.expand(dir);
 
         setNewEntry({
             type: "directory",
@@ -260,9 +261,11 @@ export const FileExplorer = ({ w }: FileExplorerProps) => {
             <Tree
                 w={w}
                 h="100%"
+                tree={tree}
                 data={data}
                 levelOffset={23}
                 selectOnClick
+                expandOnClick
                 renderNode={({ node, expanded, hasChildren, elementProps }) =>
                     node.label === "__new__" ? (
                         <Input
@@ -310,7 +313,16 @@ export const FileExplorer = ({ w }: FileExplorerProps) => {
                             onClick={(evt) => {
                                 if (node.label === "__new__") return;
 
-                                elementProps.onClick?.(evt);
+                                tree.select(node.value);
+
+                                if (onSelect) {
+                                    onSelect(
+                                        `${node.label}`.startsWith("dir:")
+                                            ? "directory"
+                                            : "file",
+                                        node.value
+                                    );
+                                }
 
                                 if (`${node.label}`.startsWith("dir:")) {
                                     tree.toggleExpanded(node.value);

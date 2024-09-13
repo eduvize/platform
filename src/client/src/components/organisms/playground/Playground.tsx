@@ -31,6 +31,7 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
     const { connected, ready, reconnecting } = usePlaygroundConnectivity();
     const { sendInput, resize, subscribe, unsubscribe } = useCommandLine();
     const [showTerminal, setShowTerminal] = useState(!hideTerminal);
+    const [focusedFile, setFocusedFile] = useState<string | null>(null);
 
     const heightProperty =
         typeof height === "number"
@@ -135,12 +136,19 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
                         align="flex-start"
                     >
                         <Box bg="dark" h="100%">
-                            <FileExplorer w="200px" />
+                            <FileExplorer
+                                w="200px"
+                                onSelect={(type, path) => {
+                                    if (type === "file") {
+                                        setFocusedFile(path);
+                                    }
+                                }}
+                            />
                         </Box>
 
                         <Flex direction="column" w="100%" h="100%">
                             <Flex flex={1} w="100%">
-                                <OpenFiles />
+                                <OpenFiles selectedFile={focusedFile} />
                             </Flex>
 
                             {showTerminal && (

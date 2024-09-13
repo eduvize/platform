@@ -5,10 +5,46 @@ import { FileEditor } from "./FileEditor";
 import { useEffect, useRef, useState } from "react";
 import { IconX } from "@tabler/icons-react";
 
-export const OpenFiles = () => {
+interface OpenFilesProps {
+    selectedFile?: string | null;
+}
+
+export const OpenFiles = ({ selectedFile: overridePath }: OpenFilesProps) => {
     const openedRef = useRef<string[]>([]);
-    const { openFiles, closeFile } = usePlaygroundFilesystem();
-    const [selectedFile, setSelectedFile] = useState<string | null>(null);
+    const { openFiles, closeFile, entries } = usePlaygroundFilesystem();
+    const [selectedFile, setSelectedFile] = useState<string | null>(
+        overridePath || null
+    );
+
+    const doesPathExist = (path: string) => {
+        const parts = path.split("/");
+        let current = entries;
+
+        for (let i = 0; i < parts.length - 1; i++) {
+            const part = parts[i];
+
+            const entry = current.find((entry) => entry.name === part);
+
+            if (!entry) {
+                return false;
+            }
+
+            current = entry.children ?? [];
+        }
+
+        return current.some((entry) => entry.name === parts[parts.length - 1]);
+    };
+
+    useEffect(() => {
+        setSelectedFile(overridePath || "__welcome__");
+    }, [overridePath]);
+
+    useEffect(() => {
+        // Close files that no longer exist
+        const toClose = openFiles.filter((path) => !doesPathExist(path));
+
+        toClose.forEach((path) => closeFile(path));
+    }, [entries, openFiles]);
 
     useEffect(() => {
         // Figure out which file was opened, if any
