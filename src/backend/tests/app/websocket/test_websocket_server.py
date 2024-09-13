@@ -79,78 +79,62 @@ async def test_connect_missing_session_id(mock_decode_token, mock_get_key, mock_
 @pytest.mark.asyncio
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
 @patch("app.websocket.websocket_server.delete_key", autospec=True)
-async def test_disconnect_user(mock_delete_key, mock_socket_server):
+@patch("app.websocket.websocket_server.get_connection_information", autospec=True)
+async def test_disconnect_user(mock_get_conn_info, mock_delete_key, mock_socket_server):
     """
     Test user disconnection and ensure correct events are triggered.
-    1. Emit user_disconnected event to the session room.
+    1. Get the session information using the SID
+    2. Emit user_disconnected event to the session room without echoing to the SID
     2. Deletion of the user connected key.
     """
-    mock_session = AsyncMock()
-    mock_session.__aenter__.return_value = {
-        "session_id": "session123",
-        "user_id": "user456"
-    }
+    mock_get_conn_info.return_value = "user", "session123"
     cache_key = socket_server.get_user_connected_cache_key("session123")
     
-    mock_socket_server.session.return_value = mock_session
-
     await socket_server.disconnect(sid="user123")
     
-
-    mock_socket_server.emit.assert_called_once_with("user_disconnected", room="session123")
+    mock_get_conn_info.assert_called_once_with("user123")
+    mock_socket_server.emit.assert_called_once_with("user_disconnected", room="session123", skip_sid="user123")
     mock_delete_key.assert_called_once_with(cache_key)
 
 @pytest.mark.asyncio
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
-async def test_terminal_input(mock_socket_server):
+@patch("app.websocket.websocket_server.get_connection_information", autospec=True)
+async def test_terminal_input(mock_get_conn_info, mock_socket_server):
     """
     Test terminal input event.
     """
-    mock_session = AsyncMock()
-    mock_session.__aenter__.return_value = {
-        "session_id": "session123",
-        "user_id": "user456"
-    }
-    
-    mock_socket_server.session.return_value = mock_session
+    mock_get_conn_info.return_value = "user", "session123"
     
     await socket_server.terminal_input(sid="user123", t_input="some command")
 
-    mock_socket_server.emit.assert_called_once_with("terminal_input", "some command", room="session123")
+    mock_get_conn_info.assert_called_once_with("user123")
+    mock_socket_server.emit.assert_called_once_with("terminal_input", "some command", room="session123", skip_sid="user123")
 
 @pytest.mark.asyncio
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
-async def test_terminal_output(mock_socket_server):
+@patch("app.websocket.websocket_server.get_connection_information", autospec=True)
+async def test_terminal_output(mock_get_conn_info, mock_socket_server):
     """
     Test terminal output event.
     """
-    mock_session = AsyncMock()
-    mock_session.__aenter__.return_value = {
-        "session_id": "session123",
-        "user_id": "user456"
-    }
+    mock_get_conn_info.return_value = "instance", "session123"
     
-    mock_socket_server.session.return_value = mock_session
-    
-    await socket_server.terminal_output(sid="user123", output="output text")
+    await socket_server.terminal_output(sid="instance123", output="output text")
 
-    mock_socket_server.emit.assert_called_once_with("terminal_output", "output text", room="session123")
+    mock_get_conn_info.assert_called_once_with("instance123")
+    mock_socket_server.emit.assert_called_once_with("terminal_output", "output text", room="session123", skip_sid="instance123")
 
 @pytest.mark.asyncio
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
-async def test_terminal_resize(mock_socket_server):
+@patch("app.websocket.websocket_server.get_connection_information", autospec=True)
+async def test_terminal_resize(mock_get_conn_info, mock_socket_server):
     """
     Test terminal resize event.
     """
-    mock_session = AsyncMock()
-    mock_session.__aenter__.return_value = {
-        "session_id": "session123",
-        "user_id": "user456"
-    }
-    
-    mock_socket_server.session.return_value = mock_session
+    mock_get_conn_info.return_value = "user", "session123"
     
     data = {"rows": 24, "columns": 80}
     await socket_server.terminal_resize(sid="user123", data=data)
 
-    mock_socket_server.emit.assert_called_once_with("terminal_resize", data, room="session123")
+    mock_get_conn_info.assert_called_once_with("user123")
+    mock_socket_server.emit.assert_called_once_with("terminal_resize", data, room="session123", skip_sid="user123")
