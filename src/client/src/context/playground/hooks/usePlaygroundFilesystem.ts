@@ -8,11 +8,13 @@ interface UsePlaygroundFilesystemReturn {
     openFile: (path: string) => void;
     closeFile: (path: string) => void;
     createFile: (path: string) => void;
+    rename: (path: string, newPath: string) => void;
     createDirectory: (path: string) => void;
 }
 
 export const usePlaygroundFilesystem = (): UsePlaygroundFilesystemReturn => {
     const create = useContextSelector(PlaygroundContext, (v) => v.create);
+    const rename = useContextSelector(PlaygroundContext, (v) => v.rename);
     const openFile = useContextSelector(PlaygroundContext, (v) => v.openFile);
     const closeFile = useContextSelector(PlaygroundContext, (v) => v.closeFile);
     const openFiles = useContextSelector(PlaygroundContext, (v) => v.openFiles);
@@ -28,6 +30,7 @@ export const usePlaygroundFilesystem = (): UsePlaygroundFilesystemReturn => {
         openFile,
         closeFile,
         createFile: (path: string) => create("file", path),
+        rename,
         createDirectory: (path: string) => create("directory", path),
     };
 };
