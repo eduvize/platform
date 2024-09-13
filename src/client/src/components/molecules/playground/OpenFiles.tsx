@@ -54,6 +54,13 @@ export const OpenFiles = ({
 
     useEffect(() => {
         setSelectedFile(overridePath || "__welcome__");
+
+        if (overridePath) {
+            console.log(`overridePath: ${overridePath}`);
+            if (!openedRef.current.includes(overridePath)) {
+                openedRef.current.push(overridePath);
+            }
+        }
     }, [overridePath]);
 
     useEffect(() => {
@@ -71,17 +78,15 @@ export const OpenFiles = ({
 
         if (opened.length) {
             setSelectedFile(opened[0]);
-
-            openedRef.current = [...openFiles];
         }
+
+        openedRef.current = [...openFiles];
     }, [openFiles]);
 
     useEffect(() => {
-        setTimeout(() => {
-            if (!openedRef.current.includes(selectedFile || "")) {
-                setSelectedFile("__welcome__");
-            }
-        }, 1);
+        if (openedRef.current.length === 0) {
+            setSelectedFile("__welcome__");
+        }
     }, [openFiles, selectedFile]);
 
     const FileTab = ({ path }: { path: string }) => {
@@ -116,7 +121,9 @@ export const OpenFiles = ({
             ref={tabContainerRef}
         >
             <Tabs.List ref={tabListRef}>
-                <Tabs.Tab value="__welcome__">Welcome</Tabs.Tab>
+                <Tabs.Tab value="__welcome__">
+                    <Text>README</Text>
+                </Tabs.Tab>
                 {openFiles.map((path) => (
                     <FileTab key={path} path={path} />
                 ))}
