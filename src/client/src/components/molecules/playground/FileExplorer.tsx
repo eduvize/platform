@@ -36,6 +36,7 @@ export const FileExplorer = ({ w }: FileExplorerProps) => {
         createFile,
         openFile,
         rename,
+        deletePath,
         openFiles,
     } = usePlaygroundFilesystem();
     const [newEntry, setNewEntry] = useState<EntryData | null>(null);
@@ -142,7 +143,7 @@ export const FileExplorer = ({ w }: FileExplorerProps) => {
                     {
                         key: "delete-file",
                         title: "Delete",
-                        onClick: () => console.log("delete file"),
+                        onClick: () => deletePath(entry.value),
                     },
                 ],
                 {
@@ -172,7 +173,7 @@ export const FileExplorer = ({ w }: FileExplorerProps) => {
                     {
                         key: "delete-directory",
                         title: "Delete",
-                        onClick: () => console.log("delete directory"),
+                        onClick: () => deletePath(entry.value),
                     },
                 ],
                 {

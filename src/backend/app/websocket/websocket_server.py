@@ -157,6 +157,18 @@ async def rename(sid: str, data: dict):
         await socket_server.emit("rename", data, room=session_id)
         
 @socket_server.event
+async def delete(sid: str, data: dict):
+    async with socket_server.session(sid) as session:
+        session_id = session.get("session_id", None)
+        
+        if session_id is None:
+            return
+        
+        logger.info(f"Deleting filesystem entry in session {session_id}: {data['path']}")
+        
+        await socket_server.emit("delete", data, room=session_id)
+        
+@socket_server.event
 async def environment(sid: str, data: dict):
     async with socket_server.session(sid) as session:
         session_id = session.get("session_id", None)

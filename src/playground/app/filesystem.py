@@ -1,3 +1,4 @@
+import shutil
 from typing import List, Literal, Optional, Callable, TypedDict
 import os
 from watchdog.observers import Observer
@@ -88,6 +89,24 @@ def rename_path(old_path: str, new_path: str) -> None:
     new_full_path = os.path.join(base_path, new_path)
 
     os.rename(old_full_path, new_full_path)
+    
+def delete_path(path: str) -> None:
+    """
+    Deletes a file or directory recursively if it's a directory.
+
+    Args:
+        path (str): The path to delete
+    """
+    # Trim leading /'s from the path
+    path = path.lstrip("/")
+
+    base_path = "/userland/home/user"
+    full_path = os.path.join(base_path, path)
+
+    if os.path.isdir(full_path):
+        shutil.rmtree(full_path)  # Recursively delete directory and its contents
+    else:
+        os.remove(full_path)  # Delete a file
     
 def save_file_content(path: str, content: str) -> None:
     """

@@ -10,6 +10,7 @@ type Context = {
     resize: (rows: number, columns: number) => void;
     create: (type: "file" | "directory", path: string) => void;
     rename: (path: string, newPath: string) => void;
+    deletePath: (path: string) => void;
     openFile: (path: string) => void;
     closeFile: (path: string) => void;
     setFileContent: (path: string, content: string) => void;
@@ -27,6 +28,7 @@ const defaultValue: Context = {
     resize: () => {},
     create: () => {},
     rename: () => {},
+    deletePath: () => {},
     openFile: () => {},
     closeFile: () => {},
     setFileContent: () => {},
@@ -176,6 +178,14 @@ export const PlaygroundProvider = memo(
             clientRef.current.emit("rename", { path, new_path: newPath });
         };
 
+        const handleDeletePath = (path: string) => {
+            if (!clientRef.current || !isInstanceReady) {
+                return;
+            }
+
+            clientRef.current.emit("delete", { path });
+        };
+
         const handleOpenFile = (path: string) => {
             if (!clientRef.current || !isInstanceReady) {
                 return;
@@ -212,6 +222,7 @@ export const PlaygroundProvider = memo(
                     resize: handleResize,
                     create: handleCreate,
                     rename: handleRename,
+                    deletePath: handleDeletePath,
                     openFile: handleOpenFile,
                     closeFile: handleCloseFile,
                     subscribeToOutput: (callback) =>

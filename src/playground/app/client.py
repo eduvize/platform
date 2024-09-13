@@ -5,7 +5,7 @@ import threading
 from .config import get_backend_socketio_endpoint, get_self_destruct_enabled
 from .shell import Shell
 from .orchestration import mark_for_deletion
-from .filesystem import create_filesystem_entry, read_file_content, save_file_content, rename_path
+from .filesystem import create_filesystem_entry, read_file_content, save_file_content, rename_path, delete_path
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -105,6 +105,19 @@ def rename(data: dict):
     new_path = data.get("new_path")
     
     rename_path(old_path, new_path)
+    
+@client.event
+def delete(data: dict):
+    """
+    Command to delete an entry in the filesystem
+
+    Args:
+        data (dict): The filesystem entry data
+    """
+    
+    path = data.get("path")
+    
+    delete_path(path)
     
 @client.event
 def open_file(data: dict):
