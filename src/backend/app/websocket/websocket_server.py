@@ -145,6 +145,18 @@ async def create(sid: str, data: dict):
         await socket_server.emit("create", data, room=session_id)
         
 @socket_server.event
+async def rename(sid: str, data: dict):
+    async with socket_server.session(sid) as session:
+        session_id = session.get("session_id", None)
+        
+        if session_id is None:
+            return
+        
+        logger.info(f"Renaming filesystem entry in session {session_id}: {data['path']}, {data['new_path']}")
+        
+        await socket_server.emit("rename", data, room=session_id)
+        
+@socket_server.event
 async def environment(sid: str, data: dict):
     async with socket_server.session(sid) as session:
         session_id = session.get("session_id", None)
