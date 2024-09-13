@@ -9,7 +9,7 @@ import {
     TreeNodeData,
 } from "@mantine/core";
 import { FilesystemEntry } from "@models/dto";
-import { IconChevronDown } from "@tabler/icons-react";
+import { IconChevronDown, IconFile } from "@tabler/icons-react";
 import { useContextMenu } from "mantine-contextmenu";
 import { useEffect, useMemo, useState } from "react";
 
@@ -341,6 +341,10 @@ export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
                                             : "rotate(270deg)",
                                     }}
                                 />
+                            )}
+
+                            {`${node.label}`.startsWith("file:") && (
+                                <IconFile size={14} />
                             )}
 
                             <Text c="gray" size="sm">
