@@ -138,3 +138,108 @@ async def test_terminal_resize(mock_get_conn_info, mock_socket_server):
 
     mock_get_conn_info.assert_called_once_with("user123")
     mock_socket_server.emit.assert_called_once_with("terminal_resize", data, room="session123", skip_sid="user123")
+
+@pytest.mark.asyncio
+@patch("app.websocket.websocket_server.socket_server", autospec=True)
+@patch("app.websocket.websocket_server.get_connection_information", autospec=True)
+async def test_create(mock_get_conn_info, mock_socket_server):
+    """
+    Test create event.
+    """
+    mock_get_conn_info.return_value = "user", "session123"
+    mock_data = {"type": "file", "path": "test.txt"}
+    
+    await socket_server.create(sid="user123", data=mock_data)
+    
+    mock_get_conn_info.assert_called_once_with("user123")
+    mock_socket_server.emit.assert_called_once_with("create", mock_data, room="session123", skip_sid="user123")
+    
+@pytest.mark.asyncio
+@patch("app.websocket.websocket_server.socket_server", autospec=True)
+@patch("app.websocket.websocket_server.get_connection_information", autospec=True)
+async def test_rename(mock_get_conn_info, mock_socket_server):
+    """
+    Test rename event.
+    """
+    mock_get_conn_info.return_value = "user", "session123"
+    mock_data = {"path": "test", "new_path": "new_test"}
+    
+    await socket_server.rename(sid="user123", data=mock_data)
+    
+    mock_get_conn_info.assert_called_once_with("user123")
+    mock_socket_server.emit.assert_called_once_with("rename", mock_data, room="session123", skip_sid="user123")
+    
+@pytest.mark.asyncio
+@patch("app.websocket.websocket_server.socket_server", autospec=True)
+@patch("app.websocket.websocket_server.get_connection_information", autospec=True)
+async def test_delete(mock_get_conn_info, mock_socket_server):
+    """
+    Test delete event.
+    """
+    mock_get_conn_info.return_value = "user", "session123"
+    mock_data = {"path": "test.txt"}
+    
+    await socket_server.delete(sid="user123", data=mock_data)
+    
+    mock_get_conn_info.assert_called_once_with("user123")
+    mock_socket_server.emit.assert_called_once_with("delete", mock_data, room="session123", skip_sid="user123")
+    
+@pytest.mark.asyncio
+@patch("app.websocket.websocket_server.socket_server", autospec=True)
+@patch("app.websocket.websocket_server.get_connection_information", autospec=True)
+async def test_environment(mock_get_conn_info, mock_socket_server):
+    """
+    Test environment event.
+    """
+    mock_get_conn_info.return_value = "instance", "session123"
+    mock_data = {}
+    
+    await socket_server.environment(sid="instance123", data=mock_data)
+    
+    mock_get_conn_info.assert_called_once_with("instance123")
+    mock_socket_server.emit.assert_called_once_with("environment", mock_data, room="session123", skip_sid="instance123")
+    
+@pytest.mark.asyncio
+@patch("app.websocket.websocket_server.socket_server", autospec=True)
+@patch("app.websocket.websocket_server.get_connection_information", autospec=True)
+async def test_open_file(mock_get_conn_info, mock_socket_server):
+    """
+    Test open_file event.
+    """
+    mock_get_conn_info.return_value = "user", "session123"
+    mock_data = {"path": "test.txt"}
+    
+    await socket_server.open_file(sid="user123", data=mock_data)
+    
+    mock_get_conn_info.assert_called_once_with("user123")
+    mock_socket_server.emit.assert_called_once_with("open_file", mock_data, room="session123", skip_sid="user123")
+    
+@pytest.mark.asyncio
+@patch("app.websocket.websocket_server.socket_server", autospec=True)
+@patch("app.websocket.websocket_server.get_connection_information", autospec=True)
+async def test_save_file(mock_get_conn_info, mock_socket_server):
+    """
+    Test save_file event.
+    """
+    mock_get_conn_info.return_value = "user", "session123"
+    mock_data = {"path": "test.txt", "content": "some content"}
+    
+    await socket_server.save_file(sid="user123", data=mock_data)
+    
+    mock_get_conn_info.assert_called_once_with("user123")
+    mock_socket_server.emit.assert_called_once_with("save_file", mock_data, room="session123", skip_sid="user123")
+    
+@pytest.mark.asyncio
+@patch("app.websocket.websocket_server.socket_server", autospec=True)
+@patch("app.websocket.websocket_server.get_connection_information", autospec=True)
+async def test_file_content(mock_get_conn_info, mock_socket_server):
+    """
+    Test file_content event.
+    """
+    mock_get_conn_info.return_value = "instance", "session123"
+    mock_data = {"path": "test.txt", "content": "some content"}
+    
+    await socket_server.file_content(sid="instance123", data=mock_data)
+    
+    mock_get_conn_info.assert_called_once_with("instance123")
+    mock_socket_server.emit.assert_called_once_with("file_content", mock_data, room="session123", skip_sid="instance123")
