@@ -73,6 +73,8 @@ export const OpenFiles = () => {
                     {`
 ## Welcome to the Playground
 You can create new files and directories using the file explorer on the left, or by using the command line.
+
+In the future, this tab will be replaced with a description of what you'd be working on and the tools provided to you.
 `}
                 </Markdown>
             </Tabs.Panel>
