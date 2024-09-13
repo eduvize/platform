@@ -142,6 +142,9 @@ def get_filesystem_entries(directory: str) -> List[FilesystemEntry]:
         # Trim the directory path from the full path
         rel_path = os.path.relpath(full_path, base_path)
         
+        # Trim leading /'s from the path
+        rel_path = rel_path.lstrip("/")
+        
         if os.path.isdir(full_path):
             # If it's a directory, recursively get its children
             entries.append(FilesystemEntry(

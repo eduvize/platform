@@ -128,7 +128,7 @@ def open_file(data: dict):
         data (dict): The filesystem entry data
     """
     
-    path = data.get("path")
+    path = data.get("path").lstrip("/")
     content = read_file_content(path)
     
     client.emit("file_content", {
