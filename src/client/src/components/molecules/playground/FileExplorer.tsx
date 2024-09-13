@@ -263,10 +263,9 @@ export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
                 h="100%"
                 tree={tree}
                 data={data}
-                levelOffset={23}
                 selectOnClick
                 expandOnClick
-                renderNode={({ node, expanded, hasChildren, elementProps }) =>
+                renderNode={({ node, expanded, elementProps }) =>
                     node.label === "__new__" ? (
                         <Input
                             size="xs"
@@ -310,7 +309,7 @@ export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
                         <Group
                             gap={5}
                             {...elementProps}
-                            onClick={(evt) => {
+                            onClick={() => {
                                 if (node.label === "__new__") return;
 
                                 tree.select(node.value);

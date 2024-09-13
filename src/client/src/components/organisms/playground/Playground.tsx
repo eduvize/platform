@@ -36,6 +36,7 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
     const [showTerminal, setShowTerminal] = useState(!hideTerminal);
     const [focusedFile, setFocusedFile] = useState<string | null>(null);
     const [editorHeight, setEditorHeight] = useState<number | null>(null);
+    const [terminalHeight, setTerminalHeight] = useState<number>(130);
 
     const heightProperty =
         typeof height === "number"
@@ -48,7 +49,7 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
         if (rect) {
             const { width, height } = rect;
 
-            setEditorHeight(height - 123);
+            setEditorHeight(height - terminalHeight);
         }
     }, [rect]);
 
@@ -168,7 +169,7 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
                                 <div
                                     ref={viewport}
                                     style={{
-                                        height: "123px",
+                                        height: `${terminalHeight}px`,
                                         width: "100%",
                                         borderTop:
                                             "1px solid var(--mantine-color-gray-7)",
