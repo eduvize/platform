@@ -56,7 +56,6 @@ export const OpenFiles = ({
         setSelectedFile(overridePath || "__welcome__");
 
         if (overridePath) {
-            console.log(`overridePath: ${overridePath}`);
             if (!openedRef.current.includes(overridePath)) {
                 openedRef.current.push(overridePath);
             }

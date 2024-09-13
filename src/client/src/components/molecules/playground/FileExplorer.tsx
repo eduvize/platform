@@ -21,7 +21,7 @@ interface FileExplorerProps {
 interface EntryData {
     type: "file" | "directory";
     name: string;
-    dir: string;
+    path: string;
 }
 
 interface RenameData extends EntryData {
@@ -56,7 +56,7 @@ export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
 
         setNewEntry({
             type: "file",
-            dir,
+            path: dir,
             name: "",
         });
     };
@@ -66,7 +66,7 @@ export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
 
         setNewEntry({
             type: "directory",
-            dir,
+            path: dir,
             name: "",
         });
     };
@@ -76,9 +76,9 @@ export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
 
         if (newEntry.name !== "") {
             if (newEntry.type === "file") {
-                createFile(`${newEntry.dir}/${newEntry.name}`);
+                createFile(`${newEntry.path}/${newEntry.name}`);
             } else {
-                createDirectory(`${newEntry.dir}/${newEntry.name}`);
+                createDirectory(`${newEntry.path}/${newEntry.name}`);
             }
         }
 
@@ -99,8 +99,6 @@ export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
             }
 
             current = entry.children ?? [];
-            console.log(part);
-            console.log(current);
         }
 
         return current.find((entry) => entry.name === parts[parts.length - 1]);
@@ -110,11 +108,10 @@ export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
         if (renameEntry) return;
 
         const entry = getEntryFromNestedEntries(path);
-        const dirName = path.split("/").slice(0, -1).join("/");
 
         setRenameEntry({
             type,
-            dir: dirName,
+            path: path,
             name: entry?.name ?? "",
             newName: entry?.name ?? "",
         });
@@ -123,10 +120,15 @@ export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
     const handleRenameSubmit = () => {
         if (!renameEntry || renameEntry.name.trim().length === 0) return;
 
-        rename(
-            `${renameEntry.dir}/${renameEntry.name}`,
-            `${renameEntry.dir}/${renameEntry.newName}`
-        );
+        const dirName = renameEntry.path.split("/").slice(0, -1).join("/");
+
+        let newPath = renameEntry.newName;
+
+        if (dirName !== "") {
+            newPath = `${dirName}/${renameEntry.newName}`;
+        }
+
+        rename(renameEntry.path, newPath);
         setRenameEntry(null);
     };
 
@@ -188,10 +190,7 @@ export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
 
     const data = useMemo(() => {
         function makeEntry(entry: FilesystemEntry): any {
-            if (
-                renameEntry &&
-                entry.path === `${renameEntry.dir}/${renameEntry.name}`
-            ) {
+            if (renameEntry && entry.path === renameEntry.path) {
                 return {
                     label: "__rename__",
                     value: "__rename__",
@@ -203,10 +202,10 @@ export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
 
                 // Filter out any rename/new entries that are already in the directory
                 children = children.filter(
-                    (child) => !(renameEntry && renameEntry.dir === child.path)
+                    (child) => !(renameEntry && renameEntry.path === child.path)
                 );
 
-                if (newEntry && newEntry.dir === entry.path) {
+                if (newEntry && newEntry.path === entry.path) {
                     children = [
                         ...children,
                         {
@@ -231,7 +230,7 @@ export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
 
         let list = entries.map(makeEntry);
 
-        if (newEntry && newEntry.dir === "/") {
+        if (newEntry && newEntry.path === "/") {
             list = [
                 ...list,
                 {
