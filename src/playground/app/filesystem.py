@@ -22,8 +22,8 @@ def create_filesystem_entry(entry_type: Literal["file", "directory"], path: str)
         path (str): The path of the entry
     """
 
-    # Strip ., / and .. from the path
-    path = os.path.normpath(path)
+    # Remove leading /'s from the path
+    path = path.lstrip("/")
     
     # Define the base path (user's home directory)
     base_path = "/userland/home/user"
@@ -59,8 +59,35 @@ def read_file_content(path: str) -> str:
         str: The content of the file
     """
 
-    with open(path, "r") as f:
+    # Trim leading /'s from the path
+    path = path.lstrip("/")
+
+    base_path = "/userland/home/user"
+
+    full_path = os.path.join(base_path, path)
+
+    with open(full_path, "r") as f:
         return f.read()
+    
+def rename_path(old_path: str, new_path: str) -> None:
+    """
+    Renames a file or directory
+
+    Args:
+        old_path (str): The old path
+        new_path (str): The new path
+    """
+
+    # Trim leading /'s from the path
+    old_path = old_path.lstrip("/")
+    new_path = new_path.lstrip("/")
+
+    base_path = "/userland/home/user"
+
+    old_full_path = os.path.join(base_path, old_path)
+    new_full_path = os.path.join(base_path, new_path)
+
+    os.rename(old_full_path, new_full_path)
     
 def save_file_content(path: str, content: str) -> None:
     """
@@ -71,11 +98,19 @@ def save_file_content(path: str, content: str) -> None:
         content (str): The content to save
     """
 
-    with open(path, "w") as f:
+    # Trim leading /'s from the path
+    path = path.lstrip("/")
+    
+    base_path = "/userland/home/user"
+    
+    full_path = os.path.join(base_path, path)
+
+    with open(full_path, "w") as f:
         f.write(content)
 
 def get_filesystem_entries(directory: str) -> List[FilesystemEntry]:
     entries: List[FilesystemEntry] = []
+    base_path = "/userland/home/user"
     
     # Walk through the directory contents
     for entry_name in os.listdir(directory):
@@ -84,11 +119,15 @@ def get_filesystem_entries(directory: str) -> List[FilesystemEntry]:
             continue
 
         full_path = os.path.join(directory, entry_name)
+        
+        # Trim the directory path from the full path
+        rel_path = os.path.relpath(full_path, base_path)
+        
         if os.path.isdir(full_path):
             # If it's a directory, recursively get its children
             entries.append(FilesystemEntry(
                 name=entry_name,
-                path=full_path,
+                path=rel_path,
                 type="directory",
                 children=get_filesystem_entries(full_path)
             ))
@@ -96,7 +135,7 @@ def get_filesystem_entries(directory: str) -> List[FilesystemEntry]:
             # If it's a file, just add the file entry without children
             entries.append(FilesystemEntry(
                 name=entry_name,
-                path=full_path,
+                path=rel_path,
                 type="file",
                 children=None
             ))

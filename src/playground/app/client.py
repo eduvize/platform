@@ -5,7 +5,7 @@ import threading
 from .config import get_backend_socketio_endpoint, get_self_destruct_enabled
 from .shell import Shell
 from .orchestration import mark_for_deletion
-from .filesystem import create_filesystem_entry, read_file_content, save_file_content
+from .filesystem import create_filesystem_entry, read_file_content, save_file_content, rename_path
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -91,6 +91,20 @@ def create(data: dict):
     
     if not success:
         pass #TODO: Send an alert to the user
+    
+@client.event
+def rename(data: dict):
+    """
+    Command to rename an entry in the filesystem
+
+    Args:
+        data (dict): The filesystem entry data
+    """
+    
+    old_path = data.get("path")
+    new_path = data.get("new_path")
+    
+    rename_path(old_path, new_path)
     
 @client.event
 def open_file(data: dict):
