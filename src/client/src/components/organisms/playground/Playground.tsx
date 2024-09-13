@@ -18,6 +18,7 @@ import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "./Playground.css";
 import { FileExplorer, OpenFiles } from "@molecules";
+import { useResizeObserver } from "@mantine/hooks";
 
 interface PlaygroundProps {
     hideTerminal?: boolean;
@@ -27,11 +28,14 @@ interface PlaygroundProps {
 export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
     const viewport = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<Terminal | null>(null);
+    const [stackRef, rect] = useResizeObserver();
+    const editorContainerRef = useRef<HTMLDivElement>(null);
     const fitAddonRef = useRef<FitAddon>(new FitAddon());
     const { connected, ready, reconnecting } = usePlaygroundConnectivity();
     const { sendInput, resize, subscribe, unsubscribe } = useCommandLine();
     const [showTerminal, setShowTerminal] = useState(!hideTerminal);
     const [focusedFile, setFocusedFile] = useState<string | null>(null);
+    const [editorHeight, setEditorHeight] = useState<number | null>(null);
 
     const heightProperty =
         typeof height === "number"
@@ -39,6 +43,14 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
             : typeof height === "string"
             ? height
             : "400px";
+
+    useEffect(() => {
+        if (rect) {
+            const { width, height } = rect;
+
+            setEditorHeight(height - 123);
+        }
+    }, [rect]);
 
     useEffect(() => {
         if (!connected || reconnecting) {
@@ -146,26 +158,25 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
                             />
                         </Box>
 
-                        <Flex direction="column" w="100%" h="100%">
-                            <Flex flex={1} w="100%">
-                                <OpenFiles selectedFile={focusedFile} />
-                            </Flex>
+                        <Stack w="100%" h="100%" ref={stackRef}>
+                            <OpenFiles
+                                selectedFile={focusedFile}
+                                height={`${editorHeight}px`}
+                            />
 
                             {showTerminal && (
-                                <Flex h="120px" mb="xs" w="100%">
-                                    <div
-                                        ref={viewport}
-                                        style={{
-                                            height: "100%",
-                                            width: "100%",
-                                            borderTop:
-                                                "1px solid var(--mantine-color-gray-7)",
-                                            padding: "4px",
-                                        }}
-                                    />
-                                </Flex>
+                                <div
+                                    ref={viewport}
+                                    style={{
+                                        height: "123px",
+                                        width: "100%",
+                                        borderTop:
+                                            "1px solid var(--mantine-color-gray-7)",
+                                        padding: "4px",
+                                    }}
+                                />
                             )}
-                        </Flex>
+                        </Stack>
                     </Group>
                 </Grid.Col>
             </Grid>

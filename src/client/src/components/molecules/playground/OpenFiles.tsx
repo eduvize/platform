@@ -4,17 +4,25 @@ import Markdown from "react-markdown";
 import { FileEditor } from "./FileEditor";
 import { useEffect, useRef, useState } from "react";
 import { IconX } from "@tabler/icons-react";
+import { useResizeObserver } from "@mantine/hooks";
 
 interface OpenFilesProps {
+    height: string;
     selectedFile?: string | null;
 }
 
-export const OpenFiles = ({ selectedFile: overridePath }: OpenFilesProps) => {
+export const OpenFiles = ({
+    height,
+    selectedFile: overridePath,
+}: OpenFilesProps) => {
     const openedRef = useRef<string[]>([]);
+    const tabListRef = useRef<HTMLDivElement>(null);
+    const [tabContainerRef, tabContainerRect] = useResizeObserver();
     const { openFiles, closeFile, entries } = usePlaygroundFilesystem();
     const [selectedFile, setSelectedFile] = useState<string | null>(
         overridePath || null
     );
+    const [editorHeight, setEditorHeight] = useState<number | null>(null);
 
     const doesPathExist = (path: string) => {
         const parts = path.split("/");
@@ -34,6 +42,15 @@ export const OpenFiles = ({ selectedFile: overridePath }: OpenFilesProps) => {
 
         return current.some((entry) => entry.name === parts[parts.length - 1]);
     };
+
+    useEffect(() => {
+        setEditorHeight(
+            tabContainerRect?.height
+                ? tabContainerRect.height -
+                      (tabListRef.current?.clientHeight || 0)
+                : null
+        );
+    }, [tabContainerRect]);
 
     useEffect(() => {
         setSelectedFile(overridePath || "__welcome__");
@@ -96,8 +113,9 @@ export const OpenFiles = ({ selectedFile: overridePath }: OpenFilesProps) => {
             w="100%"
             h="100%"
             onChange={setSelectedFile}
+            ref={tabContainerRef}
         >
-            <Tabs.List>
+            <Tabs.List ref={tabListRef}>
                 <Tabs.Tab value="__welcome__">Welcome</Tabs.Tab>
                 {openFiles.map((path) => (
                     <FileTab key={path} path={path} />
@@ -116,8 +134,8 @@ In the future, this tab will be replaced with a description of what you'd be wor
             </Tabs.Panel>
 
             {openFiles.map((path) => (
-                <Tabs.Panel key={path} value={path} h="calc(100% - 14px)">
-                    <FileEditor path={path} />
+                <Tabs.Panel key={path} value={path}>
+                    <FileEditor path={path} height={`${editorHeight}px`} />
                 </Tabs.Panel>
             ))}
         </Tabs>

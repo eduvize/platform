@@ -1,16 +1,17 @@
 import { useFile } from "@context/playground/hooks";
-import Editor, { useMonaco } from "@monaco-editor/react";
+import Editor from "@monaco-editor/react";
 
 interface FileEditorProps {
     path: string;
+    height: string;
 }
 
-export const FileEditor = ({ path }: FileEditorProps) => {
+export const FileEditor = ({ height, path }: FileEditorProps) => {
     const { isLoaded, content, setContent } = useFile(path);
 
     return (
         <Editor
-            height="100%"
+            height={height}
             theme="vs-dark"
             defaultLanguage="python"
             value={content}
