@@ -27,6 +27,8 @@ spec:
             secretKeyRef:
               name: postgres
               key: connection-string
+        - name: BACKEND_API_ENDPOINT
+          value: "http://{{ include "eduvize.fullname" . }}-api-service:{{ .Values.api.port }}/api"
         - name: BACKEND_SOCKETIO_ENDPOINT
           value: "http://{{ include "eduvize.fullname" . }}-api-service:{{ .Values.api.port }}"
         - name: JWT_SIGNING_KEY
@@ -36,7 +38,5 @@ spec:
               key: {{ .Values.bearerAuth.playground.key }}
         - name: IMAGE_PULL_SECRET
           value: "regcred"
-        - name: PLAYGROUND_ENVIRONMENT_IMAGE_PREFIX
-          value: {{ .Values.playground.environmentImagePrefix }}
-        - name: PLAYGROUND_CONTROLLER_IMAGE
-          value: {{ .Values.playground.controllerImage }}
+        - name: PLAYGROUND_HOST_IMAGE
+          value: {{ .Values.playground.hostImage }}

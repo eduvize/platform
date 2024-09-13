@@ -12,7 +12,6 @@ import {
     Grid,
     Group,
     Box,
-    Flex,
 } from "@mantine/core";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
@@ -29,9 +28,9 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
     const viewport = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<Terminal | null>(null);
     const [stackRef, rect] = useResizeObserver();
-    const editorContainerRef = useRef<HTMLDivElement>(null);
     const fitAddonRef = useRef<FitAddon>(new FitAddon());
-    const { connected, ready, reconnecting } = usePlaygroundConnectivity();
+    const { connected, state, status, reconnecting } =
+        usePlaygroundConnectivity();
     const { sendInput, resize, subscribe, unsubscribe } = useCommandLine();
     const [showTerminal, setShowTerminal] = useState(!hideTerminal);
     const [focusedFile, setFocusedFile] = useState<string | null>(null);
@@ -54,6 +53,10 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
     }, [rect]);
 
     useEffect(() => {
+        if (hideTerminal) {
+            return;
+        }
+
         if (!connected || reconnecting) {
             if (terminalRef.current) {
                 terminalRef.current.dispose();
@@ -63,7 +66,7 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
             return;
         }
 
-        if (!ready || terminalRef.current) {
+        if (state !== "ready" || terminalRef.current) {
             return;
         }
 
@@ -88,7 +91,7 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
         const { rows, cols } = terminalRef.current;
 
         resize(rows, cols);
-    }, [connected, ready, reconnecting]);
+    }, [connected, state, reconnecting, hideTerminal]);
 
     useEffect(() => {
         // Subscribe to output
@@ -114,7 +117,7 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
         });
     };
 
-    if (!connected || !ready || reconnecting) {
+    if (!connected || state !== "ready" || reconnecting) {
         return (
             <Card withBorder mih={heightProperty}>
                 <Center pos="absolute" left="0" top="0" w="100%" h="100%">
@@ -126,9 +129,16 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
 
                             {!reconnecting && (
                                 <>
-                                    {!connected
-                                        ? "Connecting to playground..."
-                                        : "Initializing playground..."}
+                                    {!connected &&
+                                        "Connecting to playground..."}
+                                    {connected &&
+                                        state === "initializing" &&
+                                        !status &&
+                                        "Initializing playground session..."}
+                                    {connected &&
+                                        state === "initializing" &&
+                                        status !== null &&
+                                        status}
                                 </>
                             )}
                         </Text>

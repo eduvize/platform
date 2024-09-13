@@ -1,7 +1,7 @@
 import logging
 import os
 import time
-from .config import get_jwt_signing_key, get_purge_on_disconnect
+from .config import get_jwt_signing_key, get_purge_on_disconnect, get_environment_id
 from .client import connect_to_server
 from .jwt import create_token
 from .cleanup import reinitialize_environment
@@ -18,27 +18,17 @@ def initialize_session():
     
     while True:
         logging.info("Generating token")
+            
+        logging.info("Connecting to server")
         token = create_token(
             data={
                 "session_id": session_id,
+                "environment_id": get_environment_id(),
                 "hostname": pod_hostname
             }, 
             secret=signing_key, 
             expiration_minutes=5
         )
-        
-        # Loop until /userland/NOTICE.txt is found
-        while True:
-            try:
-                with open("/userland/NOTICE.txt") as f:
-                    break
-            except Exception:
-                print("Waiting for NOTICE.txt")
-                pass
-            
-            time.sleep(1)
-        
-        logging.info("Connecting to server")
         connect_to_server(token)
         
         if get_purge_on_disconnect():

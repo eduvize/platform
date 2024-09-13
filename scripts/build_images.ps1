@@ -98,12 +98,13 @@ Write-Log "Build process started with arguments: images='$images', repository='$
 
 # Define the name to image tag map
 $nameToTagMap = @{
-    "backend/api"            = "api"
-    "backend/database"       = "postgres"
-    "playground"             = "playground-controller"
-    "playground/controller"  = "playground-controller"
-    "playground/environment" = "playground-environment"
-    "client"                 = "app"
+    "backend/api"               = "api"
+    "backend/database"          = "postgres"
+    "playground/builder"        = "playground-image-builder"
+    "playground/container"      = "playground-host"
+    "course_generator"          = "course-generator"
+    "exercise_generator"        = "exercise-generator"
+    "client"                    = "app"
 }
 
 # Split the images argument into individual names

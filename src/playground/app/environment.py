@@ -1,10 +1,10 @@
 from typing import List, TypedDict
-from .filesystem import FilesystemEntry, get_filesystem_entries
+from .filesystem import FilesystemEntry, get_top_level_filesystem_entries
 
 class EnvironmentSnapshot(TypedDict):
     filesystem: List[FilesystemEntry]
 
 def get_environment_snapshot():
     return EnvironmentSnapshot(
-        filesystem=get_filesystem_entries("/userland/home/user")
+        filesystem=get_top_level_filesystem_entries("/home/user")
     )

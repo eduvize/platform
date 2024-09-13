@@ -1,5 +1,6 @@
 import { ChatProvider, useChat } from "@context/chat";
 import { useCourse, useLesson } from "@context/course/hooks";
+import { PlaygroundProvider } from "@context/playground";
 import {
     Button,
     Card,
@@ -13,7 +14,7 @@ import {
     Text,
 } from "@mantine/core";
 import { ReadingMaterial } from "@molecules";
-import { Chat } from "@organisms";
+import { Chat, Playground } from "@organisms";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -30,7 +31,8 @@ export const Component = ({ courseId, lessonId }: LessonProps) => {
         course: { lesson_index },
     } = useCourse();
     const [isChatUsed, setIsChatUsed] = useState(false);
-    const { title, description, sections, order } = useLesson(lessonId);
+    const { title, description, sections, order, exercises } =
+        useLesson(lessonId);
     const [section, setSection] = useState(lessonId ? lesson_index : 0);
 
     useEffect(() => {
@@ -46,6 +48,8 @@ export const Component = ({ courseId, lessonId }: LessonProps) => {
     const handleNextSection = () => {
         setSection(section + 1);
     };
+
+    const exercise = exercises.length > 0 ? exercises[0] : null;
 
     return (
         <Container size={sections.length === 1 ? "lg" : "xl"}>
@@ -109,6 +113,23 @@ export const Component = ({ courseId, lessonId }: LessonProps) => {
                         </Card>
 
                         <Space h="xs" />
+
+                        {exercise && (
+                            <>
+                                <Card withBorder>
+                                    <Text size="lg">{exercise.title}</Text>
+                                    <Text size="sm">{exercise.summary}</Text>
+
+                                    <PlaygroundProvider
+                                        environmentId={exercise.environment_id}
+                                    >
+                                        <Playground height="600px" />
+                                    </PlaygroundProvider>
+                                </Card>
+
+                                <Space h="xs" />
+                            </>
+                        )}
 
                         <Card withBorder>
                             <Chat

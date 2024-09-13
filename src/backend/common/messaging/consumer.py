@@ -47,15 +47,24 @@ class KafkaConsumer:
                         raise KafkaException(msg.error())
                     
                 else:
-                    logging.info(f"Received message: {msg.key()}")
+                    key = msg.key()
+                    logging.info(f"Received message: {key}")
                     
                     # Read the JSON data, converting it to the specified type, and yield it
                     data = json.loads(msg.value())
                     
-                    if issubclass(message_type, BaseModel):
-                        model_instance = message_type.model_validate(data)
-                    else:
-                        model_instance = message_type(**data)
+                    try:
+                        if issubclass(message_type, BaseModel):
+                            model_instance = message_type.model_validate(data)
+                        else:
+                            model_instance = message_type(**data)
+                    except Exception as e:
+                        logging.error(f"An error occurred while validating the message: {e}. Skipping...")
+                        
+                        # Write offset
+                        self.consumer.commit(message=msg)
+                        
+                        continue
                     
                     yield model_instance, msg
         except KeyboardInterrupt:

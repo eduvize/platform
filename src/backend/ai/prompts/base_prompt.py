@@ -72,6 +72,7 @@ class BasePrompt:
         
         try:
             pydantic_cast = cast(BaseModel, self.tool_result_types[tool_name])
+            
             validated_data = pydantic_cast.model_validate(inst.result)
             
             inst.result = validated_data

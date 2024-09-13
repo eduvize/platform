@@ -96,13 +96,37 @@ course_generator:
       secret: openai
       key: api-key
 
+exercise_generator:
+  image: registry.crosswinds.cloud/eduvize/exercise-generator:latest
+  replicas: 1
+  envSecretMap:
+    - name: OPENAI_KEY
+      secret: openai
+      key: api-key
+
+playground_image_builder:
+  image: registry.crosswinds.cloud/eduvize/playground-image-builder:latest
+  replicas: 1
+  envSecretMap:
+    - name: OPENAI_KEY
+      secret: openai
+      key: api-key
+    - name: REGISTRY
+      secret: playground-image-registry
+      key: host
+    - name: REGISTRY_USER
+      secret: playground-image-registry
+      key: user
+    - name: REGISTRY_CRED
+      secret: playground-image-registry
+      key: password
+
 playground:
-  controllerImage: registry.crosswinds.cloud/eduvize/playground-controller:latest
-  environmentImagePrefix: registry.crosswinds.cloud/eduvize/playground-environment
+  hostImage: registry.crosswinds.cloud/eduvize/playground-host:latest
   orchestratorImage: registry.crosswinds.cloud/eduvize/playground-orchestrator:latest
 
 kafka:
-    bootstrapServers: kafka:9092
+  bootstrapServers: kafka:9092
 
 redis:
   image: redis:6

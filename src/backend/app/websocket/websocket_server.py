@@ -4,14 +4,19 @@ from socketio import AsyncServer
 from app.utilities.jwt import decode_token, InvalidJWTToken
 from common.cache import set_key, get_key, delete_key
 from config import get_playground_token_secret
+from app.repositories import PlaygroundRepository
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-socket_server = AsyncServer(async_mode="asgi", cors_allowed_origins="*")
+socket_server = AsyncServer(async_mode="asgi", cors_allowed_origins="*", async_handlers=True)
 
 @socket_server.event
-async def connect(sid: str, environment_data: dict, extra: Optional[dict] = None):
+async def connect(
+    sid: str, 
+    environment_data: dict, 
+    extra: Optional[dict] = None
+):
     token = get_token(environment_data)
     
     if token is None:
@@ -21,6 +26,7 @@ async def connect(sid: str, environment_data: dict, extra: Optional[dict] = None
     try:
         decoded = decode_token(token=token, secret=get_playground_token_secret())
         session_id = decoded.get("session_id", None)
+        environment_id = decoded.get("environment_id", None)
         instance_hostname = decoded.get("hostname", None)
         user_id = decoded.get("user_id", None)
         
@@ -33,16 +39,50 @@ async def connect(sid: str, environment_data: dict, extra: Optional[dict] = None
         
         # If it's a user
         if user_id is not None:
+            if environment_id is None:
+                logger.info(f"Connection from {sid} failed due to missing environment ID")
+                return False
+            
             logger.info(f"Connection from {sid} succeeded with user ID {user_id}, session ID {session_id}")
             async with socket_server.session(sid) as session:
                 session["session_id"] = session_id
                 session["user_id"] = user_id
-                
-            is_alive = get_key(get_liveness_cache_key(session_id))
+                session["environment_id"] = environment_id
             
+            logger.info(f"User wants environment {environment_id}")
+            
+            playground_repo = PlaygroundRepository()
+            environment = playground_repo.get_environment(environment_id)
+
+            if environment is None:
+                logger.info(f"Connection from {sid} failed due to missing environment {environment_id}")
+                return False
+            
+            logger.info(f"Image tag for environment {environment_id}: {environment.image_tag}")
+            
+            image_tag = environment.image_tag
+            
+            if image_tag is None:
+                logger.info(f"Connection from {sid} failed due to missing image tag for environment {environment_id}")
+                return False
+            
+            set_key(
+                key=get_image_tag_cache_key(environment_id),
+                value=image_tag
+            )
+            
+            is_alive = get_key(get_liveness_cache_key(session_id))
+            is_ready = get_key(get_instance_ready_cache_key(session_id))
+            
+            # Check if the instance is already waiting for the user
             if is_alive is not None:
                 await socket_server.emit("instance_connected", room=session_id) # Notify the user of the instance connection
-                await socket_server.emit("user_connected", room=session_id) # Notify the instance of the user connection
+                await socket_server.emit("user_connected", {
+                    "image_tag": image_tag
+                }, room=session_id) # Notify the instance of the user connection
+                
+            if is_ready is not None:
+                await socket_server.emit("instance_ready", room=session_id)
                 
             connected_key = get_user_connected_cache_key(session_id)
             
@@ -60,9 +100,15 @@ async def connect(sid: str, environment_data: dict, extra: Optional[dict] = None
                 session["instance_hostname"] = instance_hostname
                 
             user_connected_key = get_user_connected_cache_key(session_id)
+            image_tag_key = get_image_tag_cache_key(environment_id)
             
-            if get_key(user_connected_key) is not None:
-                await socket_server.emit("user_connected", room=session_id) # Notify the instance of the user connection
+            is_user_connected = get_key(user_connected_key)
+            image_tag = get_key(image_tag_key)
+            
+            if is_user_connected is not None and image_tag is not None:
+                await socket_server.emit("user_connected", {
+                    "image_tag": image_tag
+                }, room=session_id) # Notify the instance of the user connection
                 
             set_key(
                 key=get_liveness_cache_key(session_id),
@@ -80,23 +126,48 @@ async def connect(sid: str, environment_data: dict, extra: Optional[dict] = None
     return True
 
 @socket_server.event
+async def setup_status(sid: str, status: str):
+    client_type, session_id, environment_id = await get_connection_information(sid)
+    
+    if client_type == "instance" and session_id:
+        logger.info(f"Received setup status from {client_type} {session_id}: {status}")
+        
+        await socket_server.emit("setup_status", status, room=session_id, skip_sid=sid)
+
+@socket_server.event
+async def ready(sid: str):
+    client_type, session_id, env_id = await get_connection_information(sid)
+    
+    if client_type == "instance" and session_id:
+        logger.info(f"Instance {session_id} is ready")
+        
+        set_key(
+            key=get_instance_ready_cache_key(session_id),
+            value="1",
+        )
+        await socket_server.emit("instance_ready", room=session_id, skip_sid=sid)
+
+@socket_server.event
 async def disconnect(sid: str):
-    client_type, session_id = await get_connection_information(sid)
+    client_type, session_id, environment_id = await get_connection_information(sid)
     
     if client_type and session_id:
         if client_type == "instance":
             logger.info(f"Instance {session_id} disconnected")
             await socket_server.emit("instance_disconnected", room=session_id, skip_sid=sid)
             delete_key(get_liveness_cache_key(session_id))
+            delete_key(get_instance_ready_cache_key(session_id))
             
         if client_type == "user":
             logger.info(f"User {session_id} disconnected")
+            image_cache_key = get_image_tag_cache_key(environment_id)
             await socket_server.emit("user_disconnected", room=session_id, skip_sid=sid)
             delete_key(get_user_connected_cache_key(session_id))
+            delete_key(image_cache_key)
 
 @socket_server.event
 async def terminal_input(sid: str, t_input: str):
-    client_type, session_id = await get_connection_information(sid)
+    client_type, session_id, env_id = await get_connection_information(sid)
     
     if client_type == "user" and session_id:
         logger.info(f"Received terminal input from {client_type} {session_id}: {t_input}")
@@ -105,7 +176,7 @@ async def terminal_input(sid: str, t_input: str):
     
 @socket_server.event
 async def terminal_output(sid: str, output: str):
-    client_type, session_id = await get_connection_information(sid)
+    client_type, session_id, env_id = await get_connection_information(sid)
     
     if client_type == "instance" and session_id:
         logger.info(f"Sending terminal output to {client_type} {session_id}: {output}")
@@ -114,7 +185,7 @@ async def terminal_output(sid: str, output: str):
     
 @socket_server.event
 async def terminal_resize(sid: str, data: dict):
-    client_type, session_id = await get_connection_information(sid)
+    client_type, session_id, env_id = await get_connection_information(sid)
     
     if client_type == "user" and session_id:
         logger.info(f"Resizing terminal for {client_type} {session_id} to {data['rows']}x{data['columns']}")
@@ -123,7 +194,7 @@ async def terminal_resize(sid: str, data: dict):
     
 @socket_server.event
 async def create(sid: str, data: dict):
-    client_type, session_id = await get_connection_information(sid)
+    client_type, session_id, env_id = await get_connection_information(sid)
     
     if client_type == "user" and session_id:
         logger.info(f"Creating new filesystem entry for {client_type} {session_id}: {data['type']}, {data['path']}")
@@ -132,7 +203,7 @@ async def create(sid: str, data: dict):
     
 @socket_server.event
 async def rename(sid: str, data: dict):
-    client_type, session_id = await get_connection_information(sid)
+    client_type, session_id, env_id = await get_connection_information(sid)
     
     if client_type == "user" and session_id:
         logger.info(f"Renaming filesystem entry for {client_type} {session_id}: {data['path']}, {data['new_path']}")
@@ -141,7 +212,7 @@ async def rename(sid: str, data: dict):
         
 @socket_server.event
 async def delete(sid: str, data: dict):
-    client_type, session_id = await get_connection_information(sid)
+    client_type, session_id, env_id = await get_connection_information(sid)
     
     if client_type == "user" and session_id:
         logger.info(f"Deleting filesystem entry for {client_type} {session_id}: {data['path']}")
@@ -150,7 +221,7 @@ async def delete(sid: str, data: dict):
         
 @socket_server.event
 async def environment(sid: str, data: dict):
-    client_type, session_id = await get_connection_information(sid)
+    client_type, session_id, env_id = await get_connection_information(sid)
     
     if client_type == "instance" and session_id:
         logger.info(f"Updating environment for {client_type} {session_id}")
@@ -159,7 +230,7 @@ async def environment(sid: str, data: dict):
         
 @socket_server.event
 async def open_file(sid: str, data: dict):
-    client_type, session_id = await get_connection_information(sid)
+    client_type, session_id, env_id = await get_connection_information(sid)
     
     if client_type == "user" and session_id:
         logger.info(f"Opening file {data['path']} for {client_type} {session_id}")
@@ -168,7 +239,7 @@ async def open_file(sid: str, data: dict):
     
 @socket_server.event
 async def save_file(sid: str, data: dict):
-    client_type, session_id = await get_connection_information(sid)
+    client_type, session_id, env_id = await get_connection_information(sid)
     
     if client_type == "user" and session_id:
         logger.info(f"Saving file {data['path']} for {client_type} {session_id}")
@@ -177,14 +248,50 @@ async def save_file(sid: str, data: dict):
     
 @socket_server.event
 async def file_content(sid: str, data: dict):
-    client_type, session_id = await get_connection_information(sid)
+    client_type, session_id, env_id = await get_connection_information(sid)
     
     if client_type == "instance" and session_id:
         logger.info(f"Sending file content to user for {data['path']} in session {session_id}")
         
         await socket_server.emit("file_content", data, room=session_id, skip_sid=sid)
+
+@socket_server.event
+async def subscribe_to_path(sid: str, data: dict):
+    client_type, session_id, env_id = await get_connection_information(sid)
+    
+    if client_type == "user" and session_id:
+        logger.info(f"Subscribing to path {data['path']} in session {session_id}")
         
-async def get_connection_information(sid: str) -> Tuple[Literal["user", "instance", None], Optional[str]]:
+        await socket_server.emit("subscribe_to_path", data, room=session_id, skip_sid=sid)
+        
+@socket_server.event
+async def unsubscribe_from_path(sid: str, data: dict):
+    client_type, session_id, env_id = await get_connection_information(sid)
+    
+    if client_type == "user" and session_id:
+        logger.info(f"Unsubscribing from path {data['path']} in session {session_id}")
+        
+        await socket_server.emit("unsubscribe_from_path", data, room=session_id, skip_sid=sid)
+
+@socket_server.event
+async def get_directory(sid: str, data: dict):
+    client_type, session_id, env_id = await get_connection_information(sid)
+    
+    if client_type == "user" and session_id:
+        logger.info(f"Getting directory for {data['path']} in session {session_id}")
+        
+        await socket_server.emit("get_directory", data, room=session_id, skip_sid=sid)
+        
+@socket_server.event
+async def directory_contents(sid: str, data: dict):
+    client_type, session_id, env_id = await get_connection_information(sid)
+    
+    if client_type == "instance" and session_id:
+        logger.info(f"Sending directory contents to user for {data['path']} in session {session_id}")
+        
+        await socket_server.emit("directory_contents", data, room=session_id, skip_sid=sid)
+        
+async def get_connection_information(sid: str) -> Tuple[Literal["user", "instance", None], Optional[str], Optional[str]]:
     """
     Gets the client type and session ID associated with a socket connection.
 
@@ -195,14 +302,15 @@ async def get_connection_information(sid: str) -> Tuple[Literal["user", "instanc
         session_id = session.get("session_id", None)
         user_id = session.get("user_id", None)
         instance_hostname = session.get("instance_hostname", None)
+        environment_id = session.get("environment_id", None)
         
         if user_id is not None:
-            return "user", session_id
+            return "user", session_id, environment_id
         
         if instance_hostname is not None:
-            return "instance", session_id
+            return "instance", session_id, None
         
-        return None, session_id
+        return None, session_id, None
     
 def get_liveness_cache_key(session_id: str) -> str:
     """
@@ -216,6 +324,18 @@ def get_liveness_cache_key(session_id: str) -> str:
     """
     return f"playground_session:{session_id}:alive"
 
+def get_instance_ready_cache_key(session_id: str) -> str:
+    """
+    Generates a cache key for the readiness status of a session instance.
+
+    Args:
+        session_id (str): The ID of the session to generate the key for.
+
+    Returns:
+        str: The cache key.
+    """
+    return f"playground_session:{session_id}:ready"
+
 def get_user_connected_cache_key(session_id: str) -> str:
     """
     Generates a cache key for the user connected status of a session instance.
@@ -227,6 +347,18 @@ def get_user_connected_cache_key(session_id: str) -> str:
         str: The cache key.
     """
     return f"playground_session:{session_id}:user_connected"
+
+def get_image_tag_cache_key(environment_id: str) -> str:
+    """
+    Generates a cache key for the image tag of an environment.
+
+    Args:
+        environment_id (str): The ID of the environment to generate the key for.
+
+    Returns:
+        str: The cache key.
+    """
+    return f"playground_environment:{environment_id}:image_tag"
 
 def get_token(environ: dict) -> Optional[str]:
     """

@@ -1,7 +1,10 @@
+import logging
 from typing import Optional
 import uuid
 from fastapi import Depends
 from openai import OpenAI
+
+from domain.dto.courses.exercise_plan import ExercisePlan
 from .user_service import UserService
 from app.repositories import CourseRepository
 from app.utilities.profile import get_user_profile_text
@@ -13,9 +16,7 @@ from domain.schema.courses import Course, Lesson
 from domain.dto.courses import CourseDto, CourseListingDto, CoursePlanDto, CourseProgressionDto
 from domain.dto.profile import UserProfileDto
 from domain.topics import CourseGenerationTopic
-from ai.prompts import GetAdditionalInputsPrompt, GenerateCourseOutlinePrompt
-
-kafka_producer = KafkaProducer()
+from ai.prompts import GetAdditionalInputsPrompt, GenerateCourseOutlinePrompt, GenerateExercisesPrompt
 
 class CourseService:
     user_service: UserService
@@ -111,9 +112,12 @@ class CourseService:
             course_dto=course_dto
         )
         
+        kafka_producer = KafkaProducer()
+        
         kafka_producer.produce_message(
             topic=Topic.GENERATE_NEW_COURSE,
             message=CourseGenerationTopic(
+                user_id=uuid.UUID(user_id),
                 course_id=course_id,
                 course_outline=outline   
             ) 
@@ -129,7 +133,7 @@ class CourseService:
         if user is None:
             raise ValueError("User not found")
         
-        course = self.course_repo.get_course(user.id, uuid.UUID(course_id))
+        course = self.course_repo.get_course(uuid.UUID(course_id))
         
         if course is None:
             raise ValueError("Course not found")
@@ -227,7 +231,7 @@ class CourseService:
         if user is None:
             raise ValueError("User not found")
         
-        course = self.course_repo.get_course(user.id, course_id)
+        course = self.course_repo.get_course(course_id)
         
         if course is None:
             raise ValueError("Course not found")
@@ -244,3 +248,30 @@ class CourseService:
         )
         
         return response.data[0].url
+    
+    def get_exercises(self, course_id: uuid.UUID) -> Optional[list[ExercisePlan]]:
+        course = self.course_repo.get_course(course_id)
+        
+        if course is None:
+            raise ValueError("Course not found")
+        
+        exercises: list[ExercisePlan] = []
+        
+        for module in course.modules:
+            logging.info(f"Generating exercises for module: {module.title}")
+            
+            for lesson in module.lessons:
+                logging.info(f"Generating exercises for lesson: {lesson.title}")
+                
+                lesson_content = "\n".join([
+                    section.content
+                    for section in lesson.sections
+                ])
+                
+                prompt = GenerateExercisesPrompt()
+                lesson_exercises = prompt.get_exercises(lesson_content)
+                
+                if lesson_exercises is not None:
+                    exercises.append(lesson_exercises[0])
+                    
+        return exercises

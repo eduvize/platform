@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   api:
     build:
@@ -15,6 +13,7 @@ services:
       - REQUIRE_EMAIL_VALIDATION=false
       - PLAYGROUND_TOKEN_SECRET=devkey123
       - OVERRIDE_PLAYGROUND_SESSION_ID=fakeplaygroundsessionid
+      - OVERRIDE_PLAYGROUND_HOSTNAME=playground-host
     depends_on:
       - database
       - redis
@@ -23,7 +22,14 @@ services:
     ports:
       - "8000:8000"
     networks:
-      - app-tier
+      - eduvize
+
+  redis:
+    image: redis:6
+    ports:
+      - "6379:6379"
+    networks:
+      - eduvize
 
   course_generation_job:
     build:
@@ -41,46 +47,60 @@ services:
       - kafka
       - database
     networks:
-      - app-tier
+      - eduvize
 
-  playground-controller:
+  exercise_generation_job:
+    build:
+      context: .
+      dockerfile: jobs/Dockerfile
+      args:
+        JOB_NAME: exercise_generator
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=database
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_MAX_POLL_INTERVAL_SECONDS=1800 # 30 minutes
+    depends_on:
+      - kafka
+      - database
+    networks:
+      - eduvize
+
+  playground-host:
     build:
       context: ../playground
-      dockerfile: Dockerfile
+      dockerfile: container.Dockerfile
+    privileged: true
+    env_file:
+      - .env.playground
     environment:
       - HOSTNAME=playground-controller
+      - BACKEND_API_ENDPOINT=http://api:8000/api
       - BACKEND_SOCKETIO_ENDPOINT=http://api:8000
       - JWT_SIGNING_KEY=devkey123
       - SESSION_ID=fakeplaygroundsessionid
       - PURGE_DATA_ON_DISCONNECT=true
       - ENABLE_SELF_DESTRUCT=false
-    depends_on:
-      - api
+      - DOCKER_HOST=unix:///var/run/docker.sock
     networks:
-      - app-tier
-    volumes:
-      - playground_shared:/userland
-      - playground_hidden:/playground
+      - eduvize
 
-  playground-environment:
+  playground-image-builder:
     build:
       context: ../playground
-      dockerfile: environment.Dockerfile
+      dockerfile: builder.Dockerfile
+    privileged: true
+    env_file:
+      - .env.playground
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - DOCKER_HOST=unix:///var/run/docker.sock
     depends_on:
       - api
-      - playground-controller
+      - kafka
     networks:
-      - app-tier
-    volumes:
-      - playground_shared:/userland
-      - playground_hidden:/playground
-
-  redis:
-    image: redis:6
-    ports:
-      - "6379:6379"
-    networks:
-      - app-tier
+      - eduvize
 
   database:
     image: postgres:13
@@ -95,7 +115,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
     networks:
-      - app-tier
+      - eduvize
 
   s3:
     image: docker.io/bitnami/minio:2024
@@ -110,7 +130,7 @@ services:
     volumes:
       - s3_data:/data
     networks:
-      - app-tier
+      - eduvize
 
   zookeeper:
     image: wurstmeister/zookeeper
@@ -119,7 +139,7 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
     networks:
-      - app-tier
+      - eduvize
 
   kafka:
     image: wurstmeister/kafka
@@ -131,19 +151,16 @@ services:
       KAFKA_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      KAFKA_NUM_PARTITIONS: 3
     depends_on:
       - zookeeper
     networks:
-      - app-tier
+      - eduvize
 
 networks:
-  app-tier:
-    driver: bridge
+  eduvize:
+    external: true
 
 volumes:
   postgres_data:
   s3_data:
-  playground_hidden:
-  playground_shared:

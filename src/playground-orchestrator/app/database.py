@@ -3,16 +3,32 @@ import uuid
 from typing import Optional
 from datetime import datetime
 from sqlmodel import Field, create_engine, Session, select
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel, Relationship
+from sqlalchemy.orm import joinedload
+
+class PlaygroundEnvironment(SQLModel, table=True):
+    __tablename__ = "playground_environments"
+    
+    id: uuid.UUID               = Field(default_factory=uuid.uuid4, primary_key=True)
+    image_tag: Optional[str]    = Field(nullable=True)
+    docker_base_image: str      = Field(nullable=False)
+    description: str            = Field(nullable=False)
+    user_id: uuid.UUID          = Field(default=None, foreign_key="users.id")
+    created_at_utc: datetime    = Field(default_factory=datetime.utcnow)
+    last_used_at_utc: datetime  = Field(default=None, nullable=True)
+    
+    sessions: list["PlaygroundSession"] = Relationship(back_populates="environment")
 
 # Database model for the playground_sessions table
 class PlaygroundSession(SQLModel, table=True):
     __tablename__ = "playground_sessions"
     
     id: uuid.UUID                       = Field(default_factory=uuid.uuid4, primary_key=True)
-    type: str                           = Field(nullable=False)
+    environment_id: uuid.UUID           = Field(nullable=False, foreign_key="playground_environments.id")
     instance_hostname: Optional[str]    = Field(nullable=True)
     created_at_utc: datetime            = Field(default_factory=datetime.utcnow)
+    
+    environment: PlaygroundEnvironment = Relationship(back_populates="sessions")
 
 def get_db_session():
     connection_string = os.getenv("POSTGRES_CONNECTION_STRING")
@@ -22,7 +38,7 @@ def get_db_session():
 
 def get_unreserved_sessions():
     session = get_db_session()
-    statement = select(PlaygroundSession).where(PlaygroundSession.instance_hostname == None)
+    statement = select(PlaygroundSession).where(PlaygroundSession.instance_hostname == None).options(joinedload(PlaygroundSession.environment))
     result = session.exec(statement).all()
     session.close()
     return result
@@ -65,7 +81,7 @@ def unassign_session(session_id: uuid.UUID):
 
 def get_reserved_sessions():
     session = get_db_session()
-    statement = select(PlaygroundSession).where(PlaygroundSession.instance_hostname != None)
+    statement = select(PlaygroundSession).where(PlaygroundSession.instance_hostname != None).options(joinedload(PlaygroundSession.environment))
     result = session.exec(statement).all()
     session.close()
     return result

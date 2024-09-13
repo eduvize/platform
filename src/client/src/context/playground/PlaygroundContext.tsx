@@ -2,7 +2,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import io, { Socket } from "socket.io-client";
 import { createContext } from "use-context-selector";
 import { PlaygroundApi } from "@api";
-import { PlaygroundEnvironment } from "@models/dto";
+import { FilesystemEntry, PlaygroundEnvironment } from "@models/dto";
 const SocketIOEndpoint = import.meta.env.VITE_SOCKETIO_ENDPOINT;
 
 type Context = {
@@ -16,8 +16,11 @@ type Context = {
     setFileContent: (path: string, content: string) => void;
     subscribeToOutput: (callback: (output: string) => void) => void;
     unsubscribeFromOutput: (callback: (output: string) => void) => void;
+    expandPath: (path: string) => void;
+    collapsePath: (path: string) => void;
     isConnected: boolean;
-    isReady: boolean;
+    instanceState: "initializing" | "ready" | null;
+    setupStatus: string | null;
     isReconnecting: boolean;
     environment?: PlaygroundEnvironment;
     openFiles: Record<string, string>;
@@ -34,8 +37,11 @@ const defaultValue: Context = {
     setFileContent: () => {},
     subscribeToOutput: () => {},
     unsubscribeFromOutput: () => {},
+    expandPath: () => {},
+    collapsePath: () => {},
     isConnected: false,
-    isReady: false,
+    instanceState: null,
+    setupStatus: null,
     isReconnecting: false,
     openFiles: {},
 };
@@ -43,11 +49,12 @@ const defaultValue: Context = {
 export const PlaygroundContext = createContext<Context>(defaultValue);
 
 interface PlaygroundProviderProps {
+    environmentId: string;
     children: React.ReactNode;
 }
 
 export const PlaygroundProvider = memo(
-    ({ children }: PlaygroundProviderProps) => {
+    ({ environmentId, children }: PlaygroundProviderProps) => {
         const sessionIdRef = useRef<string | null>(null);
         const clientRef = useRef<Socket | null>(null);
         const sizeRef = useRef<{ rows: number; columns: number }>({
@@ -57,77 +64,192 @@ export const PlaygroundProvider = memo(
         const subscribersRef = useRef<((output: string) => void)[]>([]);
         const [isConnected, setIsConnected] = useState(false);
         const [isReconnecting, setIsReconnecting] = useState(false);
-        const [isInstanceReady, setIsInstanceReady] = useState(false);
-        const [environment, setEnvironment] = useState<PlaygroundEnvironment>();
+        const [instanceState, setInstanceState] = useState<
+            "initializing" | "ready" | null
+        >(null);
+        const [setupStatus, setSetupStatus] = useState<string | null>(null);
+        const [environment, setEnvironment] = useState<PlaygroundEnvironment>({
+            filesystem: [],
+        });
         const [openFiles, setOpenFiles] = useState<Record<string, string>>({});
 
         useEffect(() => {
-            PlaygroundApi.createSession().then(({ session_id, token }) => {
-                sessionIdRef.current = session_id;
-                clientRef.current = io(SocketIOEndpoint, {
-                    extraHeaders: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                    reconnection: true,
-                    reconnectionAttempts: 99999,
-                });
+            PlaygroundApi.createSession(environmentId).then(
+                ({ session_id, token }) => {
+                    sessionIdRef.current = session_id;
+                    clientRef.current = io(SocketIOEndpoint, {
+                        extraHeaders: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                        reconnection: true,
+                        reconnectionAttempts: 99999,
+                    });
 
-                clientRef.current.on("connect", () => {
-                    setIsConnected(true);
-                    console.log("Connected to playground server");
-                });
+                    clientRef.current.on("connect", () => {
+                        setIsConnected(true);
+                        console.log("Connected to playground server");
+                    });
 
-                clientRef.current.on("disconnect", () => {
-                    setIsReconnecting(true);
-                    console.log("Disconnected from playground server");
-                });
+                    clientRef.current.on("disconnect", () => {
+                        setIsReconnecting(true);
+                        console.log("Disconnected from playground server");
+                    });
 
-                clientRef.current.on("reconnect_attempt", () => {
-                    setIsReconnecting(true);
-                    console.log("Reconnecting to playground server");
-                });
+                    clientRef.current.on("reconnect_attempt", () => {
+                        setIsReconnecting(true);
+                        console.log("Reconnecting to playground server");
+                    });
 
-                clientRef.current.on("reconnect", () => {
-                    setIsReconnecting(false);
-                    console.log("Reconnected to playground server");
-                });
+                    clientRef.current.on("reconnect", () => {
+                        setIsReconnecting(false);
+                        console.log("Reconnected to playground server");
+                    });
 
-                clientRef.current.on("instance_connected", () => {
-                    setIsInstanceReady(true);
-                    setIsReconnecting(false);
-                    console.log("Instance is ready");
+                    clientRef.current.on("instance_connected", () => {
+                        setInstanceState("initializing");
+                        setSetupStatus(null);
+                        setIsReconnecting(false);
 
-                    if (sizeRef.current.rows && sizeRef.current.columns) {
-                        clientRef.current!.emit(
-                            "terminal_resize",
-                            sizeRef.current
-                        );
-                    }
-                });
+                        if (sizeRef.current.rows && sizeRef.current.columns) {
+                            clientRef.current!.emit(
+                                "terminal_resize",
+                                sizeRef.current
+                            );
+                        }
+                    });
 
-                clientRef.current.on("instance_disconnected", () => {
-                    setIsInstanceReady(false);
-                    setIsReconnecting(true);
-                });
+                    clientRef.current.on("setup_status", (status) => {
+                        setSetupStatus(status);
+                    });
 
-                clientRef.current.on("terminal_output", (data) => {
-                    subscribersRef.current.forEach((cb) => cb(data));
-                });
+                    clientRef.current.on("instance_ready", () => {
+                        handleExpandPath("/");
+                        setInstanceState("ready");
+                        setSetupStatus(null);
+                    });
 
-                clientRef.current.on(
-                    "environment",
-                    (data: PlaygroundEnvironment) => {
-                        setEnvironment(data);
-                    }
-                );
+                    clientRef.current.on("instance_disconnected", () => {
+                        setInstanceState(null);
+                        setIsReconnecting(true);
+                    });
 
-                clientRef.current.on(
-                    "file_content",
-                    ({ path, content }: { path: string; content: string }) => {
-                        setOpenFiles((prev) => ({ ...prev, [path]: content }));
-                    }
-                );
-            });
+                    clientRef.current.on("terminal_output", (data) => {
+                        subscribersRef.current.forEach((cb) => cb(data));
+                    });
+
+                    clientRef.current.on(
+                        "environment",
+                        (data: PlaygroundEnvironment) => {
+                            setEnvironment(data);
+                        }
+                    );
+
+                    clientRef.current.on(
+                        "file_content",
+                        ({
+                            path,
+                            content,
+                        }: {
+                            path: string;
+                            content: string;
+                        }) => {
+                            setOpenFiles((prev) => ({
+                                ...prev,
+                                [path]: content,
+                            }));
+                        }
+                    );
+
+                    clientRef.current.on(
+                        "directory_contents",
+                        ({ path, entries }) => {
+                            setEnvironment((prevEnvironment) => {
+                                if (path === "") {
+                                    return {
+                                        ...prevEnvironment,
+                                        filesystem: [
+                                            ...prevEnvironment.filesystem.filter(
+                                                (e: FilesystemEntry) =>
+                                                    entries.find(
+                                                        (f: FilesystemEntry) =>
+                                                            f.path === e.path
+                                                    )
+                                            ),
+                                            ...entries.filter(
+                                                (e: FilesystemEntry) =>
+                                                    !prevEnvironment.filesystem.find(
+                                                        (f) => f.path === e.path
+                                                    )
+                                            ),
+                                        ],
+                                    };
+                                }
+
+                                // Helper function to recursively merge entries at the target path
+                                const mergeEntriesAtPath = (
+                                    nodes: FilesystemEntry[],
+                                    targetPath: string,
+                                    entriesToMerge: FilesystemEntry[]
+                                ): FilesystemEntry[] => {
+                                    return nodes.map((node) => {
+                                        if (
+                                            node.path === targetPath &&
+                                            node.type === "directory"
+                                        ) {
+                                            // Replace or set the children of the target directory
+                                            return {
+                                                ...node,
+                                                children: [
+                                                    ...(
+                                                        node.children || []
+                                                    ).filter((e) =>
+                                                        entriesToMerge.find(
+                                                            (f) =>
+                                                                f.path ===
+                                                                e.path
+                                                        )
+                                                    ),
+                                                    ...entriesToMerge.filter(
+                                                        (e) =>
+                                                            !node.children?.find(
+                                                                (f) =>
+                                                                    f.path ===
+                                                                    e.path
+                                                            )
+                                                    ),
+                                                ],
+                                            };
+                                        } else if (node.children) {
+                                            // Recursively search in nested directories
+                                            return {
+                                                ...node,
+                                                children: mergeEntriesAtPath(
+                                                    node.children,
+                                                    targetPath,
+                                                    entriesToMerge
+                                                ),
+                                            };
+                                        } else {
+                                            return node;
+                                        }
+                                    });
+                                };
+
+                                const updatedFilesystem = mergeEntriesAtPath(
+                                    prevEnvironment.filesystem,
+                                    path,
+                                    entries
+                                );
+
+                                return {
+                                    ...prevEnvironment,
+                                    filesystem: updatedFilesystem,
+                                };
+                            });
+                        }
+                    );
+                }
+            );
 
             return () => {
                 if (clientRef.current) {
@@ -136,8 +258,30 @@ export const PlaygroundProvider = memo(
             };
         }, []);
 
+        const isPathLoaded = (path: string) => {
+            // Helper function to recursively check if the path has loaded children
+            const checkPath = (
+                nodes: FilesystemEntry[],
+                targetPath: string
+            ) => {
+                for (const node of nodes) {
+                    if (node.path === targetPath && node.type === "directory") {
+                        // Check if children are defined and not empty
+                        return node.children && node.children.length > 0;
+                    } else if (node.children) {
+                        // Continue searching in nested directories
+                        const result = checkPath(node.children, targetPath);
+                        if (result) return true;
+                    }
+                }
+                return false;
+            };
+
+            return checkPath(environment?.filesystem || [], path);
+        };
+
         const handleSendInput = (input: string) => {
-            if (!clientRef.current || !isInstanceReady) {
+            if (!clientRef.current || instanceState !== "ready") {
                 return;
             }
 
@@ -148,7 +292,7 @@ export const PlaygroundProvider = memo(
             sizeRef.current = { rows, columns };
             console.log(`terminal size set to ${rows}x${columns}`);
 
-            if (!clientRef.current || !isInstanceReady) {
+            if (!clientRef.current || instanceState !== "ready") {
                 return;
             }
 
@@ -156,16 +300,26 @@ export const PlaygroundProvider = memo(
         };
 
         const handleCreate = (type: "file" | "directory", path: string) => {
-            if (!clientRef.current || !isInstanceReady) {
+            if (!clientRef.current || instanceState !== "ready") {
                 return;
             }
 
             clientRef.current.emit("create", { type, path });
-            clientRef.current.emit("open_file", { path });
+
+            // get the parent path
+            const parentPath = path.split("/").slice(0, -1).join("/");
+
+            if (type === "file") {
+                clientRef.current.emit("open_file", { path });
+            }
+
+            if (!isPathLoaded(parentPath)) {
+                handleExpandPath(parentPath);
+            }
         };
 
         const handleRename = (path: string, newPath: string) => {
-            if (!clientRef.current || !isInstanceReady) {
+            if (!clientRef.current || instanceState !== "ready") {
                 return;
             }
 
@@ -179,7 +333,7 @@ export const PlaygroundProvider = memo(
         };
 
         const handleDeletePath = (path: string) => {
-            if (!clientRef.current || !isInstanceReady) {
+            if (!clientRef.current || instanceState !== "ready") {
                 return;
             }
 
@@ -187,7 +341,7 @@ export const PlaygroundProvider = memo(
         };
 
         const handleOpenFile = (path: string) => {
-            if (!clientRef.current || !isInstanceReady) {
+            if (!clientRef.current || instanceState !== "ready") {
                 return;
             }
 
@@ -195,7 +349,7 @@ export const PlaygroundProvider = memo(
         };
 
         const handleCloseFile = (path: string) => {
-            if (!clientRef.current || !isInstanceReady) {
+            if (!clientRef.current || instanceState !== "ready") {
                 return;
             }
 
@@ -206,13 +360,64 @@ export const PlaygroundProvider = memo(
         };
 
         const handleSetFileContent = (path: string, content: string) => {
-            if (!clientRef.current || !isInstanceReady) {
+            if (!clientRef.current || instanceState !== "ready") {
                 return;
             }
 
             clientRef.current.emit("save_file", { path, content });
 
             setOpenFiles((prev) => ({ ...prev, [path]: content }));
+        };
+
+        const handleExpandPath = (path: string) => {
+            if (!clientRef.current || instanceState !== "ready") {
+                return;
+            }
+
+            clientRef.current.emit("get_directory", { path });
+            clientRef.current.emit("subscribe_to_path", { path });
+        };
+
+        const handleCollapsePath = (path: string) => {
+            setEnvironment((prevEnvironment) => {
+                const updatedFilesystem = [...prevEnvironment.filesystem];
+
+                // Helper function to recursively find the correct path and clear its children
+                const clearChildrenAtPath = (
+                    nodes: FilesystemEntry[],
+                    targetPath: string
+                ): FilesystemEntry[] => {
+                    return nodes.map((node) => {
+                        if (
+                            node.path === targetPath &&
+                            node.type === "directory"
+                        ) {
+                            return { ...node, children: [] };
+                        } else if (node.children) {
+                            return {
+                                ...node,
+                                children: clearChildrenAtPath(
+                                    node.children,
+                                    targetPath
+                                ),
+                            };
+                        }
+                        return node;
+                    }) as FilesystemEntry[];
+                };
+
+                const newFilesystem = clearChildrenAtPath(
+                    updatedFilesystem,
+                    path
+                );
+                return { ...prevEnvironment, filesystem: newFilesystem };
+            });
+
+            if (!clientRef.current || instanceState !== "ready") {
+                return;
+            }
+
+            clientRef.current.emit("unsubscribe_from_path", { path });
         };
 
         return (
@@ -231,8 +436,11 @@ export const PlaygroundProvider = memo(
                         (subscribersRef.current = subscribersRef.current.filter(
                             (cb) => cb !== callback
                         )),
+                    expandPath: handleExpandPath,
+                    collapsePath: handleCollapsePath,
                     isConnected,
-                    isReady: isInstanceReady,
+                    instanceState,
+                    setupStatus,
                     isReconnecting,
                     environment,
                     openFiles,

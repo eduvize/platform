@@ -12,7 +12,6 @@ class FilesystemEntry(TypedDict):
     name: str
     path: str
     type: Literal["file", "directory"]
-    children: Optional[List["FilesystemEntry"]]  # Recursive type
 
 def create_filesystem_entry(entry_type: Literal["file", "directory"], path: str) -> bool:
     """
@@ -27,7 +26,7 @@ def create_filesystem_entry(entry_type: Literal["file", "directory"], path: str)
     path = path.lstrip("/")
     
     # Define the base path (user's home directory)
-    base_path = "/userland/home/user"
+    base_path = "/userland"
     
     # Build the full path
     full_path = os.path.join(base_path, path)
@@ -63,7 +62,7 @@ def read_file_content(path: str) -> str:
     # Trim leading /'s from the path
     path = path.lstrip("/")
 
-    base_path = "/userland/home/user"
+    base_path = "/userland"
 
     full_path = os.path.join(base_path, path)
 
@@ -83,7 +82,7 @@ def rename_path(old_path: str, new_path: str) -> None:
     old_path = old_path.lstrip("/")
     new_path = new_path.lstrip("/")
 
-    base_path = "/userland/home/user"
+    base_path = "/userland"
 
     old_full_path = os.path.join(base_path, old_path)
     new_full_path = os.path.join(base_path, new_path)
@@ -100,7 +99,7 @@ def delete_path(path: str) -> None:
     # Trim leading /'s from the path
     path = path.lstrip("/")
 
-    base_path = "/userland/home/user"
+    base_path = "/userland"
     full_path = os.path.join(base_path, path)
 
     if os.path.isdir(full_path):
@@ -120,46 +119,44 @@ def save_file_content(path: str, content: str) -> None:
     # Trim leading /'s from the path
     path = path.lstrip("/")
     
-    base_path = "/userland/home/user"
+    base_path = "/userland"
     
     full_path = os.path.join(base_path, path)
 
     with open(full_path, "w") as f:
         f.write(content)
 
-def get_filesystem_entries(directory: str) -> List[FilesystemEntry]:
+def get_top_level_filesystem_entries(directory: str) -> List[FilesystemEntry]:
     entries: List[FilesystemEntry] = []
-    base_path = "/userland/home/user"
+    base_path = "/userland"
+    full_dir_path = os.path.join(base_path, directory)
     
-    # Walk through the directory contents
-    for entry_name in os.listdir(directory):
+    # Walk through the top-level directory contents
+    for entry_name in os.listdir(full_dir_path):
         # Skip ignored dot files
         if entry_name in IGNORED_SYSTEM_DOTFILES:
             continue
-
-        full_path = os.path.join(directory, entry_name)
+        
+        full_path = os.path.join(base_path, directory, entry_name)
         
         # Trim the directory path from the full path
         rel_path = os.path.relpath(full_path, base_path)
         
         # Trim leading /'s from the path
         rel_path = rel_path.lstrip("/")
-        
+
+        # Only collect top-level directory/file info without recursion
         if os.path.isdir(full_path):
-            # If it's a directory, recursively get its children
             entries.append(FilesystemEntry(
                 name=entry_name,
                 path=rel_path,
                 type="directory",
-                children=get_filesystem_entries(full_path)
             ))
         else:
-            # If it's a file, just add the file entry without children
             entries.append(FilesystemEntry(
                 name=entry_name,
                 path=rel_path,
                 type="file",
-                children=None
             ))
 
     return entries
@@ -168,12 +165,14 @@ class DirectoryMonitor:
     watch_directory: str
     callback: Callable[[], None]
     event_handler: FileSystemEventHandler
+    subscribed_paths: List[str]
     
-    def __init__(self, directory: str, callback: Callable[[], None]) -> None:
+    def __init__(self, directory: str, callback: Callable[[str], None]) -> None:
         self.watch_directory = directory
         self.callback = callback
-        self.event_handler = self.ChangeHandler(callback)
-        self.observer = Observer() 
+        self.event_handler = self.ChangeHandler(self, callback)
+        self.observer = Observer()
+        self.subscribed_paths = [directory] 
         
     def start_watching(self):
         self.observer.schedule(self.event_handler, self.watch_directory, recursive=True)
@@ -183,17 +182,52 @@ class DirectoryMonitor:
         self.observer.stop()
         self.observer.join()
         
-    class ChangeHandler(FileSystemEventHandler):
-        callback: Callable[[], None]
+    def add_path(self, path: str):
+        full_path = os.path.join(self.watch_directory, path)
         
-        def __init__(self, callback: Callable[[], None]) -> None:
+        if full_path not in self.subscribed_paths:
+            self.subscribed_paths.append(full_path)
+            
+    def remove_path(self, path: str):
+        full_path = os.path.join(self.watch_directory, path)
+        
+        if full_path in self.subscribed_paths:
+            self.subscribed_paths.remove(full_path)
+            
+    def is_tracked_path(self, path: str) -> bool:
+        return path in self.subscribed_paths
+        
+    class ChangeHandler(FileSystemEventHandler):
+        monitor: "DirectoryMonitor"
+        callback: Callable[[str], None]
+        
+        def __init__(self, monitor: "DirectoryMonitor", callback: Callable[[str], None]) -> None:
+            self.monitor = monitor
             self.callback = callback
             
         def on_created(self, event: DirCreatedEvent | FileCreatedEvent) -> None:
-            self.callback()
+            dir_path = os.path.dirname(event.src_path)
+
+            if not self.monitor.is_tracked_path(dir_path):
+                return
+            
+            self.callback(dir_path)
             
         def on_deleted(self, event: DirDeletedEvent | FileDeletedEvent) -> None:
-            self.callback()
+            dir_path = os.path.dirname(event.src_path)
+            
+            if not self.monitor.is_tracked_path(dir_path):
+                return
+            
+            self.callback(dir_path)
             
         def on_moved(self, event: DirMovedEvent | FileMovedEvent) -> None:
-            self.callback()
+            src_dir_path = os.path.dirname(event.src_path)
+            
+            if self.monitor.is_tracked_path(src_dir_path):
+                self.callback(src_dir_path)
+
+            dest_dir_path = os.path.dirname(event.dest_path)
+            
+            if self.monitor.is_tracked_path(dest_dir_path):
+                self.callback(dest_dir_path)
