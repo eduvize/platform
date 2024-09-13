@@ -158,7 +158,7 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
                             />
                         </Box>
 
-                        <Stack w="100%" h="100%" ref={stackRef}>
+                        <Stack w="100%" h="100%" ref={stackRef} gap={0}>
                             <OpenFiles
                                 selectedFile={focusedFile}
                                 height={`${editorHeight}px`}
