@@ -64,18 +64,18 @@ jobs:
           echo "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > $HOME/.kube/config
           kubectl config view
 
-      - name: Helm Upgrade
-        run: |
-          helm upgrade --install eduvize kubernetes/eduvize \
-            --values ${{ inputs.VALUES_FILE_PATH }} \
-            --set ingress.hostname=${{ inputs.DOMAIN_NAME }} \
-            --set frontend.image=${{ secrets.REGISTRY_NAME }}/${{ inputs.REGISTRY_PREFIX }}/app:${{ inputs.IMAGE_TAG }} \
-            --set api.image=${{ secrets.REGISTRY_NAME }}/${{ inputs.REGISTRY_PREFIX }}/api:${{ inputs.IMAGE_TAG }} \
-            --set course_generator.image=${{ secrets.REGISTRY_NAME }}/${{ inputs.REGISTRY_PREFIX }}/course-generator:${{ inputs.IMAGE_TAG }} \
-            --set playground.controllerImage=${{ secrets.REGISTRY_NAME }}/${{ inputs.REGISTRY_PREFIX }}/playground-controller:${{ inputs.IMAGE_TAG }} \
-            --set playground.orchestratorImage=${{ secrets.REGISTRY_NAME }}/${{ inputs.REGISTRY_PREFIX }}/playground-orchestrator:${{ inputs.IMAGE_TAG }} \
-            --namespace ${{ inputs.RELEASE_NAMESPACE }} \
-            --debug
+      #- name: Helm Upgrade
+      #  run: |
+      #    helm upgrade --install eduvize kubernetes/eduvize \
+      #      --values ${{ inputs.VALUES_FILE_PATH }} \
+      #      --set ingress.hostname=${{ inputs.DOMAIN_NAME }} \
+      #      --set frontend.image=${{ secrets.REGISTRY_NAME }}/${{ inputs.REGISTRY_PREFIX }}/app:${{ inputs.IMAGE_TAG }} \
+      #      --set api.image=${{ secrets.REGISTRY_NAME }}/${{ inputs.REGISTRY_PREFIX }}/api:${{ inputs.IMAGE_TAG }} \
+      #      --set course_generator.image=${{ secrets.REGISTRY_NAME }}/${{ inputs.REGISTRY_PREFIX }}/course-generator:${{ inputs.IMAGE_TAG }} \
+      #      --set playground.controllerImage=${{ secrets.REGISTRY_NAME }}/${{ inputs.REGISTRY_PREFIX }}/playground-controller:${{ inputs.IMAGE_TAG }} \
+      #      --set playground.orchestratorImage=${{ secrets.REGISTRY_NAME }}/${{ inputs.REGISTRY_PREFIX }}/playground-orchestrator:${{ inputs.IMAGE_TAG }} \
+      #      --namespace ${{ inputs.RELEASE_NAMESPACE }} \
+      #      --debug
 
       - name: Restart Deployment
         if: ${{ inputs.DEPLOYMENT_NAME }}
