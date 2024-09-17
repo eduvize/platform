@@ -54,10 +54,17 @@ def generate_course(data):
     course_dto = CourseDto.model_construct(modules=[])
 
     pool = multiprocessing.Pool()
-    modules_dto = pool.starmap(generate_module, zip(repeat(data), data.course_outline.modules, repeat(get_total_progress)))
+    try:
+        modules_dto = pool.starmap(generate_module, zip(repeat(data), data.course_outline.modules, repeat(get_total_progress)))
 
-    for module_dto in modules_dto:
-        course_dto.modules.append(module_dto)
+        for module_dto in modules_dto:
+            course_dto.modules.append(module_dto)
+    except BaseException as e:
+        logging.error(f"Error generating modules in parallel: {e}.")
+    finally:
+        # Ensure the pool is closed and joined
+        pool.close() # Close the pool to prevent new tasks from being submitted
+        pool.join() # Wait for the worker processes to finish
 
     # Create the course content in the database
     repository.create_course_content(
