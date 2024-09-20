@@ -17,7 +17,8 @@ async def test_connect_user_success_without_active_instance(
     mock_socket_server: Mock
 ):
     """
-    Test a successful connection for a user with a valid token.
+    Verify that user token validation works correctly, that they are put in the session room, and connected/image tag keys are set.
+    In this scenario, the user is the first to connect, meaning the server should not attempt to notify the instance.
     """
     # Mock the decoded token
     mock_decode_token.return_value = {
@@ -26,8 +27,13 @@ async def test_connect_user_success_without_active_instance(
         "user_id": "user456",
     }
     
-    mock_get_key.return_value = True
+    # No related keys should be set at this point since the user is first to connect
+    mock_get_key.return_value = None
+    
+    # Mock successful connection to the socket server
     mock_socket_server.connect = AsyncMock(return_value=True)
+    
+    # Mock successful environment retrieval
     mock_playground_repo_inst.return_value = Mock()
     mock_playground_repo_inst.return_value.get_environment = Mock(return_value=Mock(id="environment_id", image_tag="tag"))
 
@@ -43,6 +49,7 @@ async def test_connect_user_success_without_active_instance(
     mock_socket_server.enter_room.assert_called_once_with("user123", "session123")
     mock_set_key.assert_any_call(key=socket_server.get_user_connected_cache_key("session123"), value=ANY, expiration=5*60)
     mock_set_key.assert_any_call(key=socket_server.get_image_tag_cache_key("environment_id"), value="tag")
+    mock_socket_server.emit.assert_not_called()
     
 @pytest.mark.asyncio
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
@@ -58,8 +65,10 @@ async def test_connect_user_success_with_active_instance(
     mock_socket_server: Mock
 ):
     """
-    Test a successful connection for a user with a valid token, notifying the instance of the user's connection and the user of the instance's connection.
+    Test that a user connecting after an instance has already connected appropriately notifies both parties of each other's presence and sets
+    the necessary keys.
     """
+    
     # Mock the decoded token
     mock_decode_token.return_value = {
         "session_id": "session123",
@@ -97,7 +106,10 @@ async def test_connect_user_success_with_active_instance(
 @pytest.mark.asyncio
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
 @patch("app.websocket.websocket_server.decode_token", side_effect=InvalidJWTToken)
-async def test_connect_invalid_token(mock_decode_token, mock_socket_server):
+async def test_connect_invalid_token(
+    mock_decode_token: Mock,
+    mock_socket_server: Mock
+):
     """
     Test connection failure due to an invalid JWT token.
     """
@@ -116,7 +128,11 @@ async def test_connect_invalid_token(mock_decode_token, mock_socket_server):
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
 @patch("app.websocket.websocket_server.get_key", return_value=None)
 @patch("app.websocket.websocket_server.decode_token")
-async def test_connect_missing_session_id(mock_decode_token, mock_get_key, mock_socket_server):
+async def test_connect_missing_session_id(
+    mock_decode_token: Mock, 
+    mock_get_key: Mock, 
+    mock_socket_server: Mock
+):
     """
     Test connection failure due to missing session ID.
     """
@@ -140,12 +156,14 @@ async def test_connect_missing_session_id(mock_decode_token, mock_get_key, mock_
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
 @patch("app.websocket.websocket_server.delete_key", autospec=True)
 @patch("app.websocket.websocket_server.get_connection_information", autospec=True)
-async def test_disconnect_user(mock_get_conn_info: Mock, mock_delete_key: Mock, mock_socket_server: Mock):
+async def test_disconnect_user(
+    mock_get_conn_info: Mock, 
+    mock_delete_key: Mock, 
+    mock_socket_server: Mock
+):
     """
-    Test user disconnection and ensure correct events are triggered.
-    1. Get the session information using the SID
-    2. Emit user_disconnected event to the session room without echoing to the SID
-    2. Deletion of the user connected key.
+    Tests that users disconnecting triggers the user_disconnected event to the session room
+    and removes related keys.
     """
     mock_get_conn_info.return_value = "user", "session123", "environment_id"
     cache_key = socket_server.get_user_connected_cache_key("session123")
@@ -162,12 +180,14 @@ async def test_disconnect_user(mock_get_conn_info: Mock, mock_delete_key: Mock, 
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
 @patch("app.websocket.websocket_server.delete_key", autospec=True)
 @patch("app.websocket.websocket_server.get_connection_information", autospec=True)
-async def test_disconnect_instance(mock_get_conn_info: Mock, mock_delete_key: Mock, mock_socket_server: Mock):
+async def test_disconnect_instance(
+    mock_get_conn_info: Mock, 
+    mock_delete_key: Mock, 
+    mock_socket_server: Mock
+):
     """
-    Test instance disconnection and ensure correct events are triggered.
-    1. Get the session information using the SID
-    2. Emit user_disconnected event to the session room without echoing to the SID
-    2. Deletion of the user connected key.
+    Test that instances disconnecting triggers the instance_disconnected event to the session room
+    and removes related keys.
     """
     mock_get_conn_info.return_value = "instance", "session123", "environment_id"
     liveness_key = socket_server.get_liveness_cache_key("session123")
@@ -183,7 +203,10 @@ async def test_disconnect_instance(mock_get_conn_info: Mock, mock_delete_key: Mo
 @pytest.mark.asyncio
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
 @patch("app.websocket.websocket_server.get_connection_information", autospec=True)
-async def test_terminal_input(mock_get_conn_info, mock_socket_server):
+async def test_terminal_input(
+    mock_get_conn_info: Mock, 
+    mock_socket_server: Mock
+):
     """
     Test terminal input event.
     """
@@ -197,7 +220,10 @@ async def test_terminal_input(mock_get_conn_info, mock_socket_server):
 @pytest.mark.asyncio
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
 @patch("app.websocket.websocket_server.get_connection_information", autospec=True)
-async def test_terminal_output(mock_get_conn_info, mock_socket_server):
+async def test_terminal_output(
+    mock_get_conn_info: Mock, 
+    mock_socket_server: Mock
+):
     """
     Test terminal output event.
     """
@@ -211,7 +237,10 @@ async def test_terminal_output(mock_get_conn_info, mock_socket_server):
 @pytest.mark.asyncio
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
 @patch("app.websocket.websocket_server.get_connection_information", autospec=True)
-async def test_terminal_resize(mock_get_conn_info, mock_socket_server):
+async def test_terminal_resize(
+    mock_get_conn_info: Mock, 
+    mock_socket_server: Mock
+):
     """
     Test terminal resize event.
     """
@@ -226,7 +255,10 @@ async def test_terminal_resize(mock_get_conn_info, mock_socket_server):
 @pytest.mark.asyncio
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
 @patch("app.websocket.websocket_server.get_connection_information", autospec=True)
-async def test_create(mock_get_conn_info, mock_socket_server):
+async def test_create(
+    mock_get_conn_info: Mock, 
+    mock_socket_server: Mock
+):
     """
     Test create event.
     """
@@ -241,7 +273,10 @@ async def test_create(mock_get_conn_info, mock_socket_server):
 @pytest.mark.asyncio
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
 @patch("app.websocket.websocket_server.get_connection_information", autospec=True)
-async def test_rename(mock_get_conn_info, mock_socket_server):
+async def test_rename(
+    mock_get_conn_info: Mock, 
+    mock_socket_server: Mock
+):
     """
     Test rename event.
     """
@@ -256,7 +291,10 @@ async def test_rename(mock_get_conn_info, mock_socket_server):
 @pytest.mark.asyncio
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
 @patch("app.websocket.websocket_server.get_connection_information", autospec=True)
-async def test_delete(mock_get_conn_info, mock_socket_server):
+async def test_delete(
+    mock_get_conn_info: Mock, 
+    mock_socket_server: Mock
+):
     """
     Test delete event.
     """
@@ -271,7 +309,10 @@ async def test_delete(mock_get_conn_info, mock_socket_server):
 @pytest.mark.asyncio
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
 @patch("app.websocket.websocket_server.get_connection_information", autospec=True)
-async def test_environment(mock_get_conn_info, mock_socket_server):
+async def test_environment(
+    mock_get_conn_info: Mock, 
+    mock_socket_server: Mock
+):
     """
     Test environment event.
     """
@@ -286,7 +327,10 @@ async def test_environment(mock_get_conn_info, mock_socket_server):
 @pytest.mark.asyncio
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
 @patch("app.websocket.websocket_server.get_connection_information", autospec=True)
-async def test_open_file(mock_get_conn_info, mock_socket_server):
+async def test_open_file(
+    mock_get_conn_info: Mock, 
+    mock_socket_server: Mock
+):
     """
     Test open_file event.
     """
@@ -301,7 +345,10 @@ async def test_open_file(mock_get_conn_info, mock_socket_server):
 @pytest.mark.asyncio
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
 @patch("app.websocket.websocket_server.get_connection_information", autospec=True)
-async def test_save_file(mock_get_conn_info, mock_socket_server):
+async def test_save_file(
+    mock_get_conn_info: Mock, 
+    mock_socket_server: Mock
+):
     """
     Test save_file event.
     """
@@ -316,7 +363,10 @@ async def test_save_file(mock_get_conn_info, mock_socket_server):
 @pytest.mark.asyncio
 @patch("app.websocket.websocket_server.socket_server", autospec=True)
 @patch("app.websocket.websocket_server.get_connection_information", autospec=True)
-async def test_file_content(mock_get_conn_info, mock_socket_server):
+async def test_file_content(
+    mock_get_conn_info: Mock, 
+    mock_socket_server: Mock
+):
     """
     Test file_content event.
     """
