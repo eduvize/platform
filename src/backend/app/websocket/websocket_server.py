@@ -44,6 +44,7 @@ async def connect(
                 return False
             
             logger.info(f"Connection from {sid} succeeded with user ID {user_id}, session ID {session_id}")
+            
             async with socket_server.session(sid) as session:
                 session["session_id"] = session_id
                 session["user_id"] = user_id

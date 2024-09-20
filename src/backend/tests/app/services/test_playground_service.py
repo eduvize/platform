@@ -1,3 +1,4 @@
+import uuid
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 from app.services.playground_service import PlaygroundService
@@ -15,7 +16,11 @@ def playground_service():
 @pytest.mark.asyncio
 @patch("app.services.playground_service.create_token", autospec=True)
 @patch("app.services.playground_service.get_playground_token_secret", autospec=True)
-async def test_create_playground(mock_get_playground_token_secret, mock_create_token, playground_service):
+async def test_create_playground(
+    mock_get_playground_token_secret, 
+    mock_create_token, 
+    playground_service
+):
     """
     Test create_playground method:
     1. Should create a new playground session.
@@ -31,13 +36,15 @@ async def test_create_playground(mock_get_playground_token_secret, mock_create_t
     # Mock JWT token creation
     mock_create_token.return_value = token
     
-    result = await playground_service.create_playground(user_id=user_id)
+    env_id = uuid.uuid4()
+    
+    result = await playground_service.create_playground_session(user_id=user_id, environment_id=env_id)
     
     # Assertions
-    playground_service.playground_repo.create_playground_session.assert_awaited_once_with("basic")
+    playground_service.playground_repo.create_playground_session.assert_awaited_once_with(environment_id=env_id, hostname_override=None)
     mock_get_playground_token_secret.assert_called_once()
     mock_create_token.assert_called_once_with(
-        data={"session_id": session_id, "user_id": user_id},
+        data={"session_id": session_id, "environment_id": str(env_id), "user_id": user_id},
         secret="mocked_secret",
         expiration_minutes=5
     )
@@ -47,7 +54,7 @@ async def test_create_playground(mock_get_playground_token_secret, mock_create_t
 @pytest.mark.asyncio
 @patch("app.services.playground_service.create_token", autospec=True)
 @patch("app.services.playground_service.get_playground_token_secret", autospec=True)
-@patch("app.services.playground_service.get_playground_session_id_override", autospec=True)
+@patch("app.services.playground_service.get_playground_session_override", autospec=True)
 async def test_create_playground_session_override(mock_session_id_override, mock_get_playground_token_secret, mock_create_token, playground_service):
     """
     Test create_playground method when session ID override is set:
@@ -67,13 +74,15 @@ async def test_create_playground_session_override(mock_session_id_override, mock
     # Mock JWT token creation
     mock_create_token.return_value = token
     
-    result = await playground_service.create_playground(user_id=user_id)
+    env_id = uuid.uuid4()
+    
+    result = await playground_service.create_playground_session(user_id=user_id, environment_id=env_id)
     
     # Assertions
     playground_service.playground_repo.create_playground_session.assert_not_called()
     mock_get_playground_token_secret.assert_called_once()
     mock_create_token.assert_called_once_with(
-        data={"session_id": session_id, "user_id": user_id},
+        data={"session_id": session_id, "environment_id": str(env_id), "user_id": user_id},
         secret="mocked_secret",
         expiration_minutes=5
     )
