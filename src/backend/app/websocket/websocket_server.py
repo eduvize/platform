@@ -1,10 +1,12 @@
 import logging
 from typing import Literal, Optional, Tuple
 from socketio import AsyncServer
-from app.utilities.jwt import decode_token, InvalidJWTToken
-from common.cache import set_key, get_key, delete_key
-from config import get_playground_token_secret
 from app.repositories import PlaygroundRepository
+from app.utilities.jwt import decode_token, InvalidJWTToken
+from common.cache import set_key
+from config import get_playground_token_secret
+from .connection_lifecycle import handle_instance_connection, handle_user_connection, handle_instance_disconnect, handle_user_disconnect
+from .cache_keys import get_instance_ready_cache_key
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -39,85 +41,25 @@ async def connect(
         
         # If it's a user
         if user_id is not None:
-            if environment_id is None:
-                logger.info(f"Connection from {sid} failed due to missing environment ID")
-                return False
-            
-            logger.info(f"Connection from {sid} succeeded with user ID {user_id}, session ID {session_id}")
-            
-            async with socket_server.session(sid) as session:
-                session["session_id"] = session_id
-                session["user_id"] = user_id
-                session["environment_id"] = environment_id
-            
-            logger.info(f"User wants environment {environment_id}")
-            
             playground_repo = PlaygroundRepository()
-            environment = playground_repo.get_environment(environment_id)
-
-            if environment is None:
-                logger.info(f"Connection from {sid} failed due to missing environment {environment_id}")
-                return False
-            
-            logger.info(f"Image tag for environment {environment_id}: {environment.image_tag}")
-            
-            image_tag = environment.image_tag
-            
-            if image_tag is None:
-                logger.info(f"Connection from {sid} failed due to missing image tag for environment {environment_id}")
-                return False
-            
-            set_key(
-                key=get_image_tag_cache_key(environment_id),
-                value=image_tag
-            )
-            
-            is_alive = get_key(get_liveness_cache_key(session_id))
-            is_ready = get_key(get_instance_ready_cache_key(session_id))
-            
-            # Check if the instance is already waiting for the user
-            if is_alive is not None:
-                await socket_server.emit("instance_connected", room=session_id) # Notify the user of the instance connection
-                await socket_server.emit("user_connected", {
-                    "image_tag": image_tag
-                }, room=session_id) # Notify the instance of the user connection
-                
-            if is_ready is not None:
-                await socket_server.emit("instance_ready", room=session_id)
-                
-            connected_key = get_user_connected_cache_key(session_id)
-            
-            set_key(
-                key=connected_key,
-                value="1",
-                expiration=5 * 60 # 5 minutes
+            await handle_user_connection(
+                server=socket_server, 
+                playground_repo=playground_repo, 
+                sid=sid, 
+                user_id=user_id, 
+                session_id=session_id, 
+                environment_id=environment_id
             )
                 
         # If it's an instance
         if instance_hostname is not None:
-            logger.info(f"Connection from {sid} succeeded with hostname {instance_hostname}, session ID {session_id}")
-            async with socket_server.session(sid) as session:
-                session["session_id"] = session_id
-                session["instance_hostname"] = instance_hostname
-                
-            user_connected_key = get_user_connected_cache_key(session_id)
-            image_tag_key = get_image_tag_cache_key(environment_id)
-            
-            is_user_connected = get_key(user_connected_key)
-            image_tag = get_key(image_tag_key)
-            
-            if is_user_connected is not None and image_tag is not None:
-                await socket_server.emit("user_connected", {
-                    "image_tag": image_tag
-                }, room=session_id) # Notify the instance of the user connection
-                
-            set_key(
-                key=get_liveness_cache_key(session_id),
-                value="1",
-                expiration=5 * 60 # 5 minutes
+            await handle_instance_connection(
+                server=socket_server,
+                sid=sid, 
+                session_id=session_id, 
+                environment_id=environment_id, 
+                instance_hostname=instance_hostname
             )
-            
-            await socket_server.emit("instance_connected", room=session_id) # Notify the user of the instance connection
         
     except InvalidJWTToken:
         logger.info(f"Connection from {sid} failed due to invalid token")
@@ -154,17 +96,19 @@ async def disconnect(sid: str):
     
     if client_type and session_id:
         if client_type == "instance":
-            logger.info(f"Instance {session_id} disconnected")
-            await socket_server.emit("instance_disconnected", room=session_id, skip_sid=sid)
-            delete_key(get_liveness_cache_key(session_id))
-            delete_key(get_instance_ready_cache_key(session_id))
+            await handle_instance_disconnect(
+                server=socket_server,
+                sid=sid,
+                session_id=session_id,
+            )
             
         if client_type == "user":
-            logger.info(f"User {session_id} disconnected")
-            image_cache_key = get_image_tag_cache_key(environment_id)
-            await socket_server.emit("user_disconnected", room=session_id, skip_sid=sid)
-            delete_key(get_user_connected_cache_key(session_id))
-            delete_key(image_cache_key)
+            await handle_user_disconnect(
+                server=socket_server,
+                sid=sid,
+                session_id=session_id,
+                environment_id=environment_id
+            )
 
 @socket_server.event
 async def terminal_input(sid: str, t_input: str):
@@ -312,54 +256,6 @@ async def get_connection_information(sid: str) -> Tuple[Literal["user", "instanc
             return "instance", session_id, None
         
         return None, session_id, None
-    
-def get_liveness_cache_key(session_id: str) -> str:
-    """
-    Generates a cache key for the liveness status of a session instance.
-
-    Args:
-        session_id (str): The ID of the session to generate the key for.
-
-    Returns:
-        str: The cache key.
-    """
-    return f"playground_session:{session_id}:alive"
-
-def get_instance_ready_cache_key(session_id: str) -> str:
-    """
-    Generates a cache key for the readiness status of a session instance.
-
-    Args:
-        session_id (str): The ID of the session to generate the key for.
-
-    Returns:
-        str: The cache key.
-    """
-    return f"playground_session:{session_id}:ready"
-
-def get_user_connected_cache_key(session_id: str) -> str:
-    """
-    Generates a cache key for the user connected status of a session instance.
-
-    Args:
-        session_id (str): The ID of the session to generate the key for.
-
-    Returns:
-        str: The cache key.
-    """
-    return f"playground_session:{session_id}:user_connected"
-
-def get_image_tag_cache_key(environment_id: str) -> str:
-    """
-    Generates a cache key for the image tag of an environment.
-
-    Args:
-        environment_id (str): The ID of the environment to generate the key for.
-
-    Returns:
-        str: The cache key.
-    """
-    return f"playground_environment:{environment_id}:image_tag"
 
 def get_token(environ: dict) -> Optional[str]:
     """
