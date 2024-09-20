@@ -1,4 +1,4 @@
-name: Course Generator - Test
+name: Playground Orchestrator - Test
 
 on:
   workflow_dispatch:
@@ -6,24 +6,23 @@ on:
     branches:
       - main
     paths:
-      - "src/backend/jobs/course_generator/**"
+      - "src/playground/**"
 
 jobs:
-  build-push-course-generator:
-    name: Build and Test Course Generator Image
+  build-push-playground-image-builder:
+    name: Build and Test Playground Image Builder Image
     uses: ./.github/workflows/reusable_build_push.yml
     with:
-      IMAGE_NAME: "course-generator"
-      DOCKERFILE: "src/backend/jobs/Dockerfile"
-      BUILD_CONTEXT: "src/backend"
-      BUILD_ARGS: "JOB_NAME=course_generator"
+      IMAGE_NAME: "playground-image-builder"
+      DOCKERFILE: "src/playground/builder.Dockerfile"
+      BUILD_CONTEXT: "src/playground"
       RUN_TESTS: true
       SHOULD_PUSH_IMAGE: false
     secrets: inherit
 
   comment-on-failure:
     name: Comment on PR if tests fail
-    needs: build-push-course-generator
+    needs: build-push-playground-image-builder
     if: failure()
     runs-on: ubuntu-latest
     steps:
@@ -35,5 +34,5 @@ jobs:
               issue_number: context.payload.pull_request.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '❌ The Course Generator build and test job failed. Please check the logs for more details.'
+              body: '❌ The Playground Image Builder build and test job failed. Please check the logs for more details.'
             })

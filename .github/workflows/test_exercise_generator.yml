@@ -1,4 +1,4 @@
-name: Course Generator - Test
+name: Exercise Generator - Test
 
 on:
   workflow_dispatch:
@@ -6,24 +6,24 @@ on:
     branches:
       - main
     paths:
-      - "src/backend/jobs/course_generator/**"
+      - "src/backend/jobs/exercise_generator/**"
 
 jobs:
-  build-push-course-generator:
-    name: Build and Test Course Generator Image
+  build-push-exercise-generator:
+    name: Build and Test Exercise Generator Image
     uses: ./.github/workflows/reusable_build_push.yml
     with:
-      IMAGE_NAME: "course-generator"
+      IMAGE_NAME: "exercise-generator"
       DOCKERFILE: "src/backend/jobs/Dockerfile"
       BUILD_CONTEXT: "src/backend"
-      BUILD_ARGS: "JOB_NAME=course_generator"
+      BUILD_ARGS: "JOB_NAME=exercise_generator"
       RUN_TESTS: true
       SHOULD_PUSH_IMAGE: false
     secrets: inherit
 
   comment-on-failure:
     name: Comment on PR if tests fail
-    needs: build-push-course-generator
+    needs: build-push-exercise-generator
     if: failure()
     runs-on: ubuntu-latest
     steps:
@@ -35,5 +35,5 @@ jobs:
               issue_number: context.payload.pull_request.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '❌ The Course Generator build and test job failed. Please check the logs for more details.'
+              body: '❌ The Exercise Generator build and test job failed. Please check the logs for more details.'
             })

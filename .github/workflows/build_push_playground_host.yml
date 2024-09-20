@@ -1,0 +1,19 @@
+name: Playground Host - Build and Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/playground/**"
+
+jobs:
+  build-push-playground-image-builder:
+    name: Build and Push Playground Host Image
+    uses: ./.github/workflows/reusable_build_push.yml
+    with:
+      IMAGE_NAME: "playground-host"
+      DOCKERFILE: "src/playground/container.Dockerfile"
+      BUILD_CONTEXT: "src/playground"
+    secrets: inherit
