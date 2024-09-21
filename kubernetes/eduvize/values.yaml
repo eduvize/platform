@@ -1,6 +1,6 @@
 ingress:
   enabled: true
-  hostname: eduvize.dev
+  hostname: eduvize.ai
   ingressClassName: public
   tls:
     enabled: true
@@ -47,15 +47,15 @@ api:
   replicas: 1
   env:
     - name: PUBLIC_UI_URL
-      value: https://eduvize.dev
+      value: https://eduvize.ai
     - name: PUBLIC_URL
-      value: https://api.eduvize.dev/api
+      value: https://api.eduvize.ai/api
     - name: DASHBOARD_ENDPOINT
       value: dashboard
     - name: NOREPLY_ADDRESS
       value: no-reply@mail.eduvize.dev
     - name: AUTH_REDIRECT_URL
-      value: https://eduvize.dev/auth
+      value: https://eduvize.ai/auth
   envSecretMap:
     - name: AWS_ACCESS_KEY
       secret: aws

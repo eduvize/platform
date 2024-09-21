@@ -25,6 +25,6 @@ jobs:
     uses: ./.github/workflows/reusable_helm_deploy.yml
     with:
       DEPLOYMENT_NAME: "eduvize-exercise-generator"
-      DOMAIN_NAME: "eduvize.dev"
+      DOMAIN_NAME: "eduvize.ai"
     secrets: inherit
     needs: build-push-exercise-generator
