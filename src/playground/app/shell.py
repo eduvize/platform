@@ -2,18 +2,15 @@ import fcntl
 import logging
 import os
 import struct
-import subprocess
 import termios
 import threading
 from time import sleep
 from typing import Optional
 import socketio
 import pty
-import pwd
 import signal
 import select
-from .filesystem import DirectoryMonitor
-from .environment import get_environment_snapshot
+from .filesystem import DirectoryMonitor, get_top_level_filesystem_entries
 
 logger = logging.getLogger("Shell")
 
@@ -29,19 +26,25 @@ class Shell:
         self.stop_signal = threading.Event()
         self.terminated = False
         self.directory_monitor = DirectoryMonitor(
-            directory="/userland/home/user", 
-            callback=lambda: 
-                self.client.emit("environment", get_environment_snapshot())
+            directory="/userland", 
+            callback=lambda dir_path: 
+                self.client.emit("directory_contents", {
+                    "path": dir_path[len("/userland/"):],
+                    "entries": get_top_level_filesystem_entries(dir_path)
+                }) if not self.terminated else None
         )
 
     def start(self):
+        self.terminated = False
+        self.stop_signal = threading.Event()
+        
         logger.info("Starting directory monitor")
         self.directory_monitor.start_watching()
         
         logger.info("Starting shell process")
 
         def read(fd):
-            while not self.stop_signal.is_set():
+            while not self.stop_signal.is_set() and not self.terminated:
                 sleep(0.01)
                 (data_ready, _, _) = select.select([fd], [], [], 0.1)
                 
@@ -52,24 +55,15 @@ class Shell:
 
         pid, fd = pty.fork()
         if pid == 0:  # Child process
-            os.chroot("/userland")
-            os.chdir("/")  # Change to the root directory inside chroot
             os.environ['TERM'] = 'xterm-256color'
             os.environ['HOME'] = '/home/user'
-            # Drop privileges to "user"
-            user_info = pwd.getpwnam("user")
-            os.setgid(user_info.pw_gid)  # Set group ID
-            os.setuid(user_info.pw_uid)  # Set user ID
-
-            subprocess.run("bash")
+            # Execute the docker exec command to run bash in the container as "user"
+            os.execvp('docker', ['docker', 'exec', '-i', '-t', 'my_playground_container', 'su', 'user', '-c', 'bash'])
         else:  # Parent process
             self.process_pid = pid  # Store the child PID for later termination
             self.master_fd = fd
             self.output_thread = threading.Thread(target=read, args=(fd,))
             self.output_thread.start()
-            
-            # Send the first state of the environment
-            self.client.emit("environment", get_environment_snapshot())
 
     def terminate(self):
         # Stop monitoring the directory

@@ -1,0 +1,38 @@
+name: Playground Host - Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/playground/**"
+
+jobs:
+  build-push-playground-image-builder:
+    name: Build and Test Playground Host Image
+    uses: ./.github/workflows/reusable_build_push.yml
+    with:
+      IMAGE_NAME: "playground-host"
+      DOCKERFILE: "src/playground/container.Dockerfile"
+      BUILD_CONTEXT: "src/playground"
+      RUN_TESTS: true
+      SHOULD_PUSH_IMAGE: false
+    secrets: inherit
+
+  comment-on-failure:
+    name: Comment on PR if tests fail
+    needs: build-push-playground-image-builder
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post failure comment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.payload.pull_request.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ The Playground Host build and test job failed. Please check the logs for more details.'
+            })

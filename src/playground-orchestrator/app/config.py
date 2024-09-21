@@ -1,29 +1,25 @@
 import os
-from typing import Optional
+from typing import Optional, Tuple
 
-def get_playground_controller_image() -> str:
+def get_playground_host_image() -> str:
     """
-    Gets the playground controller image
-
-    Returns:
-        str: The playground controller image
-    """
-    
-    return os.getenv("PLAYGROUND_CONTROLLER_IMAGE")
-
-def get_environment_image(instance_type: str) -> str:
-    """
-    Gets the environment image for a given instance type
-
-    Args:
-        instance_type (str): The instance type
+    Gets the environment image
 
     Returns:
         str: The environment image
     """
-    image_prefix = os.getenv("PLAYGROUND_ENVIRONMENT_IMAGE_PREFIX")
     
-    return f"{image_prefix}-{instance_type.lower()}:latest"
+    return os.getenv("PLAYGROUND_HOST_IMAGE")
+
+def get_backend_api_endpoint() -> str:
+    """
+    Gets the backend API endpoint
+
+    Returns:
+        str: The backend API endpoint
+    """
+    
+    return os.getenv("BACKEND_API_ENDPOINT")
 
 def get_backend_socketio_endpoint() -> str:
     """

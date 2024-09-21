@@ -1,0 +1,39 @@
+name: Exercise Generator - Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/backend/jobs/exercise_generator/**"
+
+jobs:
+  build-push-exercise-generator:
+    name: Build and Test Exercise Generator Image
+    uses: ./.github/workflows/reusable_build_push.yml
+    with:
+      IMAGE_NAME: "exercise-generator"
+      DOCKERFILE: "src/backend/jobs/Dockerfile"
+      BUILD_CONTEXT: "src/backend"
+      BUILD_ARGS: "JOB_NAME=exercise_generator"
+      RUN_TESTS: true
+      SHOULD_PUSH_IMAGE: false
+    secrets: inherit
+
+  comment-on-failure:
+    name: Comment on PR if tests fail
+    needs: build-push-exercise-generator
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post failure comment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.payload.pull_request.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ The Exercise Generator build and test job failed. Please check the logs for more details.'
+            })

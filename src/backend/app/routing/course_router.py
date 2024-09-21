@@ -1,7 +1,10 @@
+import uuid
 from fastapi import APIRouter, Depends
 from app.services import CourseService
 from domain.dto.courses import CourseDto, CourseListingDto, CoursePlanDto, CourseProgressionDto
 from .middleware import token_validator, user_id_extractor
+from common.messaging import KafkaProducer, Topic
+from domain.topics import CourseGeneratedTopic
 
 router = APIRouter(
     prefix="/courses",
@@ -46,3 +49,23 @@ async def generate_course(
     course_service: CourseService = Depends(CourseService)
 ):
     await course_service.generate_course(user_id, payload)
+    
+@router.get("/{course_id}/exercises")
+async def get_exercises(
+    course_id: uuid.UUID,
+    course_service: CourseService = Depends(CourseService)
+):
+    return course_service.get_exercises(course_id)
+
+@router.get("/trigger/{course_id}")
+async def trigger_course_generation(
+    course_id: uuid.UUID,
+    user_id: str = Depends(user_id_extractor)
+):
+    producer = KafkaProducer()
+    producer.produce_message(
+        topic=Topic.COURSE_GENERATED,
+        message=CourseGeneratedTopic(user_id=uuid.UUID(user_id), course_id=course_id)
+    )
+    
+    return {"message": "Course generation triggered"}

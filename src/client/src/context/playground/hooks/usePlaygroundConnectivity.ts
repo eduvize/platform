@@ -3,7 +3,8 @@ import { PlaygroundContext } from "../PlaygroundContext";
 
 interface UsePlaygroundConnectivityReturn {
     connected: boolean;
-    ready: boolean;
+    state: "initializing" | "ready" | null;
+    status: string | null;
     reconnecting: boolean;
 }
 
@@ -17,11 +18,19 @@ export const usePlaygroundConnectivity =
             PlaygroundContext,
             (v) => v.isReconnecting
         );
-        const isReady = useContextSelector(PlaygroundContext, (v) => v.isReady);
+        const state = useContextSelector(
+            PlaygroundContext,
+            (v) => v.instanceState
+        );
+        const status = useContextSelector(
+            PlaygroundContext,
+            (v) => v.setupStatus
+        );
 
         return {
             connected: isConnected,
-            ready: isReady,
+            state,
+            status,
             reconnecting: isReconnecting,
         };
     };

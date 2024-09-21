@@ -36,7 +36,8 @@ COPY app/repositories app/repositories
 COPY app/utilities app/utilities
 
 # Copy the job code into the container at /app
-COPY jobs/${JOB_NAME} .
+COPY jobs/${JOB_NAME} ${JOB_NAME}
 
-# Run the main entrypoint for the specific job
-ENTRYPOINT [ "python", "main.py" ]
+ENV JOB=${JOB_NAME}
+
+CMD python -m ${JOB}.main

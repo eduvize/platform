@@ -5,7 +5,7 @@ import uuid
 from sqlalchemy import update
 from sqlmodel import Session, select
 from sqlalchemy.orm import joinedload
-from domain.schema.courses import Course, Module, Lesson, Section
+from domain.schema.courses import Course, Module, Lesson, Section, CourseExercise, CourseExerciseObjective
 from domain.dto.courses.course import CourseDto
 from common.database import engine
 
@@ -233,7 +233,9 @@ class CourseRepository:
                 select(Lesson)
                 .where(Lesson.id == lesson_id)
                 .options(
-                    joinedload(Lesson.sections)
+                    joinedload(Lesson.sections),
+                    joinedload(Lesson.exercises)
+                    .joinedload(CourseExercise.objectives)
                 )
             )
             
@@ -242,20 +244,27 @@ class CourseRepository:
             
             return lesson
         
-    def get_course(self, user_id: uuid.UUID, course_id: uuid.UUID) -> Optional[Course]:
+    def get_course(self, course_id: uuid.UUID) -> Optional[Course]:
         with Session(engine) as session:
             query = (
                 select(Course)
-                .where(Course.id == course_id and Course.user_id == user_id)
+                .where(Course.id == course_id)
                 .options(
                     joinedload(Course.modules)
                     .joinedload(Module.lessons)
-                    .joinedload(Lesson.sections)
+                    .joinedload(Lesson.sections),
+                    joinedload(Course.modules)
+                    .joinedload(Module.lessons)
+                    .joinedload(Lesson.exercises)
+                    .joinedload(CourseExercise.objectives),
                 )
             )
             
             resultset = session.exec(query)
             course = resultset.first()
+            
+            if course is None:
+                return None
             
             # Order by module, lesson, section "order" field
             course.modules.sort(key=lambda x: x.order)
@@ -265,3 +274,83 @@ class CourseRepository:
                     lesson.sections.sort(key=lambda x: x.order)
                     
             return course
+        
+    def create_exercise(
+        self,
+        lesson_id: uuid.UUID, 
+        environment_id: uuid.UUID, 
+        title: str, 
+        summary: str, 
+        objectives: list[str]
+    ) -> uuid.UUID:
+        with Session(engine) as session:
+            exercise_entity = CourseExercise(
+                lesson_id=lesson_id,
+                title=title,
+                environment_id=environment_id,
+                summary=summary
+            )
+            
+            session.add(exercise_entity)
+            
+            for objective in objectives:
+                objective_entity = CourseExerciseObjective(
+                    objective=objective,
+                    exercise_id=exercise_entity.id
+                )
+                
+                session.add(objective_entity)
+            
+            session.commit()
+            session.refresh(exercise_entity)
+            
+            return exercise_entity.id
+        
+    def set_exercise_environment(self, exercise_id: uuid.UUID, environment_id: uuid.UUID) -> None:
+        with Session(engine) as session:
+            update_query = (
+                update(CourseExercise)
+                .where(CourseExercise.id == exercise_id)
+                .values(environment_id=environment_id)
+            )
+            
+            session.exec(update_query)
+            session.commit()
+            
+    def get_exercise_by_environment(self, environment_id: uuid.UUID) -> Optional[CourseExercise]:
+        with Session(engine) as session:
+            query = (
+                select(CourseExercise)
+                .where(CourseExercise.environment_id == environment_id)
+                .options(
+                    joinedload(CourseExercise.objectives)
+                )
+            )
+            
+            resultset = session.exec(query)
+            exercise = resultset.first()
+            
+            return exercise
+            
+    def remove_exercise(self, exercise_id: uuid.UUID) -> None:
+        """
+        Removes an exercise and its objectives from the database
+
+        Args:
+            exercise_id (uuid.UUID): The ID of the exercise to remove
+        """
+        
+        with Session(engine) as session:
+            query = (
+                select(CourseExercise)
+                .where(CourseExercise.id == exercise_id)
+            )
+            
+            resultset = session.exec(query)
+            exercise = resultset.first()
+            
+            if exercise is None:
+                raise ValueError("Exercise not found")
+            
+            session.delete(exercise)
+            session.commit()

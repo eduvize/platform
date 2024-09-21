@@ -1,3 +1,4 @@
+import { Exercise } from "./Exercise";
 import { Section } from "./Section";
 
 export interface LessonDto {
@@ -6,4 +7,5 @@ export interface LessonDto {
     description: string;
     order: number;
     sections: Section[];
+    exercises: Exercise[];
 }

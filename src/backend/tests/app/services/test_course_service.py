@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, Mock, patch, MagicMock
 import uuid
 from app.services.course_service import CourseService
 from domain.dto.courses import CoursePlanDto, CourseProgressionDto, CourseListingDto
@@ -12,7 +12,7 @@ from common.messaging.topics import Topic
 from ai.prompts.course_generation.models import CourseOutline, ModuleOutline, LessonOutline, SectionOutline
 
 # Sample data
-user_id = "user123"
+user_id = str(uuid.uuid4())
 course_id = str(uuid.uuid4())
 resource_id = uuid.uuid4()
 plan = CoursePlanDto(
@@ -97,8 +97,15 @@ async def test_get_additional_inputs(mock_get_user_profile_text, mock_prompt, co
 @patch("app.services.course_service.get_public_object_url", autospec=True)
 @patch("app.services.course_service.GenerateCourseOutlinePrompt", autospec=True)
 @patch("app.services.course_service.get_user_profile_text", autospec=True)
-@patch("app.services.course_service.kafka_producer", autospec=True)
-async def test_generate_course(mock_kafka_producer, mock_get_user_profile_text, mock_generate_course_outline_prompt, mock_get_public_object_url, mock_import_from_url, course_service):
+@patch("app.services.course_service.KafkaProducer", autospec=True)
+async def test_generate_course(
+    mock_kafka_inst: Mock, 
+    mock_get_user_profile_text: Mock, 
+    mock_generate_course_outline_prompt: Mock, 
+    mock_get_public_object_url: Mock, 
+    mock_import_from_url: Mock, 
+    course_service
+):
     """
     Tests generate_course method:
     1. Should call user_service.get_user to validate the user.
@@ -147,6 +154,8 @@ async def test_generate_course(mock_kafka_producer, mock_get_user_profile_text, 
     
     mock_get_user_profile_text.return_value = "User Profile Text"
     
+    mock_kafka_producer = Mock()
+    mock_kafka_inst.return_value = mock_kafka_producer
     mock_kafka_producer.produce_message = AsyncMock()
     
     course_service.generate_cover_image = MagicMock(return_value="cover_image_url")
@@ -168,6 +177,7 @@ async def test_generate_course(mock_kafka_producer, mock_get_user_profile_text, 
     mock_kafka_producer.produce_message.assert_called_once_with(
         topic=Topic.GENERATE_NEW_COURSE,
         message=CourseGenerationTopic(
+            user_id=uuid.UUID(user_id),
             course_id=uuid.UUID(course_id), 
             course_outline=mock_outline
         )
@@ -190,7 +200,7 @@ async def test_mark_section_as_completed(course_service):
     result = await course_service.mark_section_as_completed(user_id=user_id, course_id=course_id)
     
     course_service.user_service.get_user.assert_awaited_once_with("id", user_id)
-    course_service.course_repo.get_course.assert_called_once_with(user_id, uuid.UUID(course_id))
+    course_service.course_repo.get_course.assert_called_once_with(uuid.UUID(course_id))
     
     assert isinstance(result, CourseProgressionDto)
 
@@ -229,7 +239,7 @@ async def test_get_course(course_service):
     result = await course_service.get_course(user_id=user_id, course_id=course_id)
     
     course_service.user_service.get_user.assert_awaited_once_with("id", user_id)
-    course_service.course_repo.get_course.assert_called_once_with(user_id, course_id)
+    course_service.course_repo.get_course.assert_called_once_with(course_id)
     
     assert result == course
 

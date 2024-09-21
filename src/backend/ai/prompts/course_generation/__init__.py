@@ -1,2 +1,3 @@
 from .generate_course_outline_prompt import GenerateCourseOutlinePrompt
 from .generate_module_content_prompt import GenerateModuleContentPrompt
+from .generate_exercises_prompt import GenerateExercisesPrompt

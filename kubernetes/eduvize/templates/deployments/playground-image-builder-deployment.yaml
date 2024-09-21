@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ include "eduvize.fullname" . }}-playground-image-builder"
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{ include "eduvize.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.playground_image_builder.replicas }}
+  selector:
+    matchLabels: 
+      app: "{{ include "eduvize.fullname" . }}-playground-image-builder"
+      {{ include "eduvize.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: "{{ include "eduvize.fullname" . }}-playground-image-builder"
+        {{ include "eduvize.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if .Values.privateRegistry.enabled }}
+      imagePullSecrets:
+        - name: {{ .Values.privateRegistry.secretName }}
+      {{- end }}
+      containers:
+        - name: "{{ include "eduvize.fullname" . }}-playground-image-builder"
+          image: {{ .Values.playground_image_builder.image }}
+          securityContext:
+            privileged: true
+          env:
+            - name: POSTGRES_HOST
+              value: "{{ include "eduvize.fullname" . }}-postgres-service:{{ .Values.database.port }}"
+            - name: POSTGRES_DB
+              value: {{ .Values.database.name }}
+            - name: POSTGRES_USER
+              value: {{ .Values.database.user }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: password
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: {{ .Values.kafka.bootstrapServers | quote }}
+            - name: KAFKA_MAX_POLL_INTERVAL_SECONDS
+              value: "1800"
+            - name: DOCKER_HOST
+              value: "unix:///var/run/docker.sock"
+            {{- range .Values.playground_image_builder.envSecretMap }}
+            - name: {{ .name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .secret }}
+                  key: {{ .key }}
+            {{- end}}

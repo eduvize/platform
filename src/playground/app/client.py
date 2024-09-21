@@ -2,10 +2,11 @@ import logging
 import time
 import socketio
 import threading
-from .config import get_backend_socketio_endpoint, get_self_destruct_enabled
+from .config import get_backend_socketio_endpoint, get_self_destruct_enabled, get_image_tag
 from .shell import Shell
 from .orchestration import mark_for_deletion
-from .filesystem import create_filesystem_entry, read_file_content, save_file_content, rename_path, delete_path
+from .filesystem import create_filesystem_entry, read_file_content, save_file_content, rename_path, delete_path, get_top_level_filesystem_entries
+from .container_runtime import initialize_environment
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -13,37 +14,90 @@ logger = logging.getLogger(__name__)
 client = socketio.Client()
 shell = None
 user_connection_timer = None
+is_user_connected = False
+
+def self_destruct():
+    global is_user_connected
+    
+    if is_user_connected:
+        logger.info("User is connected. Skipping self-destruct.")
+        return
+    
+    logger.info("Self-destructing...")
+    mark_for_deletion()
 
 def start_user_connection_timer():
     global user_connection_timer
-    if user_connection_timer is None:
-        user_connection_timer = threading.Timer(10.0, mark_for_deletion)
-        user_connection_timer.start()
-        print("User connection timer started")
-    else:
-        print("User connection timer is already running")
+    
+    if user_connection_timer is not None:
+        logging.info("Cancelling existing user connection timer")
+        user_connection_timer.cancel()
+        user_connection_timer = None        
+    
+    user_connection_timer = threading.Timer(10.0, self_destruct)
+    user_connection_timer.start()
+    logging.info("User connection timer started")
 
 def cancel_user_connection_timer():
     global user_connection_timer
     if user_connection_timer is not None:
-        print("Cancelling user connection timer")
+        logging.info("Cancelling user connection timer")
         user_connection_timer.cancel()
         user_connection_timer = None
-    else:
-        print("No active timer to cancel")
 
 @client.event
 def connect():
-    print("Connected to server")
+    logging.info("Connected to server")
     
-    shell.start()
-        
+    if get_self_destruct_enabled():
+        start_user_connection_timer()
+            
 @client.event
 def disconnect():
-    print("Disconnected from server")
+    logging.info("Disconnected from server")
     
     if get_self_destruct_enabled():
         mark_for_deletion()
+      
+@client.event
+def subscribe_to_path(data: dict):
+    """
+    Subscribes to a filesystem path for changes
+
+    Args:
+        data (dict): The filesystem entry data
+    """
+    
+    path = data.get("path").lstrip("/")
+    shell.directory_monitor.add_path(path)
+    
+@client.event
+def unsubscribe_from_path(data: dict):
+    """
+    Unsubscribes from a filesystem path
+
+    Args:
+        data (dict): The filesystem entry data
+    """
+    
+    path = data.get("path").lstrip("/")
+    shell.directory_monitor.remove_path(path)
+        
+@client.event
+def get_directory(data: dict):
+    """
+    Command to get the directory tree
+
+    Args:
+        data (dict): The filesystem entry data
+    """
+    
+    path = data.get("path").lstrip("/")
+    
+    client.emit("directory_contents", {
+        "path": path,
+        "entries": get_top_level_filesystem_entries(path)
+    })
         
 @client.event
 def terminal_input(t_input: str):
@@ -151,14 +205,35 @@ def save_file(data: dict):
     save_file_content(path, content)
 
 @client.event
-def user_connected():
+def user_connected(data: dict):
     logger.info("User connected")
     
+    global is_user_connected
+    is_user_connected = True
+    
     cancel_user_connection_timer()
+    
+    image_tag = get_image_tag()
+    if image_tag is None:
+        image_tag = data.get("image_tag", None)
+        
+        if image_tag is None:
+            logger.error("No image tag provided")
+            return
+
+    logger.info(f"Initializing environment with image tag: {image_tag}")
+    initialize_environment(image_tag)
+            
+    shell.start()
+    
+    client.emit("ready")
     
 @client.event
 def user_disconnected():
     logger.info("User disconnected")
+    
+    global is_user_connected
+    is_user_connected = False
     
     if get_self_destruct_enabled():
         mark_for_deletion()
@@ -184,17 +259,14 @@ def connect_to_server(token: str, max_retries: int = 3, retry_delay: int = 5):
     attempt = 0
     while attempt < max_retries:
         try:
-            print(f"Attempt {attempt + 1} to connect to the server.")
+            logging.info(f"Attempt {attempt + 1} to connect to the server.")
             client.connect(
                 url=endpoint,
                 headers={
                     "Authorization": f"Bearer {token}"
                 }
             )
-            print("Connection successful!")
-            
-            if get_self_destruct_enabled():
-                start_user_connection_timer()
+            logging.info("Connection successful!")
                 
             client.wait()  # Blocks the main thread, ensuring client remains connected
             
@@ -202,10 +274,10 @@ def connect_to_server(token: str, max_retries: int = 3, retry_delay: int = 5):
 
         except Exception as e:
             attempt += 1
-            print(f"Connection attempt {attempt} failed: {e}")
+            logging.warning(f"Connection attempt {attempt} failed: {e}")
             
             if attempt < max_retries:
-                print(f"Retrying in {retry_delay} seconds...")
+                logging.warning(f"Retrying in {retry_delay} seconds...")
                 time.sleep(retry_delay)
             else:
-                print("Max retries reached. Could not connect to the server.")
+                logging.error("Max retries reached. Could not connect to the server.")

@@ -182,6 +182,21 @@ CREATE TABLE IF NOT EXISTS course_lessons (
     "order" INT NOT NULL
 );
 
+-- Create table for exercises
+CREATE TABLE IF NOT EXISTS course_exercises (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    lesson_id UUID NOT NULL REFERENCES course_lessons(id),
+    title TEXT NOT NULL,
+    summary TEXT NOT NULL
+);
+
+-- Create table for exercise objectives
+CREATE TABLE IF NOT EXISTS course_exercise_objectives(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    exercise_id UUID NOT NULL REFERENCES course_exercises(id),
+    objective TEXT NOT NULL
+);
+
 -- Add the current_lesson_id column to the courses table
 ALTER TABLE courses ADD COLUMN current_lesson_id UUID REFERENCES course_lessons(id);
 
@@ -223,13 +238,30 @@ CREATE TABLE IF NOT EXISTS chat_tool_calls (
     result TEXT NOT NULL
 );
 
+-- Create playground environments table
+CREATE TABLE IF NOT EXISTS playground_environments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    image_tag TEXT,
+    docker_base_image TEXT NOT NULL,
+    description TEXT NOT NULL,
+    created_at_utc TIMESTAMP NOT NULL DEFAULT now(),
+    last_used_at_utc TIMESTAMP
+);
+
 -- Create playground session table
 CREATE TABLE IF NOT EXISTS playground_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    type TEXT NOT NULL,
     instance_hostname TEXT,
+    environment_id UUID NOT NULL REFERENCES playground_environments(id),
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
+
+-- Add playground_environment_id to course_exercises
+ALTER TABLE course_exercises ADD COLUMN playground_environment_id UUID REFERENCES playground_environments(id);
+
+-- Add environment_id to course_exercises
+ALTER TABLE course_exercises ADD COLUMN environment_id UUID REFERENCES playground_environments(id);
 
 -- Bcrypt hash for the password "testpassword"
 DO $$

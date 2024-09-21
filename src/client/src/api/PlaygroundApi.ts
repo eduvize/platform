@@ -2,8 +2,8 @@ import { PlaygroundCreationResponse } from "@contracts";
 import BaseApi from "./BaseApi";
 
 class PlaygroundApi extends BaseApi {
-    createSession(): Promise<PlaygroundCreationResponse> {
-        return this.post("", {});
+    createSession(environmentId: string): Promise<PlaygroundCreationResponse> {
+        return this.get(environmentId);
     }
 }
 

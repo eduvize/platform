@@ -1,0 +1,29 @@
+name: Playground Image Builder - Build and Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/playground/**"
+      - "kubernetes/eduvize/templates/deployments/playground-image-builder-*.yaml"
+
+jobs:
+  build-push-playground-image-builder:
+    name: Build and Push Playground Image Builder Image
+    uses: ./.github/workflows/reusable_build_push.yml
+    with:
+      IMAGE_NAME: "playground-image-builder"
+      DOCKERFILE: "src/playground/builder.Dockerfile"
+      BUILD_CONTEXT: "src/playground"
+    secrets: inherit
+
+  deploy-playground-orchestrator:
+    name: Deploy Playground Image Builder
+    uses: ./.github/workflows/reusable_helm_deploy.yml
+    with:
+      DEPLOYMENT_NAME: "eduvize-playground-image-builder"
+      DOMAIN_NAME: "eduvize.dev"
+    secrets: inherit
+    needs: build-push-playground-image-builder

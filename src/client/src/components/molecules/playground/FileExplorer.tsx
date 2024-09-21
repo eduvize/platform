@@ -39,6 +39,8 @@ export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
         rename,
         deletePath,
         openFiles,
+        expandPath,
+        collapsePath,
     } = usePlaygroundFilesystem();
     const [newEntry, setNewEntry] = useState<EntryData | null>(null);
     const [renameEntry, setRenameEntry] = useState<RenameData | null>(null);
@@ -52,7 +54,10 @@ export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
     }, [openFiles.length]);
 
     const handleAddFile = (dir: string) => {
-        tree.expand(dir);
+        if (!tree.expandedState[dir]) {
+            tree.expand(dir);
+            expandPath(dir);
+        }
 
         setNewEntry({
             type: "file",
@@ -62,7 +67,10 @@ export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
     };
 
     const handleAddDirectory = (dir: string) => {
-        tree.expand(dir);
+        if (!tree.expandedState[dir]) {
+            tree.expand(dir);
+            expandPath(dir);
+        }
 
         setNewEntry({
             type: "directory",
@@ -323,7 +331,13 @@ export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
                                 }
 
                                 if (`${node.label}`.startsWith("dir:")) {
-                                    tree.toggleExpanded(node.value);
+                                    if (tree.expandedState[node.value]) {
+                                        tree.collapse(node.value);
+                                        collapsePath(node.value);
+                                    } else {
+                                        tree.expand(node.value);
+                                        expandPath(node.value);
+                                    }
                                     return;
                                 } else {
                                     openFile(node.value);

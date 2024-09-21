@@ -92,7 +92,7 @@ def main():
         # Loop through each unreserved session and create a pod
         for session in unreserved_sessions:
             logging.info(f"Creating a new pod for session {session.id}")
-            pod_name = create_new_pod(str(session.id), session.type)
+            pod_name = create_new_pod(str(session.id), session.environment.image_tag, str(session.environment_id))
             assign_session(session.id, pod_name)
             logging.info(f"Assigned session {session.id} to pod {pod_name}")
 
