@@ -3,7 +3,8 @@ from starlette.middleware.cors import CORSMiddleware
 
 origins = [
     "http://localhost:5173",
-    "https://eduvize.dev"
+    "https://eduvize.dev",
+    "https://eduvize.ai"
 ]
 
 app = FastAPI()

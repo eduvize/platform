@@ -33,7 +33,7 @@ COPY nginx.conf /etc/nginx/templates/default.conf.template
 
 # Set the environment variable for PORT, default to 80
 ENV PORT=80
-ENV HOSTNAME=eduvize.dev
+ENV HOSTNAME=eduvize.ai
 
 # Expose the port
 EXPOSE $PORT
