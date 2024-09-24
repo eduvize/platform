@@ -7,6 +7,7 @@ from sqlmodel import Session, select
 from sqlalchemy.orm import joinedload
 from domain.schema.courses import Course, Module, Lesson, Section, CourseExercise, CourseExerciseObjective
 from domain.dto.courses.course import CourseDto
+from domain.dto.courses.exercise_plan import ExerciseObjectivePlan
 from common.database import engine
 
 class CourseRepository:
@@ -275,13 +276,31 @@ class CourseRepository:
                     
             return course
         
+    def get_exercise(
+        self,
+        exercise_id: uuid.UUID
+    ) -> Optional[CourseExercise]:
+        with Session(engine) as session:
+            query = (
+                select(CourseExercise)
+                .where(CourseExercise.id == exercise_id)
+                .options(
+                    joinedload(CourseExercise.objectives)
+                )
+            )
+            
+            resultset = session.exec(query)
+            exercise = resultset.first()
+            
+            return exercise
+        
     def create_exercise(
         self,
         lesson_id: uuid.UUID, 
         environment_id: uuid.UUID, 
         title: str, 
         summary: str, 
-        objectives: list[str]
+        objectives: list[ExerciseObjectivePlan]
     ) -> uuid.UUID:
         with Session(engine) as session:
             exercise_entity = CourseExercise(
@@ -295,7 +314,9 @@ class CourseRepository:
             
             for objective in objectives:
                 objective_entity = CourseExerciseObjective(
-                    objective=objective,
+                    objective=objective.objective,
+                    test_plan=objective.test_plan,
+                    is_completed=False,
                     exercise_id=exercise_entity.id
                 )
                 
@@ -344,6 +365,9 @@ class CourseRepository:
             query = (
                 select(CourseExercise)
                 .where(CourseExercise.id == exercise_id)
+                .options(
+                    joinedload(CourseExercise.objectives)
+                )
             )
             
             resultset = session.exec(query)
@@ -352,5 +376,19 @@ class CourseRepository:
             if exercise is None:
                 raise ValueError("Exercise not found")
             
+            for objective in exercise.objectives:
+                session.delete(objective)
+            
             session.delete(exercise)
+            session.commit()
+            
+    def complete_objective(self, objective_id: uuid.UUID) -> None:
+        with Session(engine) as session:
+            update_query = (
+                update(CourseExerciseObjective)
+                .where(CourseExerciseObjective.id == objective_id)
+                .values(is_completed=True)
+            )
+            
+            session.exec(update_query)
             session.commit()

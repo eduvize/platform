@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from "react";
+import { memo, ReactNode, useEffect, useRef, useState } from "react";
 import io, { Socket } from "socket.io-client";
 import { createContext } from "use-context-selector";
 import { PlaygroundApi } from "@api";
@@ -24,6 +24,7 @@ type Context = {
     isReconnecting: boolean;
     environment?: PlaygroundEnvironment;
     openFiles: Record<string, string>;
+    readme?: ReactNode | string;
 };
 
 const defaultValue: Context = {
@@ -50,11 +51,21 @@ export const PlaygroundContext = createContext<Context>(defaultValue);
 
 interface PlaygroundProviderProps {
     environmentId: string;
+    onExerciseObjectiveStatusChange?: (
+        objectiveId: string,
+        isCompleted: boolean
+    ) => void;
+    readme: ReactNode | string;
     children: React.ReactNode;
 }
 
 export const PlaygroundProvider = memo(
-    ({ environmentId, children }: PlaygroundProviderProps) => {
+    ({
+        environmentId,
+        onExerciseObjectiveStatusChange,
+        readme,
+        children,
+    }: PlaygroundProviderProps) => {
         const sessionIdRef = useRef<string | null>(null);
         const clientRef = useRef<Socket | null>(null);
         const sizeRef = useRef<{ rows: number; columns: number }>({
@@ -117,6 +128,20 @@ export const PlaygroundProvider = memo(
                             );
                         }
                     });
+
+                    clientRef.current.on(
+                        "exercise_objective_status",
+                        ({ objective_id, is_completed }) => {
+                            console.log(
+                                `Objective ${objective_id} is completed: ${is_completed}`
+                            );
+
+                            onExerciseObjectiveStatusChange?.(
+                                objective_id,
+                                is_completed
+                            );
+                        }
+                    );
 
                     clientRef.current.on("setup_status", (status) => {
                         setSetupStatus(status);
@@ -445,6 +470,7 @@ export const PlaygroundProvider = memo(
                     environment,
                     openFiles,
                     setFileContent: handleSetFileContent,
+                    readme,
                 }}
             >
                 {children}

@@ -2,7 +2,7 @@ import shutil
 from typing import List, Literal, Optional, Callable, TypedDict
 import os
 from watchdog.observers import Observer
-from watchdog.events import DirCreatedEvent, DirDeletedEvent, DirMovedEvent, FileCreatedEvent, FileDeletedEvent, FileMovedEvent, FileSystemEventHandler
+from watchdog.events import DirCreatedEvent, DirDeletedEvent, DirModifiedEvent, DirMovedEvent, FileCreatedEvent, FileDeletedEvent, FileModifiedEvent, FileMovedEvent, FileSystemEventHandler
 
 IGNORED_SYSTEM_DOTFILES = {
     '.profile', '.bashrc', '.bash_profile', '.bash_logout', '.gitignore', '.git', '.DS_Store'
@@ -166,13 +166,23 @@ class DirectoryMonitor:
     callback: Callable[[], None]
     event_handler: FileSystemEventHandler
     subscribed_paths: List[str]
+    trigger_on_modified: bool
+    no_path_filter: bool
     
-    def __init__(self, directory: str, callback: Callable[[str], None]) -> None:
+    def __init__(
+        self, 
+        directory: str, 
+        callback: Callable[[str], None], 
+        trigger_on_modified: bool = False, 
+        no_path_filter: bool = False
+    ) -> None:
         self.watch_directory = directory
         self.callback = callback
         self.event_handler = self.ChangeHandler(self, callback)
         self.observer = Observer()
         self.subscribed_paths = [directory] 
+        self.trigger_on_modified = trigger_on_modified
+        self.no_path_filter = no_path_filter
         
     def start_watching(self):
         self.observer.schedule(self.event_handler, self.watch_directory, recursive=True)
@@ -208,7 +218,7 @@ class DirectoryMonitor:
         def on_created(self, event: DirCreatedEvent | FileCreatedEvent) -> None:
             dir_path = os.path.dirname(event.src_path)
 
-            if not self.monitor.is_tracked_path(dir_path):
+            if not self.monitor.is_tracked_path(dir_path) and not self.monitor.no_path_filter:
                 return
             
             self.callback(dir_path)
@@ -216,7 +226,7 @@ class DirectoryMonitor:
         def on_deleted(self, event: DirDeletedEvent | FileDeletedEvent) -> None:
             dir_path = os.path.dirname(event.src_path)
             
-            if not self.monitor.is_tracked_path(dir_path):
+            if not self.monitor.is_tracked_path(dir_path) and not self.monitor.no_path_filter:
                 return
             
             self.callback(dir_path)
@@ -224,10 +234,19 @@ class DirectoryMonitor:
         def on_moved(self, event: DirMovedEvent | FileMovedEvent) -> None:
             src_dir_path = os.path.dirname(event.src_path)
             
-            if self.monitor.is_tracked_path(src_dir_path):
+            if self.monitor.is_tracked_path(src_dir_path) and not self.monitor.no_path_filter:
                 self.callback(src_dir_path)
 
             dest_dir_path = os.path.dirname(event.dest_path)
             
-            if self.monitor.is_tracked_path(dest_dir_path):
+            if self.monitor.is_tracked_path(dest_dir_path) and not self.monitor.no_path_filter:
                 self.callback(dest_dir_path)
+                
+        def on_modified(self, event: DirModifiedEvent | FileModifiedEvent) -> None:
+            dir_path = os.path.dirname(event.src_path)
+            
+            if not self.monitor.is_tracked_path(dir_path) and not self.monitor.no_path_filter:
+                return
+            
+            if self.monitor.trigger_on_modified:
+                self.callback(dir_path)

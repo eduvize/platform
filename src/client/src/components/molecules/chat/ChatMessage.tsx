@@ -17,6 +17,9 @@ export const ChatMessage = ({ is_user, content }: ChatMessageProps) => {
         if (!is_user) return "";
         if (!localUser) return "";
 
+        if (!localUser.profile.first_name || !localUser.profile.last_name) {
+            return localUser.username[0];
+        }
         return `${localUser.profile.first_name![0]}${
             localUser.profile.last_name![0]
         }`;

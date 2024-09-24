@@ -134,7 +134,7 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
                                     {connected &&
                                         state === "initializing" &&
                                         !status &&
-                                        "Initializing playground session..."}
+                                        "Creating development environment..."}
                                     {connected &&
                                         state === "initializing" &&
                                         status !== null &&
@@ -149,48 +149,46 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
     }
 
     return (
-        <Card withBorder p={0}>
-            <Grid>
-                <Grid.Col span={12}>
-                    <Group
-                        gap="xs"
-                        h={heightProperty}
-                        wrap="nowrap"
-                        align="flex-start"
-                    >
-                        <Box bg="dark" h="100%">
-                            <FileExplorer
-                                w="200px"
-                                onSelect={(type, path) => {
-                                    if (type === "file") {
-                                        setFocusedFile(path);
-                                    }
+        <Grid>
+            <Grid.Col span={12}>
+                <Group
+                    gap="xs"
+                    h={heightProperty}
+                    wrap="nowrap"
+                    align="flex-start"
+                >
+                    <Box bg="dark" h="100%">
+                        <FileExplorer
+                            w="200px"
+                            onSelect={(type, path) => {
+                                if (type === "file") {
+                                    setFocusedFile(path);
+                                }
+                            }}
+                        />
+                    </Box>
+
+                    <Stack w="100%" h="100%" ref={stackRef} gap={0}>
+                        <OpenFiles
+                            selectedFile={focusedFile}
+                            height={`${editorHeight}px`}
+                        />
+
+                        {showTerminal && (
+                            <div
+                                ref={viewport}
+                                style={{
+                                    height: `${terminalHeight}px`,
+                                    width: "100%",
+                                    borderTop:
+                                        "1px solid var(--mantine-color-gray-7)",
+                                    padding: "4px",
                                 }}
                             />
-                        </Box>
-
-                        <Stack w="100%" h="100%" ref={stackRef} gap={0}>
-                            <OpenFiles
-                                selectedFile={focusedFile}
-                                height={`${editorHeight}px`}
-                            />
-
-                            {showTerminal && (
-                                <div
-                                    ref={viewport}
-                                    style={{
-                                        height: `${terminalHeight}px`,
-                                        width: "100%",
-                                        borderTop:
-                                            "1px solid var(--mantine-color-gray-7)",
-                                        padding: "4px",
-                                    }}
-                                />
-                            )}
-                        </Stack>
-                    </Group>
-                </Grid.Col>
-            </Grid>
-        </Card>
+                        )}
+                    </Stack>
+                </Group>
+            </Grid.Col>
+        </Grid>
     );
 };

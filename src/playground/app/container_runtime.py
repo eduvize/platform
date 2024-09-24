@@ -97,14 +97,14 @@ def run_container(image_tag, container_name="my_playground_container"):
         # Build a list of --env arguments for each environment variable
         env_args = [f"--env={key}={value}" for key, value in env.items() if value is not None]
 
-        # Make /userland 777
-        subprocess.run(["chmod", "777", "/userland"], check=True)
-
         # Run the container with the specified environment variables
         subprocess.run(
             ["docker", "run", "--name", container_name, "--rm", "-d", "-v", "/userland:/home/user", *env_args, image_tag],
             check=True
         )
+        
+        # Make /userland 777
+        subprocess.run(["chmod", "777", "-R", "/userland"], check=True)
 
         logging.info(f"Container {container_name} is now running.")
     except subprocess.CalledProcessError as e:

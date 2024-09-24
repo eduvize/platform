@@ -12,7 +12,7 @@ from common.messaging.topics import Topic
 from config import get_openai_key
 from common.storage import StoragePurpose, import_from_url, get_public_object_url
 from common.messaging import KafkaProducer
-from domain.schema.courses import Course, Lesson
+from domain.schema.courses import Course, Lesson, CourseExercise
 from domain.dto.courses import CourseDto, CourseListingDto, CoursePlanDto, CourseProgressionDto
 from domain.dto.profile import UserProfileDto
 from domain.topics import CourseGenerationTopic
@@ -237,6 +237,24 @@ class CourseService:
             raise ValueError("Course not found")
         
         return course
+    
+    async def get_exercise(
+        self,
+        exercise_id: uuid.UUID
+    ) -> CourseExercise:
+        exercise = self.course_repo.get_exercise(exercise_id)
+        
+        if exercise is None:
+            raise ValueError("Exercise not found")
+        
+        return exercise
+    
+    async def complete_objective(
+        self,
+        exercise_id: uuid.UUID,
+        objective_id: uuid.UUID
+    ) -> None:
+        self.course_repo.complete_objective(objective_id)
 
     def generate_cover_image(self, subject: str) -> str:
         response = self.openai.images.generate(
@@ -269,9 +287,9 @@ class CourseService:
                 ])
                 
                 prompt = GenerateExercisesPrompt()
-                lesson_exercises = prompt.get_exercises(lesson_content)
+                lesson_exercise = prompt.get_exercise(lesson_content)
                 
-                if lesson_exercises is not None:
-                    exercises.append(lesson_exercises[0])
+                if lesson_exercise is not None:
+                    exercises.append(lesson_exercise)
                     
         return exercises

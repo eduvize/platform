@@ -25,6 +25,11 @@ class Shell:
         self.client = client
         self.stop_signal = threading.Event()
         self.terminated = False
+
+    def start(self):
+        self.terminated = False
+        self.stop_signal = threading.Event()
+        
         self.directory_monitor = DirectoryMonitor(
             directory="/userland", 
             callback=lambda dir_path: 
@@ -33,10 +38,6 @@ class Shell:
                     "entries": get_top_level_filesystem_entries(dir_path)
                 }) if not self.terminated else None
         )
-
-    def start(self):
-        self.terminated = False
-        self.stop_signal = threading.Event()
         
         logger.info("Starting directory monitor")
         self.directory_monitor.start_watching()

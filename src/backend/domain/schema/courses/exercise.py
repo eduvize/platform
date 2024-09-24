@@ -4,7 +4,9 @@ from sqlmodel import SQLModel, Field, Relationship
 import domain.schema as schema
 
 class CourseExerciseObjectiveBase(SQLModel):
-    objective: str = Field(nullable=False)
+    objective: str      = Field(nullable=False)
+    test_plan: str      = Field(nullable=False)
+    is_completed: bool  = Field(default=False)
     
 class CourseExerciseObjective(CourseExerciseObjectiveBase, table=True):
     __tablename__ = "course_exercise_objectives"

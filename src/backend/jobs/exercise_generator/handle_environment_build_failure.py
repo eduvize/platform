@@ -19,23 +19,23 @@ def listen_for_environment_build_failure_events():
 
     for data, message in consumer.messages(message_type=EnvironmentBuildFailedTopic):
         try:
-            logging.info(f"Received environment creation failed event: {data.resource_id}, purpose: {data.purpose}")
+            logging.info(f"Received environment creation failed event: {data.environment_id}, purpose: {data.purpose}")
             
             if not data.purpose == "exercise":
                 logging.error(f"Not interested in purpose, skipping: {data.purpose}")
                 consumer.commit(message)
                 continue
             
-            exercise = course_repo.get_exercise_by_environment(data.resource_id)
+            exercise = course_repo.get_exercise_by_environment(data.environment_id)
             
             if exercise is None:
-                logging.error(f"Exercise not found for environment: {data.resource_id}. Skipping...")
+                logging.error(f"Exercise not found for environment: {data.environment_id}. Skipping...")
                 consumer.commit(message)
                 continue
             
             logging.info("Removing exercise and environment records")
             course_repo.remove_exercise(exercise.id)
-            playground_repo.remove_environment(data.resource_id)
+            playground_repo.remove_environment(data.environment_id)
             
             consumer.commit(message)
         except Exception as e:

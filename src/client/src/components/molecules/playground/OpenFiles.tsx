@@ -1,4 +1,4 @@
-import { usePlaygroundFilesystem } from "@context/playground/hooks";
+import { usePlaygroundFilesystem, useReadme } from "@context/playground/hooks";
 import { Group, Tabs, Tooltip, Text, ActionIcon } from "@mantine/core";
 import Markdown from "react-markdown";
 import { FileEditor } from "./FileEditor";
@@ -11,12 +11,42 @@ interface OpenFilesProps {
     selectedFile?: string | null;
 }
 
+const FileTab = ({
+    path,
+    onClose,
+}: {
+    path: string;
+    onClose: (path: string) => void;
+}) => {
+    const fileName = path.split("/").pop();
+
+    return (
+        <Tabs.Tab value={path} p="xs">
+            <Group align="center" gap="xs">
+                <Tooltip label={path} position="bottom">
+                    <Text size="sm">{fileName}</Text>
+                </Tooltip>
+                <ActionIcon
+                    size={12}
+                    variant="transparent"
+                    c="gray"
+                    pt={1}
+                    onClick={() => onClose(path)}
+                >
+                    <IconX />
+                </ActionIcon>
+            </Group>
+        </Tabs.Tab>
+    );
+};
+
 export const OpenFiles = ({
     height,
     selectedFile: overridePath,
 }: OpenFilesProps) => {
     const openedRef = useRef<string[]>([]);
     const tabListRef = useRef<HTMLDivElement>(null);
+    const readme = useReadme();
     const [tabContainerRef, tabContainerRect] = useResizeObserver();
     const { openFiles, closeFile, entries } = usePlaygroundFilesystem();
     const [selectedFile, setSelectedFile] = useState<string | null>(
@@ -88,29 +118,6 @@ export const OpenFiles = ({
         }
     }, [openFiles, selectedFile]);
 
-    const FileTab = ({ path }: { path: string }) => {
-        const fileName = path.split("/").pop();
-
-        return (
-            <Tabs.Tab value={path}>
-                <Group align="center" gap="xs">
-                    <Tooltip label={path} position="bottom">
-                        <Text>{fileName}</Text>
-                    </Tooltip>
-                    <ActionIcon
-                        size={12}
-                        variant="transparent"
-                        c="gray"
-                        pt={1}
-                        onClick={() => closeFile(path)}
-                    >
-                        <IconX />
-                    </ActionIcon>
-                </Group>
-            </Tabs.Tab>
-        );
-    };
-
     return (
         <Tabs
             value={selectedFile || "__welcome__"}
@@ -120,23 +127,25 @@ export const OpenFiles = ({
             ref={tabContainerRef}
         >
             <Tabs.List ref={tabListRef}>
-                <Tabs.Tab value="__welcome__">
-                    <Text>README</Text>
+                <Tabs.Tab value="__welcome__" p="xs">
+                    <Text size="sm">README</Text>
                 </Tabs.Tab>
                 {openFiles.map((path) => (
-                    <FileTab key={path} path={path} />
+                    <FileTab key={path} path={path} onClose={closeFile} />
                 ))}
             </Tabs.List>
 
             <Tabs.Panel value="__welcome__">
-                <Markdown>
-                    {`
+                {readme || (
+                    <Markdown>
+                        {`
 ## Welcome to the Playground
 You can create new files and directories using the file explorer on the left, or by using the command line.
 
 In the future, this tab will be replaced with a description of what you'd be working on and the tools provided to you.
 `}
-                </Markdown>
+                    </Markdown>
+                )}
             </Tabs.Panel>
 
             {openFiles.map((path) => (

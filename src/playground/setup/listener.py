@@ -79,10 +79,11 @@ def poll_messages(consumer):
                 # Load the message as json
                 data = json.loads(message.value().decode("utf-8"))
 
-                purpose = data.get("purpose", None)
-                resource_id = data.get("resource_id", None)
-                base_image = data.get("base_image", None)
-                description = data.get("description", None)
+                purpose = data.get("purpose", None) # The purpose of the environment (i.e exercise)
+                environment_id = data.get("environment_id", None) # The ID of the environment this image is for
+                resource_id = data.get("resource_id", None) # The ID of the resource this environment is associated to (i.e exercise)
+                base_image = data.get("base_image", None) # Base image to use for the Docker image
+                description = data.get("description", None) # A description of what the environment must contain
 
                 if not base_image:
                     logging.error("base_image not provided in the message.")
@@ -105,6 +106,7 @@ def poll_messages(consumer):
                         topic="environment_created",
                         value=json.dumps({
                             "purpose": purpose,
+                            "environment_id": environment_id,
                             "resource_id": resource_id,
                             "image_tag": tag
                         })
@@ -116,7 +118,7 @@ def poll_messages(consumer):
                         topic="environment_build_failed",
                         value=json.dumps({
                             "purpose": purpose,
-                            "resource_id": resource_id
+                            "environment_id": environment_id
                         })   
                     )
                     

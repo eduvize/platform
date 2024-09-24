@@ -2,6 +2,7 @@ import { ChatProvider, useChat } from "@context/chat";
 import { useCourse, useLesson } from "@context/course/hooks";
 import { PlaygroundProvider } from "@context/playground";
 import {
+    Box,
     Button,
     Card,
     Center,
@@ -14,7 +15,8 @@ import {
     Text,
 } from "@mantine/core";
 import { ReadingMaterial } from "@molecules";
-import { Chat, Playground } from "@organisms";
+import { Chat, Exercise } from "@organisms";
+import { IconHammer } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -34,6 +36,7 @@ export const Component = ({ courseId, lessonId }: LessonProps) => {
     const { title, description, sections, order, exercises } =
         useLesson(lessonId);
     const [section, setSection] = useState(lessonId ? lesson_index : 0);
+    const [showExercise, setShowExercise] = useState(false);
 
     useEffect(() => {
         // TODO: Figure out what's wrong with useWindowScroll. Hack in the meantime!
@@ -43,13 +46,33 @@ export const Component = ({ courseId, lessonId }: LessonProps) => {
 
         purgeChatSession();
         setIsChatUsed(false);
-    }, [section]);
+    }, [section, showExercise]);
 
-    const handleNextSection = () => {
-        setSection(section + 1);
+    const handleCompleteSection = () => {
+        markSectionCompleted(lessonId, section);
+
+        if (section === sections.length - 1) {
+            if (exercises.length > 0) {
+                if (!showExercise) {
+                    setShowExercise(true);
+                } else {
+                    navigate(`/dashboard/course/${courseId}`);
+                }
+            } else {
+                navigate(`/dashboard/course/${courseId}`);
+            }
+        } else {
+            setSection(section + 1);
+        }
     };
 
-    const exercise = exercises.length > 0 ? exercises[0] : null;
+    const handlePrevious = () => {
+        if (showExercise) {
+            setShowExercise(false);
+        } else if (section > 0) {
+            setSection(section - 1);
+        }
+    };
 
     return (
         <Container size={sections.length === 1 ? "lg" : "xl"}>
@@ -60,7 +83,7 @@ export const Component = ({ courseId, lessonId }: LessonProps) => {
                             mt="xl"
                             pt="md"
                             orientation="vertical"
-                            active={section}
+                            active={section + (showExercise ? 1 : 0)}
                         >
                             {sections.map((section, index) => (
                                 <Stepper.Step
@@ -74,6 +97,21 @@ export const Component = ({ courseId, lessonId }: LessonProps) => {
                                     }}
                                 />
                             ))}
+
+                            {exercises.length > 0 &&
+                                exercises.map((exercise, index) => (
+                                    <Stepper.Step
+                                        key={index}
+                                        label="Exercise"
+                                        description={exercise.title}
+                                        icon={<IconHammer />}
+                                        styles={{
+                                            stepLabel: {
+                                                fontSize: 12,
+                                            },
+                                        }}
+                                    />
+                                ))}
                         </Stepper>
                     </Grid.Col>
                 )}
@@ -104,37 +142,32 @@ export const Component = ({ courseId, lessonId }: LessonProps) => {
 
                         <Card
                             withBorder
-                            p="xl"
                             mt={sections.length === 1 ? "xl" : undefined}
+                            p={0}
                         >
-                            <ReadingMaterial>
-                                {sections[section].content}
-                            </ReadingMaterial>
+                            <Box
+                                opacity={showExercise ? 1 : 0}
+                                pos={showExercise ? "relative" : "fixed"}
+                                right={showExercise ? undefined : "100%"}
+                            >
+                                <Exercise exerciseId={exercises[0].id} />
+                            </Box>
+
+                            {!showExercise && (
+                                <Box p="xl">
+                                    <ReadingMaterial>
+                                        {sections[section].content}
+                                    </ReadingMaterial>
+                                </Box>
+                            )}
                         </Card>
 
                         <Space h="xs" />
 
-                        {exercise && (
-                            <>
-                                <Card withBorder>
-                                    <Text size="lg">{exercise.title}</Text>
-                                    <Text size="sm">{exercise.summary}</Text>
-
-                                    <PlaygroundProvider
-                                        environmentId={exercise.environment_id}
-                                    >
-                                        <Playground height="600px" />
-                                    </PlaygroundProvider>
-                                </Card>
-
-                                <Space h="xs" />
-                            </>
-                        )}
-
                         <Card withBorder>
                             <Chat
                                 height={isChatUsed ? "500px" : "120px"}
-                                greetingMessage="Have any questions about this section, or want to expand on any detail? Ask away!"
+                                greetingMessage="Let me know if you have any questions!"
                                 onMessageData={() => setIsChatUsed(true)}
                             />
                         </Card>
@@ -147,7 +180,7 @@ export const Component = ({ courseId, lessonId }: LessonProps) => {
                                     variant="filled"
                                     bg="dark"
                                     c="dimmed"
-                                    onClick={() => setSection(section - 1)}
+                                    onClick={handlePrevious}
                                     mr="xl"
                                 >
                                     Previous Section
@@ -156,21 +189,14 @@ export const Component = ({ courseId, lessonId }: LessonProps) => {
 
                             <Button
                                 variant="gradient"
-                                onClick={() => {
-                                    markSectionCompleted(lessonId, section);
-
-                                    if (section === sections.length - 1) {
-                                        navigate(
-                                            `/dashboard/course/${courseId}`
-                                        );
-                                        return;
-                                    } else {
-                                        handleNextSection();
-                                    }
-                                }}
+                                onClick={handleCompleteSection}
                             >
                                 {section === sections.length - 1
-                                    ? "Complete Lesson"
+                                    ? exercises.length > 0
+                                        ? showExercise
+                                            ? "Complete Lesson"
+                                            : "Continue to Exercise"
+                                        : "Complete Lesson"
                                     : "Next Section"}
                             </Button>
                         </Center>

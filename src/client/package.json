@@ -3,6 +3,7 @@
     "version": "0.1.0",
     "private": true,
     "dependencies": {
+        "@fontsource/roboto": "^5.1.0",
         "@mantine/carousel": "^7.12.2",
         "@mantine/charts": "^7.12.2",
         "@mantine/code-highlight": "^7.12.2",
@@ -26,7 +27,7 @@
         "@xterm/xterm": "^5.5.0",
         "clsx": "^2.1.1",
         "dayjs": "^1.11.12",
-        "embla-carousel-react": "^8.1.8",
+        "embla-carousel-react": "^7.1.0",
         "jwt-decode": "^4.0.0",
         "mantine-contextmenu": "^7.12.2",
         "react": "^18.3.1",

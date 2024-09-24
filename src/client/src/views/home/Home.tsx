@@ -77,7 +77,7 @@ export function Home() {
                 </Group>
             </Stack>
 
-            <Space h={120} />
+            <Space h={80} />
 
             <Footer />
         </>

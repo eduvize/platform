@@ -1,19 +1,4 @@
-import {
-    Badge,
-    Group,
-    Title,
-    Text,
-    Card,
-    SimpleGrid,
-    Container,
-    rem,
-    useMantineTheme,
-    Center,
-    Space,
-    Stack,
-    Box,
-} from "@mantine/core";
-import classes from "./Features.module.css";
+import { Title, Text, Container, Stack, Box, rem } from "@mantine/core";
 
 const data = [
     {

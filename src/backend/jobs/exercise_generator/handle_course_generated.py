@@ -31,7 +31,7 @@ def create_exercise(
         lesson_id=lesson_id,
         environment_id=environment_id,
         title=exercise.title,
-        summary=exercise.summary,
+        summary=exercise.detailed_summary,
         objectives=exercise.objectives
     )
     logging.info(f"Exercise created: {exercise_id}")
@@ -42,7 +42,8 @@ def create_exercise(
         topic=Topic.BUILD_PLAYGROUND,
         message=BuildPlaygroundTopic(
             purpose="exercise",
-            resource_id=environment_id,
+            environment_id=environment_id,
+            resource_id=exercise_id,
             base_image=exercise.docker_base_image,
             description=exercise.initial_environment_state_expected
         )

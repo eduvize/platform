@@ -1,5 +1,7 @@
 import logging
 import time
+from typing import Literal, Optional
+import uuid
 import socketio
 import threading
 from .config import get_backend_socketio_endpoint, get_self_destruct_enabled, get_image_tag
@@ -7,6 +9,7 @@ from .shell import Shell
 from .orchestration import mark_for_deletion
 from .filesystem import create_filesystem_entry, read_file_content, save_file_content, rename_path, delete_path, get_top_level_filesystem_entries
 from .container_runtime import initialize_environment
+from .monitoring import run_exercise_monitor, stop_exercise_monitor, handle_filesystem_change
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -15,6 +18,7 @@ client = socketio.Client()
 shell = None
 user_connection_timer = None
 is_user_connected = False
+environment_type: Optional[Literal["exercise"]] = None
 
 def self_destruct():
     global is_user_connected
@@ -58,6 +62,14 @@ def disconnect():
     
     if get_self_destruct_enabled():
         mark_for_deletion()
+        
+@client.event
+def start_exercise_monitoring(data: dict):
+    global environment_type, client
+    environment_type = "exercise"
+    exercise_id = data.get("exercise_id")
+    logger.info(f"Starting exercise monitoring for exercise: {exercise_id}")
+    run_exercise_monitor(client, uuid.UUID(exercise_id))
       
 @client.event
 def subscribe_to_path(data: dict):
@@ -203,6 +215,7 @@ def save_file(data: dict):
     content = data.get("content")
 
     save_file_content(path, content)
+    handle_filesystem_change(path)
 
 @client.event
 def user_connected(data: dict):
@@ -235,11 +248,13 @@ def user_disconnected():
     global is_user_connected
     is_user_connected = False
     
+    if environment_type == "exercise":
+        stop_exercise_monitor()
+    
     if get_self_destruct_enabled():
         mark_for_deletion()
-        
-    shell.terminate()
-    client.shutdown()
+    else:
+        shell.terminate()
     
 def connect_to_server(token: str, max_retries: int = 3, retry_delay: int = 5):
     """
@@ -264,7 +279,8 @@ def connect_to_server(token: str, max_retries: int = 3, retry_delay: int = 5):
                 url=endpoint,
                 headers={
                     "Authorization": f"Bearer {token}"
-                }
+                },
+                retry=True,
             )
             logging.info("Connection successful!")
                 
