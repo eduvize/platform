@@ -1,12 +1,12 @@
 import { BackgroundImage, Container, Flex } from "@mantine/core";
 import { IconPlayerPlay } from "@tabler/icons-react";
-import mock from "./mock.png";
 
 export const Video = () => {
     return (
         <Container size="lg">
             <BackgroundImage
-                src={mock}
+                src={""}
+                bg="dark"
                 style={{
                     backgroundPosition: "0 -600px",
                     border: "1px solid var(--mantine-color-gray-8)",
