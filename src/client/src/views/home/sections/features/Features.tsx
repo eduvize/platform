@@ -21,13 +21,6 @@ Whether you're preparing for a new role or aiming to level up in your current po
     },
 ];
 
-interface SectionProps {
-    title: string;
-    description: string;
-    image?: string;
-    side: "left" | "right";
-}
-
 export function Features() {
     return (
         <Container size="xl" py="xl">
