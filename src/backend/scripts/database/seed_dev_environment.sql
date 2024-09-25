@@ -186,7 +186,9 @@ CREATE TABLE IF NOT EXISTS course_exercises (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     lesson_id UUID NOT NULL REFERENCES course_lessons(id),
     title TEXT NOT NULL,
-    summary TEXT NOT NULL
+    summary TEXT NOT NULL,
+    is_unavailable BOOLEAN NOT NULL DEFAULT FALSE,
+    error_details TEXT
 );
 
 -- Create table for exercise objectives

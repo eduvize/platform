@@ -1,5 +1,5 @@
 import logging
-from app.repositories import PlaygroundRepository, CourseRepository
+from app.repositories import CourseRepository
 from common.messaging import Topic, KafkaConsumer
 from domain.topics import EnvironmentBuildFailedTopic
 
@@ -9,7 +9,6 @@ def listen_for_environment_build_failure_events():
     """
     logging.info("Listening for environment build failure events")
     
-    playground_repo = PlaygroundRepository()
     course_repo = CourseRepository()
 
     consumer = KafkaConsumer(
@@ -34,8 +33,7 @@ def listen_for_environment_build_failure_events():
                 continue
             
             logging.info("Removing exercise and environment records")
-            course_repo.remove_exercise(exercise.id)
-            playground_repo.remove_environment(data.environment_id)
+            course_repo.set_exercise_setup_error(exercise_id=exercise.id)
             
             consumer.commit(message)
         except Exception as e:

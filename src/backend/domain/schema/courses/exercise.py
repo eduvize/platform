@@ -26,5 +26,7 @@ class CourseExercise(CourseExerciseBase, table=True):
     id: uuid.UUID                           = Field(default_factory=uuid.uuid4, primary_key=True)
     lesson_id: uuid.UUID                    = Field(foreign_key="course_lessons.id")
     environment_id: uuid.UUID               = Field(foreign_key="playground_environments.id")
+    is_unavailable: bool                    = Field(default=False)
+    error_details: Optional[str]            = Field(default=None, nullable=True)
     lesson: "schema.courses.lesson.Lesson"  = Relationship(back_populates="exercises")
     objectives: List[CourseExerciseObjective] = Relationship(back_populates="exercise")

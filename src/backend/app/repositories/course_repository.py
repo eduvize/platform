@@ -237,6 +237,7 @@ class CourseRepository:
                     joinedload(Lesson.exercises)
                     .joinedload(CourseExercise.objectives)
                 )
+                .where(CourseExercise.is_unavailable == False)
             )
             
             resultset = session.exec(query)
@@ -258,6 +259,7 @@ class CourseRepository:
                     .joinedload(Lesson.exercises)
                     .joinedload(CourseExercise.objectives),
                 )
+                .where(CourseExercise.is_unavailable == False)
             )
             
             resultset = session.exec(query)
@@ -352,7 +354,7 @@ class CourseRepository:
             
             return exercise
             
-    def remove_exercise(self, exercise_id: uuid.UUID) -> None:
+    def set_exercise_setup_error(self, exercise_id: uuid.UUID, detail: Optional[str] = None) -> None:
         """
         Removes an exercise and its objectives from the database
 
@@ -361,24 +363,13 @@ class CourseRepository:
         """
         
         with Session(engine) as session:
-            query = (
-                select(CourseExercise)
+            update_query = (
+                update(CourseExercise)
                 .where(CourseExercise.id == exercise_id)
-                .options(
-                    joinedload(CourseExercise.objectives)
-                )
+                .values(is_unavailable=True, error_details=detail)
             )
             
-            resultset = session.exec(query)
-            exercise = resultset.first()
-            
-            if exercise is None:
-                raise ValueError("Exercise not found")
-            
-            for objective in exercise.objectives:
-                session.delete(objective)
-            
-            session.delete(exercise)
+            session.exec(update_query)
             session.commit()
             
     def complete_objective(self, objective_id: uuid.UUID) -> None:
