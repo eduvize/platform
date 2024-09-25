@@ -86,7 +86,7 @@ export function Header() {
     return (
         <header className={classes.header}>
             <div className={classes.inner}>
-                <img src={logo} style={{ height: "32px" }} />
+                <img src={logo} style={{ height: "26px" }} />
                 <Group gap={5} visibleFrom="sm">
                     {items}
                 </Group>

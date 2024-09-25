@@ -26,27 +26,15 @@ export const ChatMessage = ({ is_user, content }: ChatMessageProps) => {
     }, [localUser]);
 
     let parts = [
-        <Grid.Col span={0.8}>
-            <Group justify={is_user ? "flex-end" : "flex-start"}>
-                <Avatar radius="50%" size="md" src={avatarUrl}>
-                    {initials}
-                </Avatar>
-            </Group>
-        </Grid.Col>,
-        <Grid.Col span="auto">
-            <Flex
-                align="center"
-                justify={is_user ? "flex-end" : "flex-start"}
-                h="100%"
-            >
-                <Bubble
-                    tipSide={is_user ? "right" : "left"}
-                    bg={is_user ? "blue" : "gray"}
-                >
-                    <Markdown className={classes.message}>{content}</Markdown>
-                </Bubble>
-            </Flex>
-        </Grid.Col>,
+        <Flex
+            align="center"
+            justify={is_user ? "flex-end" : "flex-start"}
+            h="100%"
+        >
+            <Bubble bg={is_user ? "blue" : "gray"} p="6px" px="12px">
+                <Markdown className={classes.message}>{content}</Markdown>
+            </Bubble>
+        </Flex>,
     ];
 
     if (is_user) {
@@ -55,7 +43,7 @@ export const ChatMessage = ({ is_user, content }: ChatMessageProps) => {
 
     return (
         <Stack>
-            <Grid>{parts}</Grid>
+            <Group justify={is_user ? "flex-end" : "flex-start"}>{parts}</Group>
         </Stack>
     );
 };

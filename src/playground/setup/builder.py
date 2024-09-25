@@ -52,12 +52,9 @@ def build_image(openai_key: str, base_image: str, description: str) -> Optional[
     RUN mkdir /userland
     RUN cp -a /home/user/. /userland/ # Copy the user's home directory to /userland
 
-    COPY entrypoint.sh /entrypoint.sh
-    RUN chmod +x /entrypoint.sh
-
     WORKDIR /home/user
     
-    CMD ["/entrypoint.sh"]
+    CMD sleep infinity
     """
 
     image_tag = f"registry.crosswinds.cloud/eduvize/playground:{uuid.uuid4().hex}".replace("-", "")

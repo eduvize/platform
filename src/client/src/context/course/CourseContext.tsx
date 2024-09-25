@@ -6,12 +6,14 @@ import { createContext } from "use-context-selector";
 
 type Context = {
     course: CourseDto | null;
-    markSectionCompleted: (lessonId: string, lessonIndex: number) => void;
+    markLessonComplete: (lessonId: string) => void;
+    setObjectiveStatus: (objectiveId: string, status: boolean) => void;
 };
 
 const defaultValue: Context = {
     course: null,
-    markSectionCompleted: () => {},
+    markLessonComplete: () => {},
+    setObjectiveStatus: () => {},
 };
 
 export const CourseContext = createContext<Context>(defaultValue);
@@ -38,28 +40,21 @@ export const CourseProvider = ({ courseId, children }: CourseProviderProps) => {
         );
     }
 
-    const handleSectionCompletion = (lessonId: string, lessonIndex: number) => {
-        if (
-            lessonId !== course.current_lesson_id ||
-            lessonIndex !== course.lesson_index
-        ) {
+    const markLessonComplete = (lessonId: string) => {
+        if (lessonId !== course.current_lesson_id) {
             return;
         }
 
-        CourseApi.markSectionCompleted(courseId).then((change) => {
+        CourseApi.markLessonComplete(courseId, lessonId).then((change) => {
             if (change.is_course_complete) {
                 setCourse({
                     ...course,
                     completed_at_utc: new Date().toISOString(),
                 });
-            } else if (
-                typeof change.lesson_id !== "undefined" &&
-                typeof change.section_index !== "undefined"
-            ) {
+            } else if (typeof change.lesson_id !== "undefined") {
                 setCourse({
                     ...course,
                     current_lesson_id: change.lesson_id,
-                    lesson_index: change.section_index,
                 });
             }
         });
@@ -69,7 +64,36 @@ export const CourseProvider = ({ courseId, children }: CourseProviderProps) => {
         <CourseContext.Provider
             value={{
                 course,
-                markSectionCompleted: handleSectionCompletion,
+                markLessonComplete,
+                setObjectiveStatus: (objectiveId, status) => {
+                    if (!course) {
+                        return;
+                    }
+
+                    const newCourse = {
+                        ...course,
+                        modules: course.modules.map((module) => ({
+                            ...module,
+                            lessons: module.lessons.map((lesson) => ({
+                                ...lesson,
+                                exercises: lesson.exercises.map((exercise) => ({
+                                    ...exercise,
+                                    objectives: exercise.objectives.map(
+                                        (objective) =>
+                                            objective.id === objectiveId
+                                                ? {
+                                                      ...objective,
+                                                      is_completed: status,
+                                                  }
+                                                : objective
+                                    ),
+                                })),
+                            })),
+                        })),
+                    };
+
+                    setCourse(newCourse);
+                },
             }}
         >
             {children}

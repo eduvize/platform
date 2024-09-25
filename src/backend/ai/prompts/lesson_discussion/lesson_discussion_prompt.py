@@ -1,3 +1,4 @@
+import logging
 from typing import Generator, List
 from ai.prompts.base_prompt import BasePrompt
 from ai.common import BaseChatResponse, BaseChatMessage, ChatRole
@@ -14,7 +15,7 @@ You will not go off topic and will only discuss the lesson content.
         self,
         history: List[BaseChatMessage],
         lesson_content: str,
-        message: str
+        new_message: str
     ) -> Generator[CompletionChunk, None, List[BaseChatResponse]]:
         from ai.models.gpt_4o import GPT4o
         model = GPT4o()
@@ -32,8 +33,8 @@ Lesson content:
                     message=message.message,
                     tool_calls=message.tool_calls
                 )
-                
-        self.add_user_message(message)
+        
+        self.add_user_message(new_message)
         
         response_generator = model.get_streaming_response(self)
         

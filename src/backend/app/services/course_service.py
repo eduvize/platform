@@ -123,17 +123,18 @@ class CourseService:
             ) 
         )
         
-    async def mark_section_as_completed(
+    async def mark_lesson_complete(
         self,
-        user_id: str,
-        course_id: str
+        user_id: uuid.UUID,
+        course_id: uuid.UUID,
+        lesson_id: uuid.UUID
     ) -> CourseProgressionDto:
         user = await self.user_service.get_user("id", user_id)
         
         if user is None:
             raise ValueError("User not found")
         
-        course = self.course_repo.get_course(uuid.UUID(course_id))
+        course = self.course_repo.get_course(course_id)
         
         if course is None:
             raise ValueError("Course not found")
@@ -148,31 +149,29 @@ class CourseService:
         if current_lesson is None:
             raise ValueError("Current lesson not found")
         
-        if course.lesson_index == len(current_lesson.sections) - 1:
-            # They're finished with this lesson
-            next_lesson = self.course_repo.get_next_lesson(
-                course_id=course.id,
-                current_lesson_id=course.current_lesson_id
+        # Don't do anything if it's not the current lesson
+        if current_lesson.id != lesson_id:
+            return CourseProgressionDto.model_construct(
+                is_course_complete=False,
+                lesson_id=current_lesson.id
             )
-            
-            if next_lesson is None:
-                # They're finished with the course
-                next_lesson_id = None
-                next_section_index = 0
-            else:
-                # Move to section #1 of the next lesson
-                next_lesson_id = next_lesson.id
-                next_section_index = 0
+        
+        next_lesson = self.course_repo.get_next_lesson(
+            course_id=course.id,
+            current_lesson_id=course.current_lesson_id
+        )
+        
+        if next_lesson is None:
+            # They're finished with the course
+            next_lesson_id = None
         else:
-            # There's another section to go
-            next_lesson_id = course.current_lesson_id
-            next_section_index = course.lesson_index + 1
+            # Move to section #1 of the next lesson
+            next_lesson_id = next_lesson.id
         
         if next_lesson_id:
             self.course_repo.set_current_lesson(
                 course_id=course.id,
                 lesson_id=next_lesson_id,
-                section_index=next_section_index
             )
         else:
             self.course_repo.set_course_completion(course.id)
@@ -180,7 +179,6 @@ class CourseService:
         return CourseProgressionDto.model_construct(
             is_course_complete=next_lesson_id is None,
             lesson_id=next_lesson_id,
-            section_index=next_section_index
         )
         
     async def get_courses(

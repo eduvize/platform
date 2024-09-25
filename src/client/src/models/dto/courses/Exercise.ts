@@ -1,6 +1,7 @@
 export interface ExerciseObjective {
     id: string;
     objective: string;
+    is_completed: boolean;
 }
 
 export interface Exercise {

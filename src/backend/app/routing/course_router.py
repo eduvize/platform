@@ -40,13 +40,14 @@ async def complete_objective_internal(
 ):
     return await course_service.complete_objective(exercise_id, objective_id)
 
-@router.post("/{course_id}/section-complete", response_model=CourseProgressionDto, dependencies=[Depends(user_id_extractor)])
+@router.post("/{course_id}/lesson/{lesson_id}/complete", response_model=CourseProgressionDto, dependencies=[Depends(user_id_extractor)])
 async def complete_section(
-    course_id: str,
+    course_id: uuid.UUID,
+    lesson_id: uuid.UUID,
     user_id: str = Depends(user_id_extractor), 
     course_service: CourseService = Depends(CourseService)
 ):
-    return await course_service.mark_section_as_completed(user_id, course_id)
+    return await course_service.mark_lesson_complete(user_id, course_id, lesson_id)
 
 @router.post("/additional-inputs", dependencies=[Depends(user_id_extractor)])
 async def get_additional_inputs(

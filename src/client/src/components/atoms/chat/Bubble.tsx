@@ -3,7 +3,7 @@ import { Box, BoxProps, DefaultMantineColor } from "@mantine/core";
 import { useMantineTheme } from "@mantine/core";
 
 interface BubbleProps extends BoxProps {
-    tipSide: "left" | "right";
+    tipSide?: "left" | "right";
     children: ReactNode;
 }
 
@@ -30,7 +30,6 @@ export const Bubble = (props: BubbleProps) => {
         <Box
             {...props}
             component="span"
-            p="xs"
             style={{
                 borderRadius: "var(--mantine-radius-lg)",
                 position: "relative",

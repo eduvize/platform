@@ -118,14 +118,13 @@ class CourseRepository:
     def set_current_lesson(
         self,
         course_id: uuid.UUID,
-        lesson_id: uuid.UUID,
-        section_index: int
+        lesson_id: uuid.UUID
     ) -> None:
         with Session(engine) as session:
             update_query = (
                 update(Course)
                 .where(Course.id == course_id)
-                .values(current_lesson_id=lesson_id, lesson_index=section_index)
+                .values(current_lesson_id=lesson_id)
             )
             
             session.exec(update_query)

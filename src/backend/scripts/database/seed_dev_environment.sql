@@ -159,7 +159,6 @@ CREATE TABLE IF NOT EXISTS courses (
     cover_image_url TEXT NOT NULL,
     is_generating BOOLEAN NOT NULL DEFAULT TRUE,
     generation_progress INT NOT NULL DEFAULT 0,
-    lesson_index INT NOT NULL DEFAULT 0,
     completed_at_utc TIMESTAMP,
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );

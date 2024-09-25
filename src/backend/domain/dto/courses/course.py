@@ -10,7 +10,6 @@ class CourseDto(CourseBase):
     description: str
     cover_image_url: str
     current_lesson_id: uuid.UUID
-    lesson_index: int
     completed_at_utc: Optional[datetime]
     modules: list[ModuleDto]
     

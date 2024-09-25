@@ -5,9 +5,10 @@ import { Profile } from "@views/profile";
 import { Header } from "./sections";
 import { VerificationCta } from "./cta";
 import { useEffect } from "react";
-import { Container } from "@mantine/core";
+import { Box, Container } from "@mantine/core";
 import { Courses } from "@views/courses";
 import { Course } from "@views/course";
+import { Lesson } from "@views/lesson";
 
 const CallToActionOrView = ({ children }: { children: React.ReactNode }) => {
     const { is_verified } = useOnboarding();
@@ -37,53 +38,46 @@ export const Dashboard = () => {
         <UserProvider>
             <Header />
 
-            <Routes>
-                <Route
-                    path="course/:course_id"
-                    handle="course"
-                    element={
-                        <CallToActionOrView>
-                            <Course />
-                        </CallToActionOrView>
-                    }
-                />
-                <Route
-                    path="course/:course_id/lesson/:lesson_id"
-                    handle="lesson"
-                    element={
-                        <CallToActionOrView>
-                            <Course />
-                        </CallToActionOrView>
-                    }
-                />
-                <Route
-                    path="course/:course_id/exercise/:exercise_id"
-                    handle="exercise"
-                    element={
-                        <CallToActionOrView>
-                            <Course />
-                        </CallToActionOrView>
-                    }
-                />
-                <Route
-                    path="courses/*"
-                    handle="courses"
-                    element={
-                        <CallToActionOrView>
-                            <Courses />
-                        </CallToActionOrView>
-                    }
-                />
-                <Route
-                    path="profile"
-                    handle="profile"
-                    element={
-                        <CallToActionOrView>
-                            <Profile />
-                        </CallToActionOrView>
-                    }
-                />
-            </Routes>
+            <Box pt="56px">
+                <Routes>
+                    <Route
+                        path="course/:course_id/lesson/:lesson_id"
+                        handle="lesson"
+                        element={
+                            <CallToActionOrView>
+                                <Lesson />
+                            </CallToActionOrView>
+                        }
+                    />
+                    <Route
+                        path="course/:course_id"
+                        handle="course"
+                        element={
+                            <CallToActionOrView>
+                                <Course />
+                            </CallToActionOrView>
+                        }
+                    />
+                    <Route
+                        path="courses/*"
+                        handle="courses"
+                        element={
+                            <CallToActionOrView>
+                                <Courses />
+                            </CallToActionOrView>
+                        }
+                    />
+                    <Route
+                        path="profile"
+                        handle="profile"
+                        element={
+                            <CallToActionOrView>
+                                <Profile />
+                            </CallToActionOrView>
+                        }
+                    />
+                </Routes>
+            </Box>
         </UserProvider>
     );
 };

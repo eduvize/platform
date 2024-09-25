@@ -16,22 +16,18 @@
 }
 
 .message h1 {
-    font-size: 32px;
-}
-
-.message h2 {
-    font-size: 28px;
-}
-
-.message h3 {
     font-size: 24px;
 }
 
-.message h4 {
+.message h2 {
+    font-size: 20px;
+}
+
+.message h3 {
     font-size: 18px;
 }
 
-.message h5 {
+.message h4 {
     font-size: 16px;
 }
 
@@ -48,6 +44,13 @@
 .message code {
     background-color: var(--mantine-color-gray-7) !important;
     color: #fff !important;
+}
+
+.message code[class*="language-"] {
+    display: block !important;
+    background-color: var(--mantine-color-gray-7) !important;
+    border-radius: 4px !important;
+    padding: 6px !important;
 }
 
 .message hr {

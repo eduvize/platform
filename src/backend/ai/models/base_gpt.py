@@ -67,6 +67,8 @@ class BaseGPT(BaseModel):
             for msg in self.get_messages(message)
         ]
         
+        logger.info(f"Messages: {messages}")
+        
         if prompt.system_prompt:
             messages.insert(0, ChatCompletionSystemMessageParam(role="system", content=prompt.system_prompt))
         
@@ -317,6 +319,8 @@ Correct the errors in tool arguments and try again.
                     content=message.message
                 )
             ]
+        else:
+            raise ValueError(f"Unknown message role: {message.role}")
         
     def get_tool(self, tool: BaseTool) -> dict:
         return ChatCompletionToolParam(

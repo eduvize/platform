@@ -9,22 +9,7 @@ ProgressCallback = Callable[[int], None] # int represents the current section nu
 
 class GenerateModuleContentPrompt(BasePrompt):
     def setup(self) -> None:
-        self.set_system_prompt("""
-You are an AI assistant tasked with generating comprehensive and detailed markdown content for educational modules in a software engineering course. Each module consists of multiple lessons, and your goal is to write learning material that aligns with the lesson objectives and the overall module's focus area. The content should be structured, informative, and written in a way that is engaging and easy for students to follow.
-
-The content you generate should:
-1. **Be Comprehensive**: Ensure each section covers the topic in depth, providing examples, explanations, and any necessary context.
-2. **Use Markdown Formatting**: Properly format the text using markdown, including headers, lists, code blocks, links, and other relevant markdown elements to enhance readability.
-3. **Align with Learning Objectives**: Ensure that the content directly supports the lesson's objectives and the overall focus area of the module.
-4. **Build on Previous Content**: Retain context from previously generated sections within the same module to ensure continuity and cohesiveness in the learning material.
-
-### Guidelines for Content:
-- **Headers**: Use appropriate headers (e.g., `#`, `##`, `###`) to structure the content.
-- **Lists**: Use bullet points or numbered lists where applicable to organize information.
-- **Code Blocks**: Use fenced code blocks (```) for any code examples.
-- **Links**: Include links to external resources when relevant, using markdown link syntax.
-- **Explanations**: Provide clear explanations for any technical concepts, breaking down complex ideas into understandable segments.                            
-""")
+        pass
     
     def generate_module_content(
         self, 
@@ -41,21 +26,27 @@ The content you generate should:
         )
         model = GPT4o()
  
-        key_outcomes_str = "\n".join([f"- {outcome}" for outcome in course.key_outcomes])       
-        self.add_user_message(f"""### Course:
-- **Subject**: {course.course_subject}
-- **Description**: {course.description}
+        self.set_system_prompt(f"""
+You excel at writing comprehensive and detailed software engineering learning material.
+You are tasked with creating the content for a module in a course named "{course.course_title}": {course.description}.
 
-#### Key Outcomes:
-{key_outcomes_str}
+Content rules:
+1. **Be Comprehensive**: Ensure each section covers the topic in depth, providing examples, explanations, and any necessary context.
+2. **Use Markdown Formatting**: Properly format the text using markdown, including headers, lists, code blocks, links, and other relevant markdown elements to enhance readability.
+3. **Align with Learning Objectives**: Ensure that the content directly supports the lesson's objectives and the overall focus area of the module.
+4. **Build on Previous Content**: Retain context from previously generated sections within the same module to ensure continuity and cohesiveness in the learning material.
 
-### Module:
-- **Name**: {module_dto.title}
-- **Focus Area**: {module.focus_area}
-- **Objective**: {module_dto.description}
-
-I will provide you with each lesson in the module. You will focus on one lesson at a time.
-""")
+Content Markup:
+- **Headers**: Use appropriate headers (e.g., `#`, `##`, `###`) to structure the content.
+- **Lists**: Use bullet points or numbered lists where applicable to organize information.
+- **Code Blocks**: Use fenced code blocks (```) for any code examples.
+- **Links**: Include links to external resources when relevant, using markdown link syntax.
+- **Explanations**: Provide clear explanations for any technical concepts, breaking down complex ideas into understandable segments.                            
+""".strip())
+ 
+        self.add_user_message(f"""
+This module is named "{module.title}" and has the following description: {module.description}.
+""".strip())
         
         current_section = 0
         for lesson in module.lessons:
@@ -65,22 +56,21 @@ I will provide you with each lesson in the module. You will focus on one lesson 
                 sections=[]
             )
             
-            self.add_user_message(f"""### Lesson:
-- **Name**: {lesson_dto.title}
-- **Focus Area**: {lesson_dto.description}
+            self.add_user_message(f"""
+We will be focusing on the following lesson: {lesson.title}. {lesson.description}                       
 
-I will provide you with the title for each section in this lesson. You will generate comprehensive learning content for each of these, one at a time. Do not include any other commentary in your output.
-""")
+As I provide you with sections of this lesson, you will create detailed content for this section in alignment with the lesson objectives.
+""".strip())
             
             for section in lesson.sections:
-                self.add_user_message(f"""{section.title}
-{section.description}                                   
-""")
+                self.add_user_message(f"""
+Please provide content for the following section: {section.title}. {section.description}                    
+""".strip())
                 messages = model.get_responses(self)
                 
                 content = messages[-1].message
                 
-                logging.info(content)
+                self.add_agent_message(content)
                 
                 lesson_dto.sections.append(
                     SectionDto.model_construct(
