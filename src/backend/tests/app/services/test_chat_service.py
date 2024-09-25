@@ -122,7 +122,7 @@ def test_get_prompt_generator_lesson(mock_lesson_prompt, chat_service):
     
     chat_service.get_prompt_generator(
         session=MagicMock(id=session_id, prompt_type=PromptType.LESSON.value, resource_id=resource_id),
-        input=message
+        input_msg=message
     )
     
     chat_service.course_repository.get_lesson.assert_called_once_with(resource_id)

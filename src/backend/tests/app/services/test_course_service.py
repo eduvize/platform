@@ -184,7 +184,7 @@ async def test_generate_course(
     )
 
 @pytest.mark.asyncio
-async def test_mark_section_as_completed(course_service):
+async def test_mark_lesson_complete(course_service):
     """
     Tests mark_section_as_completed method:
     1. Should return CourseProgressionDto with correct data when section is completed.
@@ -197,10 +197,10 @@ async def test_mark_section_as_completed(course_service):
     course_service.course_repo.set_current_lesson = MagicMock()
     course_service.course_repo.set_course_completion = MagicMock()
     
-    result = await course_service.mark_section_as_completed(user_id=user_id, course_id=course_id)
+    result = await course_service.mark_lesson_complete(user_id=user_id, course_id=course_id, lesson_id=current_lesson_id)
     
     course_service.user_service.get_user.assert_awaited_once_with("id", user_id)
-    course_service.course_repo.get_course.assert_called_once_with(uuid.UUID(course_id))
+    course_service.course_repo.get_course.assert_called_once_with(course_id)
     
     assert isinstance(result, CourseProgressionDto)
 
