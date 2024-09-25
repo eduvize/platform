@@ -26,7 +26,6 @@ type Panel = "module" | "instructor";
 export const Component = (props: LessonProps) => {
     const { courseId, lessonId } = props;
     const navigate = useNavigate();
-    const { purge: purgeChatSession } = useChat();
     const { markLessonComplete: markSectionCompleted } = useCourse();
     const { sections, exercises } = useLesson(lessonId);
     const [section, setSection] = useState(0);
@@ -38,8 +37,6 @@ export const Component = (props: LessonProps) => {
         document
             .getElementById("root")!
             .scrollTo({ top: 0, behavior: "smooth" });
-
-        purgeChatSession();
     }, [section, showExercise]);
 
     const handleCompleteSection = () => {
