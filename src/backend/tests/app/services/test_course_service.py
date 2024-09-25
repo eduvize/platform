@@ -184,7 +184,7 @@ async def test_generate_course(
     )
 
 @pytest.mark.asyncio
-async def test_mark_lesson_complete(course_service):
+async def test_mark_lesson_complete_baseline(course_service):
     """
     Tests mark_section_as_completed method:
     1. Should return CourseProgressionDto with correct data when section is completed.
@@ -203,6 +203,26 @@ async def test_mark_lesson_complete(course_service):
     course_service.course_repo.get_course.assert_called_once_with(course_id)
     
     assert isinstance(result, CourseProgressionDto)
+    
+@pytest.mark.asyncio
+async def test_mark_lesson_complete_not_current_lesson(course_service):
+    """
+    Ensures that the mark_lesson_complete method does not mutate the course if the lesson provided is not the current lesson.
+    """
+    
+    # Mock user and course
+    course_service.user_service.get_user = AsyncMock(return_value=MagicMock(id=user_id))
+    course_service.course_repo.get_course = MagicMock(return_value=course)
+    
+    # Mock repository calls to set lesson progression
+    course_service.course_repo.set_current_lesson = MagicMock()
+    course_service.course_repo.set_course_completion = MagicMock()
+    
+    await course_service.mark_lesson_complete(user_id=user_id, course_id=course_id, lesson_id=uuid.uuid4())
+    
+    # Verify set_current_lesson and set_course_completion were not called
+    course_service.course_repo.set_current_lesson.assert_not_called()
+    course_service.course_repo.set_course_completion.assert_not_called()
 
 @pytest.mark.asyncio
 async def test_get_courses(course_service):
