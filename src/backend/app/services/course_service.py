@@ -147,6 +147,7 @@ class CourseService:
         ), None)
         
         if current_lesson is None:
+            print(course)
             raise ValueError("Current lesson not found")
         
         # Don't do anything if it's not the current lesson
@@ -155,7 +156,15 @@ class CourseService:
                 is_course_complete=False,
                 lesson_id=current_lesson.id
             )
-        
+            
+        if len(current_lesson.exercises) > 0:
+            # They need to fully complete the exercises before moving on
+            if not all(objective.is_completed for objective in current_lesson.exercises[0].objectives):
+                return CourseProgressionDto.model_construct(
+                    is_course_complete=False,
+                    lesson_id=current_lesson.id
+                )
+                
         next_lesson = self.course_repo.get_next_lesson(
             course_id=course.id,
             current_lesson_id=course.current_lesson_id

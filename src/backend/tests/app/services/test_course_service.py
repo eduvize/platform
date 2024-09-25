@@ -6,7 +6,7 @@ from domain.dto.courses import CoursePlanDto, CourseProgressionDto, CourseListin
 from domain.dto.profile import UserProfileDto
 from domain.enums.course_enums import CourseMotivation, CurrentSubjectExperience, CourseMaterial
 from common.storage import StoragePurpose
-from domain.schema.courses import Course, Lesson, Module, Section
+from domain.schema.courses import Course, Lesson, Module, Section, CourseExercise, CourseExerciseObjective
 from domain.topics import CourseGenerationTopic
 from common.messaging.topics import Topic
 from ai.prompts.course_generation.models import CourseOutline, ModuleOutline, LessonOutline, SectionOutline
@@ -30,6 +30,8 @@ course = Course(
     id=course_id, 
     title="Sample Course", 
     description="A sample course", 
+    cover_image_url="",
+    user_id=uuid.UUID(user_id),
     modules=[
         Module(
             id=current_module_id,
@@ -51,13 +53,18 @@ course = Course(
                             content="",
                             order=0
                         )
-                    ]
+                    ],
+                    exercises=[]
                 )
             ]
         )    
     ], 
     current_lesson_id=current_lesson_id
 )
+
+def clone_course():
+    return Course.model_copy(course)
+
 lesson = Lesson(id=uuid.uuid4(), sections=[])
 profile_dto = UserProfileDto(first_name="John", last_name="Doe")
 
@@ -189,6 +196,7 @@ async def test_mark_lesson_complete_baseline(course_service):
     Tests mark_section_as_completed method:
     1. Should return CourseProgressionDto with correct data when section is completed.
     """
+    
     # Mock user and course
     course_service.user_service.get_user = AsyncMock(return_value=MagicMock(id=user_id))
     course_service.course_repo.get_course = MagicMock(return_value=course)
@@ -219,6 +227,57 @@ async def test_mark_lesson_complete_not_current_lesson(course_service):
     course_service.course_repo.set_course_completion = MagicMock()
     
     await course_service.mark_lesson_complete(user_id=user_id, course_id=course_id, lesson_id=uuid.uuid4())
+    
+    # Verify set_current_lesson and set_course_completion were not called
+    course_service.course_repo.set_current_lesson.assert_not_called()
+    course_service.course_repo.set_course_completion.assert_not_called()
+    
+@pytest.mark.asyncio
+async def test_mark_lesson_complete_last_lesson(course_service):
+    """
+    Verifies the set_course_completion method is called when the last lesson is completed.
+    """
+
+    cloned_course = clone_course()
+    
+    # Mock user and course
+    course_service.user_service.get_user = AsyncMock(return_value=MagicMock(id=user_id))
+    course_service.course_repo.get_course = MagicMock(return_value=cloned_course)
+    course_service.course_repo.get_next_lesson = MagicMock(return_value=None)
+    
+    # Mock repository calls to set lesson progression
+    course_service.course_repo.set_current_lesson = MagicMock()
+    course_service.course_repo.set_course_completion = MagicMock()
+    
+    await course_service.mark_lesson_complete(user_id=user_id, course_id=course_id, lesson_id=current_lesson_id)
+    
+    # Verify set_course_completion was called
+    course_service.course_repo.set_course_completion.assert_called_once_with(course_id)
+    
+@pytest.mark.asyncio
+async def test_mark_lesson_complete_without_completing_exercise(course_service):
+    """
+    Verifies that a lesson cannot be marked complete when an exercise is unfinished
+    """
+    
+    cloned_course = clone_course()
+    
+    cloned_course.modules[0].lessons[0].exercises.append(CourseExercise(id=uuid.uuid4(), objectives=[
+        CourseExerciseObjective(id=uuid.uuid4(), is_completed=False)
+    ]))
+    
+    # Mock user and course
+    course_service.user_service.get_user = AsyncMock(return_value=MagicMock(id=user_id))
+    course_service.course_repo.get_course = MagicMock(return_value=cloned_course)
+    
+    # Mock repository calls to set lesson progression
+    course_service.course_repo.set_current_lesson = MagicMock()
+    course_service.course_repo.set_course_completion = MagicMock()
+    
+    # Mock repository calls to get exercise objectives
+    course_service.course_repo.get_exercise_objectives = MagicMock(return_value=[CourseExerciseObjective()])
+    
+    await course_service.mark_lesson_complete(user_id=user_id, course_id=course_id, lesson_id=current_lesson_id)
     
     # Verify set_current_lesson and set_course_completion were not called
     course_service.course_repo.set_current_lesson.assert_not_called()
