@@ -1,4 +1,4 @@
-import { useExercise, useExerciseObjectives } from "@context/exercise/hooks";
+import { useExerciseObjectives } from "@context/exercise/hooks";
 import { Card, Text, Stepper, Group, RingProgress } from "@mantine/core";
 import { LessonDto } from "@models/dto";
 import { IconHammer } from "@tabler/icons-react";
@@ -9,7 +9,7 @@ interface LessonItemProps extends LessonDto {
     onSectionChange: (section: number) => void;
 }
 
-export const LessonItem = ({
+export const LessonNavItem = ({
     active,
     title,
     description,

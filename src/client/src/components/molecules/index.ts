@@ -6,3 +6,4 @@ export * from "./course-planner";
 export * from "./course";
 export * from "./banners";
 export * from "./playground";
+export * from "./lesson";

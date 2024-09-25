@@ -5,7 +5,6 @@ import {
     Box,
     Button,
     Card,
-    Center,
     Checkbox,
     Container,
     Divider,
@@ -18,11 +17,11 @@ import {
     Text,
     UnstyledButton,
 } from "@mantine/core";
-import { LessonItem, ReadingMaterial } from "@molecules";
+import { ReadingMaterial } from "@molecules";
 import { Chat, NavigationPane, Playground } from "@organisms";
 import { IconList, IconSquareMinusFilled } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import avatar from "./avatar.png";
 import { ExerciseProvider } from "@context/exercise";
 import { useExercise, useExerciseObjectives } from "@context/exercise/hooks";

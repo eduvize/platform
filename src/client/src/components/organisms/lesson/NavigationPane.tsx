@@ -1,6 +1,6 @@
 import { useCourse } from "@context/course/hooks";
 import { Group, UnstyledButton, Divider, Box, Text } from "@mantine/core";
-import { LessonItem } from "@molecules";
+import { LessonNavItem } from "@molecules";
 import { IconSquareMinusFilled } from "@tabler/icons-react";
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
@@ -70,7 +70,7 @@ export const NavigationPane = ({
 
             {currentModule?.lessons.map((lesson) => (
                 <Box mb="xs">
-                    <LessonItem
+                    <LessonNavItem
                         key={lesson.id}
                         {...lesson}
                         active={lesson.id === currentLessonId}
