@@ -372,12 +372,12 @@ class CourseRepository:
             session.exec(update_query)
             session.commit()
             
-    def complete_objective(self, objective_id: uuid.UUID) -> None:
+    def set_objective_status(self, objective_id: uuid.UUID, is_complete: bool) -> None:
         with Session(engine) as session:
             update_query = (
                 update(CourseExerciseObjective)
                 .where(CourseExerciseObjective.id == objective_id)
-                .values(is_completed=True)
+                .values(is_completed=is_complete)
             )
             
             session.exec(update_query)

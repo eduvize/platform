@@ -1,7 +1,7 @@
 import logging
 import uuid
 from .exercise_validation import validate_objective, stop_validation
-from .api import get_exercise, set_exercise_objective_complete
+from .api import get_exercise, set_exercise_objective_status
 from .decoration import debounce
 from app.filesystem import DirectoryMonitor
 from socketio import Client
@@ -66,13 +66,14 @@ def validate_exercise_state():
         
         if is_complete:
             logging.info(f"Objective {objective.id} is complete")
-            #set_exercise_objective_complete(exercise_id, objective.id)
+            set_exercise_objective_status(exercise_id, objective.id, True)
             socket_client.emit("exercise_objective_status", {
                 "objective_id": str(objective.id),
                 "is_completed": True
             })
         else:
             logging.info(f"Objective {objective.id} is incomplete")
+            set_exercise_objective_status(exercise_id, objective.id, False)
             socket_client.emit("exercise_objective_status", {
                 "objective_id": str(objective.id),
                 "is_completed": False

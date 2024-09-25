@@ -247,12 +247,13 @@ class CourseService:
         
         return exercise
     
-    async def complete_objective(
+    async def set_objective_status(
         self,
         exercise_id: uuid.UUID,
-        objective_id: uuid.UUID
+        objective_id: uuid.UUID,
+        is_complete: bool
     ) -> None:
-        self.course_repo.complete_objective(objective_id)
+        self.course_repo.set_objective_status(objective_id, is_complete)
 
     def generate_cover_image(self, subject: str) -> str:
         response = self.openai.images.generate(

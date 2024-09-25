@@ -1,7 +1,6 @@
 import logging
 import os
-import time
-from .config import get_jwt_signing_key, get_purge_on_disconnect, get_environment_id
+from .config import get_jwt_signing_key, get_environment_id
 from .client import connect_to_server
 from .jwt import create_token
 
@@ -11,8 +10,6 @@ def initialize_session():
     pod_hostname = os.getenv("HOSTNAME")
     session_id = os.getenv("SESSION_ID")
 
-    print(f"Hostname: {pod_hostname}")
-    
     signing_key = get_jwt_signing_key()
     
     logging.info("Generating token")

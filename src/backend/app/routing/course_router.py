@@ -38,7 +38,15 @@ async def complete_objective_internal(
     objective_id: uuid.UUID,
     course_service: CourseService = Depends(CourseService)
 ):
-    return await course_service.complete_objective(exercise_id, objective_id)
+    return await course_service.set_objective_status(exercise_id, objective_id, True)
+
+@router.delete("/internal/exercises/{exercise_id}/objectives/{objective_id}/complete", dependencies=[Depends(playground_token_validator)])
+async def uncomplete_objective_internal(
+    exercise_id: uuid.UUID,
+    objective_id: uuid.UUID,
+    course_service: CourseService = Depends(CourseService)
+):
+    return await course_service.set_objective_status(exercise_id, objective_id, False)
 
 @router.post("/{course_id}/lesson/{lesson_id}/complete", response_model=CourseProgressionDto, dependencies=[Depends(user_id_extractor)])
 async def complete_section(
