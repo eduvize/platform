@@ -3,29 +3,17 @@ import { useCourse, useLesson } from "@context/course/hooks";
 import {
     Avatar,
     Box,
-    Button,
-    Card,
-    Checkbox,
     Container,
-    Divider,
-    Flex,
     Grid,
     Group,
-    List,
-    Space,
-    Stack,
-    Text,
     UnstyledButton,
 } from "@mantine/core";
-import { ReadingMaterial } from "@molecules";
-import { Chat, NavigationPane, Playground } from "@organisms";
-import { IconList, IconSquareMinusFilled } from "@tabler/icons-react";
+import { InstructorPane, LessonContent, NavigationPane } from "@organisms";
+import { IconList } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import avatar from "./avatar.png";
 import { ExerciseProvider } from "@context/exercise";
-import { useExercise, useExerciseObjectives } from "@context/exercise/hooks";
-import { useResizeObserver, useViewportSize } from "@mantine/hooks";
 import { CourseProvider } from "@context/course";
 
 interface LessonProps {
@@ -35,25 +23,15 @@ interface LessonProps {
 
 type Panel = "module" | "instructor";
 
-export const Component = ({ courseId, lessonId }: LessonProps) => {
+export const Component = (props: LessonProps) => {
+    const { courseId, lessonId } = props;
     const navigate = useNavigate();
     const { purge: purgeChatSession } = useChat();
-    const { markLessonComplete: markSectionCompleted, course } = useCourse();
-    const exercise = useExercise();
-    const objectives = useExerciseObjectives();
-    const [isChatUsed, setIsChatUsed] = useState(false);
-    const { title, description, sections, order, exercises } =
-        useLesson(lessonId);
+    const { markLessonComplete: markSectionCompleted } = useCourse();
+    const { sections, exercises } = useLesson(lessonId);
     const [section, setSection] = useState(0);
     const [showExercise, setShowExercise] = useState(false);
-    const currentModule = course.modules.find((module) =>
-        module.lessons.some((lesson) => lesson.id === lessonId)
-    );
     const [panels, setPanels] = useState<Panel[]>(["instructor", "module"]);
-    const [chatAreaRef, chatAreaRect] = useResizeObserver();
-    const [instructorPaneRef, instructorPaneRect] = useResizeObserver();
-    const { height: viewportHeight } = useViewportSize();
-    const [chatHeight, setChatHeight] = useState<number>(500);
 
     useEffect(() => {
         // TODO: Figure out what's wrong with useWindowScroll. Hack in the meantime!
@@ -62,19 +40,7 @@ export const Component = ({ courseId, lessonId }: LessonProps) => {
             .scrollTo({ top: 0, behavior: "smooth" });
 
         purgeChatSession();
-        setIsChatUsed(false);
     }, [section, showExercise]);
-
-    useEffect(() => {
-        if (chatAreaRect) {
-            setChatHeight(
-                viewportHeight -
-                    chatAreaRect.top -
-                    instructorPaneRect.height -
-                    200
-            );
-        }
-    }, [chatAreaRect, viewportHeight, instructorPaneRect]);
 
     const handleCompleteSection = () => {
         markSectionCompleted(lessonId);
@@ -142,177 +108,25 @@ export const Component = ({ courseId, lessonId }: LessonProps) => {
                         (panels.includes("instructor") ? 0 : 2.5)
                     }
                 >
-                    <Stack>
-                        <Group justify="space-between" wrap="nowrap">
-                            {!showExercise && (
-                                <Stack gap={0}>
-                                    <Text size="xl" c="white">
-                                        Lesson {order + 1}: {title}
-                                    </Text>
-
-                                    <Text size="sm">{description}</Text>
-                                </Stack>
-                            )}
-
-                            {showExercise && exercise && (
-                                <Stack gap={0}>
-                                    <Text size="xl" fw={700}>
-                                        Exercise: {exercise.title}
-                                    </Text>
-
-                                    <Text size="sm">{exercise.summary}</Text>
-                                </Stack>
-                            )}
-
-                            {section === sections.length - 1 &&
-                                (!exercise ||
-                                    objectives.every(
-                                        (x) => x.is_completed
-                                    )) && (
-                                    <Button
-                                        fw="200"
-                                        size="sm"
-                                        style={{
-                                            fontSize: "12px",
-                                            border: "1px solid #000",
-                                        }}
-                                        onClick={handleCompleteSection}
-                                    >
-                                        Complete Lesson
-                                    </Button>
-                                )}
-                        </Group>
-
-                        <Card withBorder mt="md" p={0}>
-                            <Box
-                                opacity={showExercise ? 1 : 0}
-                                pos={showExercise ? "relative" : "fixed"}
-                                right={showExercise ? undefined : "100%"}
-                            >
-                                <Playground height="800px" />
-                            </Box>
-
-                            {!showExercise && (
-                                <Box px="xl">
-                                    <ReadingMaterial>
-                                        {sections[section]?.content}
-                                    </ReadingMaterial>
-                                </Box>
-                            )}
-                        </Card>
-
-                        <Space h="sm" />
-                    </Stack>
+                    <LessonContent
+                        lessonId={lessonId}
+                        currentSection={section}
+                        view={showExercise ? "exercise" : "lesson"}
+                        onComplete={handleCompleteSection}
+                    />
                 </Grid.Col>
 
                 <Grid.Col span={panels.includes("instructor") ? 3 : 0.5}>
                     {panels.includes("instructor") && (
-                        <Stack
-                            justify="space-between"
-                            pos="absolute"
-                            h="calc(100% - 100px)"
-                            w="23.5%"
-                        >
-                            <Flex direction="column" flex="1 0 auto">
-                                <Flex
-                                    direction="column"
-                                    ref={instructorPaneRef}
-                                >
-                                    <Group justify="space-between">
-                                        <Text tt="uppercase" size="10px">
-                                            Instructor
-                                        </Text>
-
-                                        <Button
-                                            p={0}
-                                            variant="transparent"
-                                            onClick={() =>
-                                                setPanels(
-                                                    panels.filter(
-                                                        (x) =>
-                                                            x !== "instructor"
-                                                    )
-                                                )
-                                            }
-                                        >
-                                            <IconSquareMinusFilled color="#1479B2" />
-                                        </Button>
-                                    </Group>
-                                    <Divider mb="xl" />
-
-                                    {exercise && showExercise && (
-                                        <Card withBorder mb="xl">
-                                            <Text size="lg">
-                                                Exercise Task List
-                                            </Text>
-                                            <Text size="xs" c="dimmed">
-                                                Complete the following
-                                                objectives to finish this
-                                                exercise. If you need assistant,
-                                                ask your instructor.
-                                            </Text>
-
-                                            <>
-                                                <Space h="xl" />
-
-                                                <List listStyleType="none">
-                                                    {objectives.map(
-                                                        ({
-                                                            objective,
-                                                            is_completed,
-                                                        }) => (
-                                                            <Checkbox
-                                                                label={
-                                                                    objective
-                                                                }
-                                                                checked={
-                                                                    is_completed
-                                                                }
-                                                                mb="sm"
-                                                            />
-                                                        )
-                                                    )}
-                                                </List>
-                                            </>
-                                        </Card>
-                                    )}
-                                </Flex>
-
-                                <Flex pos="relative" flex="1 1 auto" mt="xl">
-                                    <Avatar
-                                        pos="absolute"
-                                        top="-55px"
-                                        left="50%"
-                                        ml="-42px"
-                                        src={avatar}
-                                        size="xl"
-                                        radius="99999"
-                                        bg="black"
-                                        p="sm"
-                                        styles={{
-                                            root: {
-                                                zIndex: 9999,
-                                            },
-                                        }}
-                                    />
-                                    <Card
-                                        withBorder
-                                        ref={chatAreaRef}
-                                        pos="relative"
-                                        w="100%"
-                                        pt="xl"
-                                    >
-                                        <Chat
-                                            maxHeight={chatHeight}
-                                            greetingMessage="Let me know if you have any questions!"
-                                            onMessageData={() =>
-                                                setIsChatUsed(true)
-                                            }
-                                        />
-                                    </Card>
-                                </Flex>
-                            </Flex>
-                        </Stack>
+                        <InstructorPane
+                            avatar={avatar}
+                            onHide={() => {
+                                setPanels(
+                                    panels.filter((x) => x !== "instructor")
+                                );
+                            }}
+                            view={showExercise ? "exercise" : "lesson"}
+                        />
                     )}
 
                     {!panels.includes("instructor") && (
