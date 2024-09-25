@@ -71,7 +71,7 @@ export function Hero() {
                 <Group className={classes.controls} justify="center">
                     <Link to="/auth">
                         <Button
-                            size="xl"
+                            size="lg"
                             className={classes.button}
                             variant="gradient"
                             gradient={{ from: "blue", to: "cyan" }}
