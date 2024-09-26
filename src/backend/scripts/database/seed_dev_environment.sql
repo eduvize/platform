@@ -196,7 +196,7 @@ CREATE TABLE IF NOT EXISTS course_exercise_objectives(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     exercise_id UUID NOT NULL REFERENCES course_exercises(id),
     objective TEXT NOT NULL,
-    test_plan TEXT NOT NULL
+    test_plan TEXT NOT NULL,
     is_completed BOOLEAN NOT NULL DEFAULT FALSE
 );
 
