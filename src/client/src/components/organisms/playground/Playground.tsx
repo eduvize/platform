@@ -58,7 +58,7 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
         terminalRef.current = new Terminal({
             cursorBlink: true,
             macOptionIsMeta: true,
-            fontSize: 12,
+            fontSize: 14,
         });
 
         terminalRef.current.loadAddon(fitAddonRef.current);

@@ -55,12 +55,9 @@ class Shell:
                         self.client.emit('terminal_output', output)
 
         pid, fd = pty.fork()
-        if pid == 0:  # Child process
-            os.environ['TERM'] = 'xterm-256color'
-            os.environ['HOME'] = '/home/user'
-            # Execute the docker exec command to run bash in the container as "user"
-            os.execvp('docker', ['docker', 'exec', '-i', '-t', 'my_playground_container', 'su', 'user', '-c', 'bash'])
-        else:  # Parent process
+        if pid == 0:
+            os.execvp('docker', ['docker', 'exec', '-i', '--env', 'TERM=xterm-256color', '--env', 'HOME=/home/user', 'my_playground_container', 'su', 'user', '-c', 'bash'])
+        else:
             self.process_pid = pid  # Store the child PID for later termination
             self.master_fd = fd
             self.output_thread = threading.Thread(target=read, args=(fd,))
