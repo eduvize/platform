@@ -7,7 +7,7 @@ import { useMemo } from "react";
 
 interface FileEditorProps {
     path: string;
-    height: string;
+    height: number;
 }
 
 enum Language {
@@ -323,7 +323,7 @@ export const FileEditor = ({ height, path }: FileEditorProps) => {
 
     return (
         <Editor
-            height={height}
+            height={`${height}px`}
             theme="vs-dark"
             defaultLanguage={language}
             value={content}

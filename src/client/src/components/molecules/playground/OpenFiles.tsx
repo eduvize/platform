@@ -7,7 +7,7 @@ import { IconX } from "@tabler/icons-react";
 import { useResizeObserver } from "@mantine/hooks";
 
 interface OpenFilesProps {
-    height: string;
+    height: number;
     selectedFile?: string | null;
 }
 
@@ -45,14 +45,12 @@ export const OpenFiles = ({
     selectedFile: overridePath,
 }: OpenFilesProps) => {
     const openedRef = useRef<string[]>([]);
-    const tabListRef = useRef<HTMLDivElement>(null);
+    const [tabListRef, tabListRect] = useResizeObserver();
     const readme = useReadme();
-    const [tabContainerRef, tabContainerRect] = useResizeObserver();
     const { openFiles, closeFile, entries } = usePlaygroundFilesystem();
     const [selectedFile, setSelectedFile] = useState<string | null>(
         overridePath || null
     );
-    const [editorHeight, setEditorHeight] = useState<number | null>(null);
 
     const doesPathExist = (path: string) => {
         const parts = path.split("/");
@@ -72,15 +70,6 @@ export const OpenFiles = ({
 
         return current.some((entry) => entry.name === parts[parts.length - 1]);
     };
-
-    useEffect(() => {
-        setEditorHeight(
-            tabContainerRect?.height
-                ? tabContainerRect.height -
-                      (tabListRef.current?.clientHeight || 0)
-                : null
-        );
-    }, [tabContainerRect]);
 
     useEffect(() => {
         setSelectedFile(overridePath || "__welcome__");
@@ -124,7 +113,6 @@ export const OpenFiles = ({
             w="100%"
             h="100%"
             onChange={setSelectedFile}
-            ref={tabContainerRef}
         >
             <Tabs.List ref={tabListRef}>
                 <Tabs.Tab value="__welcome__" p="xs">
@@ -149,8 +137,15 @@ In the future, this tab will be replaced with a description of what you'd be wor
             </Tabs.Panel>
 
             {openFiles.map((path) => (
-                <Tabs.Panel key={path} value={path}>
-                    <FileEditor path={path} height={`${editorHeight}px`} />
+                <Tabs.Panel
+                    key={path}
+                    value={path}
+                    mah={`${height - tabListRect.height}px`}
+                >
+                    <FileEditor
+                        path={path}
+                        height={height - tabListRect.height}
+                    />
                 </Tabs.Panel>
             ))}
         </Tabs>

@@ -21,7 +21,7 @@ import { useResizeObserver } from "@mantine/hooks";
 
 interface PlaygroundProps {
     hideTerminal?: boolean;
-    height?: number | string;
+    height: number;
 }
 
 export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
@@ -36,21 +36,6 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
     const [focusedFile, setFocusedFile] = useState<string | null>(null);
     const [editorHeight, setEditorHeight] = useState<number | null>(null);
     const [terminalHeight, setTerminalHeight] = useState<number>(130);
-
-    const heightProperty =
-        typeof height === "number"
-            ? `${height}px`
-            : typeof height === "string"
-            ? height
-            : "400px";
-
-    useEffect(() => {
-        if (rect) {
-            const { width, height } = rect;
-
-            setEditorHeight(height - terminalHeight);
-        }
-    }, [rect]);
 
     useEffect(() => {
         if (hideTerminal) {
@@ -73,6 +58,7 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
         terminalRef.current = new Terminal({
             cursorBlink: true,
             macOptionIsMeta: true,
+            fontSize: 12,
         });
 
         terminalRef.current.loadAddon(fitAddonRef.current);
@@ -119,7 +105,7 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
 
     if (!connected || state !== "ready" || reconnecting) {
         return (
-            <Card withBorder mih={heightProperty}>
+            <Card withBorder mih={`${height}px`}>
                 <Center pos="absolute" left="0" top="0" w="100%" h="100%">
                     <Stack align="center">
                         <Loader type="bars" size="lg" />
@@ -153,7 +139,7 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
             <Grid.Col span={12}>
                 <Group
                     gap="xs"
-                    h={heightProperty}
+                    h={`${height}px`}
                     wrap="nowrap"
                     align="flex-start"
                 >
@@ -168,10 +154,12 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
                         />
                     </Box>
 
-                    <Stack w="100%" h="100%" ref={stackRef} gap={0}>
+                    <Stack w="100%" h="100%" gap={0}>
                         <OpenFiles
                             selectedFile={focusedFile}
-                            height={`${editorHeight}px`}
+                            height={
+                                height - (showTerminal ? terminalHeight : 0)
+                            }
                         />
 
                         {showTerminal && (

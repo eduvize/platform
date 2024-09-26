@@ -66,7 +66,7 @@ export const LessonContent = ({
                     pos={view === "exercise" ? "relative" : "fixed"}
                     right={view === "exercise" ? undefined : "100%"}
                 >
-                    <Playground height="800px" />
+                    <Playground height={800} />
                 </Box>
 
                 {view === "lesson" && (
