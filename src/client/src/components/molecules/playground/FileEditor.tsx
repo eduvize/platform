@@ -3,49 +3,6 @@ import Editor from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
 import { loader } from "@monaco-editor/react";
 import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
-import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
-import cssWorker from "monaco-editor/esm/vs/language/css/css.worker?worker";
-import htmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker";
-import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
-import rustWorker from "monaco-editor/esm/vs/basic-languages/rust/rust.contribution?worker";
-import coffeeWorker from "monaco-editor/esm/vs/basic-languages/coffee/coffee.contribution?worker";
-import batWorker from "monaco-editor/esm/vs/basic-languages/bat/bat.contribution?worker";
-import bicepWorker from "monaco-editor/esm/vs/basic-languages/bicep/bicep.contribution?worker";
-import clojureWorker from "monaco-editor/esm/vs/basic-languages/clojure/clojure.contribution?worker";
-import cppWorker from "monaco-editor/esm/vs/basic-languages/cpp/cpp.contribution?worker";
-import csharpWorker from "monaco-editor/esm/vs/basic-languages/csharp/csharp.contribution?worker";
-import dartWorker from "monaco-editor/esm/vs/basic-languages/dart/dart.contribution?worker";
-import dockerfileWorker from "monaco-editor/esm/vs/basic-languages/dockerfile/dockerfile.contribution?worker";
-import elixirWorker from "monaco-editor/esm/vs/basic-languages/elixir/elixir.contribution?worker";
-import fsharpWorker from "monaco-editor/esm/vs/basic-languages/fsharp/fsharp.contribution?worker";
-import goWorker from "monaco-editor/esm/vs/basic-languages/go/go.contribution?worker";
-import graphqlWorker from "monaco-editor/esm/vs/basic-languages/graphql/graphql.contribution?worker";
-import handlebarsWorker from "monaco-editor/esm/vs/basic-languages/handlebars/handlebars.contribution?worker";
-import iniWorker from "monaco-editor/esm/vs/basic-languages/ini/ini.contribution?worker";
-import javaWorker from "monaco-editor/esm/vs/basic-languages/java/java.contribution?worker";
-import kotlinWorker from "monaco-editor/esm/vs/basic-languages/kotlin/kotlin.contribution?worker";
-import lessWorker from "monaco-editor/esm/vs/basic-languages/less/less.contribution?worker";
-import luaWorker from "monaco-editor/esm/vs/basic-languages/lua/lua.contribution?worker";
-import markdownWorker from "monaco-editor/esm/vs/basic-languages/markdown/markdown.contribution?worker";
-import objectiveCWorker from "monaco-editor/esm/vs/basic-languages/objective-c/objective-c.contribution?worker";
-import pascalWorker from "monaco-editor/esm/vs/basic-languages/pascal/pascal.contribution?worker";
-import perlWorker from "monaco-editor/esm/vs/basic-languages/perl/perl.contribution?worker";
-import phpWorker from "monaco-editor/esm/vs/basic-languages/php/php.contribution?worker";
-import powershellWorker from "monaco-editor/esm/vs/basic-languages/powershell/powershell.contribution?worker";
-import protobufWorker from "monaco-editor/esm/vs/basic-languages/protobuf/protobuf.contribution?worker";
-import pugWorker from "monaco-editor/esm/vs/basic-languages/pug/pug.contribution?worker";
-import pythonWorker from "monaco-editor/esm/vs/basic-languages/python/python.contribution?worker";
-import rWorker from "monaco-editor/esm/vs/basic-languages/r/r.contribution?worker";
-import razorWorker from "monaco-editor/esm/vs/basic-languages/razor/razor.contribution?worker";
-import rubyWorker from "monaco-editor/esm/vs/basic-languages/ruby/ruby.contribution?worker";
-import scalaWorker from "monaco-editor/esm/vs/basic-languages/scala/scala.contribution?worker";
-import sassWorker from "monaco-editor/esm/vs/basic-languages/scss/scss.contribution?worker";
-import shellWorker from "monaco-editor/esm/vs/basic-languages/shell/shell.contribution?worker";
-import sqlWorker from "monaco-editor/esm/vs/basic-languages/sql/sql.contribution?worker";
-import swiftWorker from "monaco-editor/esm/vs/basic-languages/swift/swift.contribution?worker";
-import vbWorker from "monaco-editor/esm/vs/basic-languages/vb/vb.contribution?worker";
-import xmlWorker from "monaco-editor/esm/vs/basic-languages/xml/xml.contribution?worker";
-import yamlWorker from "monaco-editor/esm/vs/basic-languages/yaml/yaml.contribution?worker";
 import { useMemo } from "react";
 
 interface FileEditorProps {
@@ -100,95 +57,139 @@ enum Language {
     Yaml = "yaml",
 }
 
+function getWorkerDynamic(
+    name: string,
+    worker: string,
+    base: "basic-languages" | "language"
+) {
+    const url = `monaco-editor/esm/vs/${base}/${name}/${worker}.worker?worker`;
+
+    return new Worker(new URL(url, import.meta.url), {
+        type: "module",
+    } as WorkerOptions);
+}
+
 self.MonacoEnvironment = {
     getWorker(_, label) {
         switch (label) {
             case Language.Json:
-                return new jsonWorker();
+                return getWorkerDynamic("json", "json", "language");
             case Language.Css:
-                return new cssWorker();
+                return getWorkerDynamic("css", "css", "language");
             case Language.Html:
-                return new htmlWorker();
+                return getWorkerDynamic("html", "html", "language");
             case Language.Typescript:
-                return new tsWorker();
+                return getWorkerDynamic("typescript", "ts", "language");
             case Language.Rust:
-                return new rustWorker();
+                return getWorkerDynamic("rust", "rust", "basic-languages");
             case Language.Coffee:
-                return new coffeeWorker();
+                return getWorkerDynamic("coffee", "coffee", "basic-languages");
             case Language.Bat:
-                return new batWorker();
+                return getWorkerDynamic("bat", "bat", "basic-languages");
             case Language.Bicep:
-                return new bicepWorker();
+                return getWorkerDynamic("bicep", "bicep", "basic-languages");
             case Language.Clojure:
-                return new clojureWorker();
+                return getWorkerDynamic(
+                    "clojure",
+                    "clojure",
+                    "basic-languages"
+                );
             case Language.Cpp:
-                return new cppWorker();
+                return getWorkerDynamic("cpp", "cpp", "basic-languages");
             case Language.Csharp:
-                return new csharpWorker();
+                return getWorkerDynamic("csharp", "csharp", "basic-languages");
             case Language.Dart:
-                return new dartWorker();
+                return getWorkerDynamic("dart", "dart", "basic-languages");
             case Language.Dockerfile:
-                return new dockerfileWorker();
+                return getWorkerDynamic(
+                    "dockerfile",
+                    "dockerfile",
+                    "basic-languages"
+                );
             case Language.Elixir:
-                return new elixirWorker();
+                return getWorkerDynamic("elixir", "elixir", "basic-languages");
             case Language.Fsharp:
-                return new fsharpWorker();
+                return getWorkerDynamic("fsharp", "fsharp", "basic-languages");
             case Language.Go:
-                return new goWorker();
+                return getWorkerDynamic("go", "go", "basic-languages");
             case Language.Graphql:
-                return new graphqlWorker();
+                return getWorkerDynamic(
+                    "graphql",
+                    "graphql",
+                    "basic-languages"
+                );
             case Language.Handlebars:
-                return new handlebarsWorker();
+                return getWorkerDynamic(
+                    "handlebars",
+                    "handlebars",
+                    "basic-languages"
+                );
             case Language.Ini:
-                return new iniWorker();
+                return getWorkerDynamic("ini", "ini", "basic-languages");
             case Language.Java:
-                return new javaWorker();
+                return getWorkerDynamic("java", "java", "basic-languages");
             case Language.Kotlin:
-                return new kotlinWorker();
+                return getWorkerDynamic("kotlin", "kotlin", "basic-languages");
             case Language.Less:
-                return new lessWorker();
+                return getWorkerDynamic("less", "less", "basic-languages");
             case Language.Lua:
-                return new luaWorker();
+                return getWorkerDynamic("lua", "lua", "basic-languages");
             case Language.Markdown:
-                return new markdownWorker();
+                return getWorkerDynamic(
+                    "markdown",
+                    "markdown",
+                    "basic-languages"
+                );
             case Language.ObjectiveC:
-                return new objectiveCWorker();
+                return getWorkerDynamic(
+                    "objective-c",
+                    "objective-c",
+                    "basic-languages"
+                );
             case Language.Pascal:
-                return new pascalWorker();
+                return getWorkerDynamic("pascal", "pascal", "basic-languages");
             case Language.Perl:
-                return new perlWorker();
+                return getWorkerDynamic("perl", "perl", "basic-languages");
             case Language.Php:
-                return new phpWorker();
+                return getWorkerDynamic("php", "php", "basic-languages");
             case Language.Powershell:
-                return new powershellWorker();
+                return getWorkerDynamic(
+                    "powershell",
+                    "powershell",
+                    "basic-languages"
+                );
             case Language.Protobuf:
-                return new protobufWorker();
+                return getWorkerDynamic(
+                    "protobuf",
+                    "protobuf",
+                    "basic-languages"
+                );
             case Language.Pug:
-                return new pugWorker();
+                return getWorkerDynamic("pug", "pug", "basic-languages");
             case Language.Python:
-                return new pythonWorker();
+                return getWorkerDynamic("python", "python", "basic-languages");
             case Language.R:
-                return new rWorker();
+                return getWorkerDynamic("r", "r", "basic-languages");
             case Language.Razor:
-                return new razorWorker();
+                return getWorkerDynamic("razor", "razor", "basic-languages");
             case Language.Ruby:
-                return new rubyWorker();
+                return getWorkerDynamic("ruby", "ruby", "basic-languages");
             case Language.Scala:
-                return new scalaWorker();
+                return getWorkerDynamic("scala", "scala", "basic-languages");
             case Language.Sass:
-                return new sassWorker();
+                return getWorkerDynamic("scss", "scss", "basic-languages");
             case Language.Shell:
-                return new shellWorker();
+                return getWorkerDynamic("shell", "shell", "basic-languages");
             case Language.Sql:
-                return new sqlWorker();
+                return getWorkerDynamic("sql", "sql", "basic-languages");
             case Language.Swift:
-                return new swiftWorker();
+                return getWorkerDynamic("swift", "swift", "basic-languages");
             case Language.Vb:
-                return new vbWorker();
+                return getWorkerDynamic("vb", "vb", "basic-languages");
             case Language.Xml:
-                return new xmlWorker();
+                return getWorkerDynamic("xml", "xml", "basic-languages");
             case Language.Yaml:
-                return new yamlWorker();
+                return getWorkerDynamic("yaml", "yaml", "basic-languages");
             default:
                 return new editorWorker();
         }
