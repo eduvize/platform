@@ -213,6 +213,8 @@ export const FileEditor = ({ height, path }: FileEditorProps) => {
             case "mjs":
             case "cjs":
             case "ts":
+            case "tsx":
+            case "jsx":
                 return Language.Typescript;
             case "html":
             case "htm":

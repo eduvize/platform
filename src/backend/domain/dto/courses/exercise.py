@@ -4,6 +4,7 @@ from domain.schema.courses.exercise import CourseExerciseBase, CourseExerciseObj
 class ExerciseObjectiveDto(CourseExerciseObjectiveBase):
     id: uuid.UUID
     objective: str
+    description: str
     is_completed: bool
 
 class ExerciseDto(CourseExerciseBase):
@@ -16,6 +17,7 @@ class ExerciseDto(CourseExerciseBase):
 class InternalExerciseObjectiveDto(CourseExerciseObjectiveBase):
     id: uuid.UUID
     objective: str
+    description: str
     test_plan: str
     is_completed: bool
     

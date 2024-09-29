@@ -2,6 +2,7 @@ from pydantic import BaseModel
 
 class ExerciseObjectivePlan(BaseModel):
     objective: str
+    description: str
     test_plan: str
 
 class ExercisePlan(BaseModel):

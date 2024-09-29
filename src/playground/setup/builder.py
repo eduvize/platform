@@ -32,22 +32,37 @@ def build_image(openai_key: str, base_image: str, description: str) -> Optional[
     RUN pyinstaller --onefile installer.py
     
     FROM {base_image}
+    WORKDIR /app
     ARG OPENAI
     ARG SCAFFOLD_DESCRIPTION
 
-    COPY install_dependencies.sh .
+    COPY install_dependencies.sh ./install_dependencies.sh
     RUN chmod +x ./install_dependencies.sh
     RUN ./install_dependencies.sh
     
-    ENV PATH="/env/bin:$PATH"
+    # Delete user with UID 1000 if it exists
+    RUN uid_to_delete=1000 \\
+        && username_to_delete=$(getent passwd | awk -F: -v uid=$uid_to_delete '$3==uid {{print $1}}') \\
+        && if [ -n "$username_to_delete" ]; then \\
+            userdel -r $username_to_delete; \\
+        fi
 
-    RUN useradd -m -s /bin/bash -d /home/user user
+    # Delete group with GID 1000 if it exists
+    RUN gid_to_delete=1000 \\
+        && groupname_to_delete=$(getent group | awk -F: -v gid=$gid_to_delete '$3==gid {{print $1}}') \\
+        && if [ -n "$groupname_to_delete" ]; then \\
+            groupdel -f $groupname_to_delete; \\
+        fi
+    
+    # Create a new group and user with UID and GID 1000
+    RUN groupadd -g 1000 user \\
+        && useradd -m -s /bin/bash -d /home/user -u 1000 -g 1000 user
 
     # Copy the installer executable
     COPY --from=packager /setup/dist/installer /usr/local/bin/installer
     
     # Run the installer
-    RUN installer --openai_key $OPENAI --description "$SCAFFOLD_DESCRIPTION"
+    RUN installer --base_image "{base_image}" --openai_key $OPENAI --description "$SCAFFOLD_DESCRIPTION"
 
     RUN mkdir /userland
     RUN cp -a /home/user/. /userland/ # Copy the user's home directory to /userland

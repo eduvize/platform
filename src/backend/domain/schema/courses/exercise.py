@@ -5,6 +5,7 @@ import domain.schema as schema
 
 class CourseExerciseObjectiveBase(SQLModel):
     objective: str      = Field(nullable=False)
+    description: str    = Field(nullable=False)
     test_plan: str      = Field(nullable=False)
     is_completed: bool  = Field(default=False)
     

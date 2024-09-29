@@ -119,3 +119,5 @@ Lesson content:
         except ValueError as e:  # TODO: This should specifically look for a course not existing rather than a generic ValueError
             logging.error(f"Failed to generate course content: {e}. Skipping...")
             consumer.commit(message)
+        except Exception as e:
+            logging.error(f"An unexpected error occurred: {e}. Not committing message...")

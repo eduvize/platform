@@ -4,7 +4,7 @@ import uuid
 
 from sqlalchemy import update
 from sqlmodel import Session, select
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, with_loader_criteria
 from domain.schema.courses import Course, Module, Lesson, Section, CourseExercise, CourseExerciseObjective
 from domain.dto.courses.course import CourseDto
 from domain.dto.courses.exercise_plan import ExerciseObjectivePlan
@@ -228,6 +228,8 @@ class CourseRepository:
             return len(lessons)
         
     def get_lesson(self, lesson_id: uuid.UUID) -> Optional[Lesson]:
+        from sqlalchemy.orm import with_loader_criteria
+
         with Session(engine) as session:
             query = (
                 select(Lesson)
@@ -235,17 +237,21 @@ class CourseRepository:
                 .options(
                     joinedload(Lesson.sections),
                     joinedload(Lesson.exercises)
-                    .joinedload(CourseExercise.objectives)
+                    .joinedload(CourseExercise.objectives),
+                    with_loader_criteria(
+                        CourseExercise, CourseExercise.is_unavailable == False
+                    ),
                 )
-                .where(CourseExercise.is_unavailable == False)
             )
-            
-            resultset = session.exec(query)
-            lesson = resultset.first()
-            
+
+            result = session.exec(query)
+            lesson = result.first()
+
             return lesson
         
     def get_course(self, course_id: uuid.UUID) -> Optional[Course]:
+        from sqlalchemy.orm import with_loader_criteria
+
         with Session(engine) as session:
             query = (
                 select(Course)
@@ -258,23 +264,25 @@ class CourseRepository:
                     .joinedload(Module.lessons)
                     .joinedload(Lesson.exercises)
                     .joinedload(CourseExercise.objectives),
+                    with_loader_criteria(
+                        CourseExercise, CourseExercise.is_unavailable == False
+                    ),
                 )
-                .where(CourseExercise.is_unavailable == False)
             )
-            
-            resultset = session.exec(query)
-            course = resultset.first()
-            
+
+            result = session.exec(query)
+            course = result.first()
+
             if course is None:
                 return None
-            
+
             # Order by module, lesson, section "order" field
             course.modules.sort(key=lambda x: x.order)
             for module in course.modules:
                 module.lessons.sort(key=lambda x: x.order)
                 for lesson in module.lessons:
                     lesson.sections.sort(key=lambda x: x.order)
-                    
+
             return course
         
     def get_exercise(
@@ -316,6 +324,7 @@ class CourseRepository:
             for objective in objectives:
                 objective_entity = CourseExerciseObjective(
                     objective=objective.objective,
+                    description=objective.description,
                     test_plan=objective.test_plan,
                     is_completed=False,
                     exercise_id=exercise_entity.id

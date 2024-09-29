@@ -15,34 +15,49 @@ An exercise should be bite-sized and should be able to be completed in a short a
 Each exercise will have a specific mock scenario that the user will be asked to complete.
 
 An exercise consists of:
-- Detailed summary: A comprehensive plan that describes the full exercise in detail, including reasons how the exercise will help the user learn from the lesson
-- A title: A friendly title that describes the mock scenario of the exercise
-- Initial environment state: A comprehensively detailed description of the initial state of the development environment that is expected for the user to be able to start the exercise
-- Objectives: A list of code-based objectives that the user should be able to complete by the end of the exercise
-- Docker image: A Docker Hub image to use as the base for the development environment, use the 'ubuntu:jammy' image if unsure. Preference for language-specific images.
+- **Detailed Summary**: A comprehensive explanation that describes the exercise in detail to the user, including how the exercise will help the user learn from the lesson
+- **Title**: A friendly title that encompasses the scenario in a friendly manner
+- **Initial Environment State**:
+    - This will be provided to a developer as a starting point for building the development environment and should include all necessary information to set up the exercise project.
+    - A comprehensive summary of what project files should be pre-populated in the environment
+    - Build tools that should be used to scaffold and run the code
+    - Additional tools, libraries, or dependencies that will be needed for the user to run the code
+- **Objectives**: 
+    - A list of code-based objectives that the user should complete by the end of the exercise
+    - Each objective should be verifiable through code review
+    - Objectives should be ordered in a way that the user can complete them in a logical sequence
+    - Each objective must have a test plan that the instructor can read to understand how to verify that the objective has been completed successfully
+    - Each objective should have a description that explains to the user what they need to do to pass the test plan
+- **Docker Image**:
+    - A suitable base image from Docker Hub that contains the necessary language tooling or libraries for the exercise
+    - Use LTS images or images based on bookworm. DO NOT use bullseye, buster, alpine, or slim images.
+    - If you are unsure of which image to use, you can use `ubuntu:jammy` as a fallback when necessary, but a language-specific image is preferred
 
-Objectives:
-The objective should be a verifiable task that the user can complete by writing code, running specific commands, or by making changes to the codebase.
-Each objective must include a test plan that the instructor can read to understand how to verify that the objective has been completed successfully.
+Example Exercise #1:
+- **Title**: Add Two Numbers
+- **Detailed Summary**: In this exercise, you will write a function that takes two numbers as arguments and returns their sum. This exercise will help you understand how to write basic functions in Python.
+- **Initial Environment State**: A virtual environment should be set up. Include a `main.py` file with a bodyless function called `add_numbers` that takes two arguments and a pass statement.
+- **Docker Image**: python:3.11
 
-Example Exercises:
-Exercise Example 1:
-Title: Create a Basic Function in JavaScript
-Summary: Write a function that takes two numbers as arguments and returns their sum
-Exercise Example 2:
-Title: Define a Class in Python
-Summary: Create a class called Person with attributes for name and date of birth with a method to calculate the age 
-Exercise Example 3:
-Title: Incorporate a New API Endpoint
-Summary: Add a new GET endpoint to the API that returns a list of users using fake data
+Example Exercise #2:
+- **Title**: Create an Endpoint
+- **Description**: In this exercise, you will create a new GET endpoint to the API that returns a list of users using fake data. This exercise will help you understand how to create endpoints in ASP.NET Core.
+- **Initial Environment State**: An ASP.NET Core project should be set up. Include a blank controller without any endpoints. A `Models` folder should be created with a `User` class that has properties for `Id`, `Name`, and `Email`.
+- **Docker Image**: mcr.microsoft.com/dotnet/aspnet:6.0
 
-Example objectives with their test plans:
-Objective 1: Write a function that returns the sum of two numbers
-Test plan 1: Read example.rs and verify that there is a function that returns the sum of two provided numbers
-Objective 2: Create a class that represents a person
-Test plan 2: Read person.py and verify that there is a class that represents a person with relevant attributes and methods
-Objective 3: Incorporate a new GET endpoint into the API
-Test plan 3: Examine the codebase and verify there is a defined GET endpoint. Run the development server and make a GET request to the new endpoint, verifying that it responds with a 200 status code
+Example Objectives:
+- **Example #1:**
+    - **Objective**: Add Two Numbers
+    - **Description**: Write a function that takes two numbers as arguments and returns their sum
+    - **Test Plan**: Read example.rs and verify that there is a function that returns the sum of two provided numbers
+- **Example #2:**
+    - **Objective**: Create a Person
+    - **Description**: Create a class called Person with attributes for name and date of birth with a method to calculate the age
+    - **Test Plan**: Read person.py and verify that there is a class that represents a person with relevant attributes and methods
+- **Example #3:**
+    - **Objective**: Implement a GET Endpoint
+    - **Description**: Add a new GET endpoint to the API that returns a list of users using fake data
+    - **Test Plan**: Examine the codebase and verify there is a defined GET endpoint that returns a list of users
 
 An exercise must incorporate only the following:
 - Writing code: The user is instructed to write specific pieces of code
@@ -53,11 +68,6 @@ An exercise must incorporate only the following:
 
 Rules for exercise environments:
 - DO NOT attempt to install Docker or require its usage during the exercise. Docker is not allowed in this exercise.
-
-Initial Environment State:
-- Tools, libraries or dependencies that will be needed for the user to run the code
-- Files that should be pre-populated on the filesystem (i.e classes, functions, etc)
-- Configuration files that should be pre-populated on the filesystem (i.e. package.json, requirements.txt, etc)
 
 If the lesson content does not produce good exercise material that matches the above criteria, you should respond with 'No exercises needed'.
 """.strip())

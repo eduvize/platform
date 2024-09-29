@@ -80,12 +80,26 @@ export const InstructorPane = ({
 
                                 <List listStyleType="none">
                                     {objectives.map(
-                                        ({ objective, is_completed }) => (
-                                            <Checkbox
-                                                label={objective}
-                                                checked={is_completed}
-                                                mb="sm"
-                                            />
+                                        ({
+                                            objective,
+                                            description,
+                                            is_completed,
+                                        }) => (
+                                            <Stack gap={0}>
+                                                <Checkbox
+                                                    label={objective}
+                                                    checked={is_completed}
+                                                />
+
+                                                <Text
+                                                    size="xs"
+                                                    c="dimmed"
+                                                    mb="sm"
+                                                    pl="xl"
+                                                >
+                                                    {description}
+                                                </Text>
+                                            </Stack>
                                         )
                                     )}
                                 </List>
