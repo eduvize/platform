@@ -35,7 +35,12 @@ export function Home() {
                     >
                         Built to Empower Developers
                     </Title>
-                    <Text c="white" size="sm" p={isMobile ? "md" : 0}>
+                    <Text
+                        c="white"
+                        size="sm"
+                        p={isMobile ? "md" : 0}
+                        ta={isMobile ? "center" : undefined}
+                    >
                         Our suite of tailored tools is designed to elevate your
                         development skills, all in one place. Whether you're
                         looking to advance your career or land a new job,

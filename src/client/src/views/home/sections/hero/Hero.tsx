@@ -6,6 +6,7 @@ import {
     Space,
     Center,
     Image,
+    Title,
 } from "@mantine/core";
 import { GithubIcon } from "@mantinex/dev-icons";
 import classes from "./Hero.module.css";
@@ -37,26 +38,29 @@ export function Hero() {
                         width={isMobile ? "90%" : "533px"}
                     />
                 </Center>
-
                 <Space h="xl" />
-
-                <h1 className={classes.title}>
-                    <Text
+                <Center>
+                    <Title
+                        order={1}
                         component="span"
-                        c="#8dcaff"
-                        inherit
-                        className={classes.glowing}
+                        c="white"
+                        tt="uppercase"
+                        ta="center"
+                        size={isMobile ? 28 : undefined}
                     >
-                        Supercharge
-                    </Text>{" "}
-                    your dev skills using A{" "}
-                    <Text component="span" c="green" inherit>
-                        Personal AI Instructor
-                    </Text>
-                </h1>
+                        <b style={{ color: "#8dcaff" }}>Supercharge</b> your dev
+                        skills using A{" "}
+                        <b
+                            style={{
+                                color: "var(--mantine-color-green-5",
+                            }}
+                        >
+                            Personal AI Instructor
+                        </b>
+                    </Title>
+                </Center>
 
                 <Space h="lg" />
-
                 <Text className={classes.description} c="white">
                     Learning new software development skills can be challenging,
                     but staying ahead is crucial. With Eduvize, powered by
@@ -64,7 +68,6 @@ export function Hero() {
                     technologies through tailored courses, exercises, and
                     projects that match your unique needs.
                 </Text>
-
                 <Group className={classes.controls} justify="center">
                     <Link to="/auth">
                         <Button
