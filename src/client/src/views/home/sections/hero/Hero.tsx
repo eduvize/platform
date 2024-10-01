@@ -12,8 +12,11 @@ import classes from "./Hero.module.css";
 import logo from "../../logo.png";
 import { Link } from "react-router-dom";
 import bg from "./background.png";
+import { useMediaQuery } from "@mantine/hooks";
 
 export function Hero() {
+    const isMobile = useMediaQuery("(max-width: 768px)");
+
     return (
         <div className={classes.wrapper}>
             <Image
@@ -31,6 +34,7 @@ export function Hero() {
                         src={logo}
                         alt="Eduvize Logo"
                         className={classes.logo}
+                        width={isMobile ? "90%" : "533px"}
                     />
                 </Center>
 

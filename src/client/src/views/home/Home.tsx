@@ -27,7 +27,12 @@ export function Home() {
                     justify="center"
                     py="xl"
                 >
-                    <Title c="white" order={2} miw={390}>
+                    <Title
+                        c="white"
+                        order={2}
+                        miw={390}
+                        ta={isMobile ? "center" : undefined}
+                    >
                         Built to Empower Developers
                     </Title>
                     <Text c="white" size="sm" p={isMobile ? "md" : 0}>
@@ -50,7 +55,7 @@ export function Home() {
 
             <Space h="xl" />
 
-            <Stack>
+            <Stack p={isMobile ? "xl" : 0}>
                 <Title order={2} c="white" ta="center">
                     Are you ready to take your skills to the next level?
                 </Title>

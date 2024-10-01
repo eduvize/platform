@@ -55,7 +55,11 @@ export const Personas = () => {
                 How can Eduvize help you?
             </Title>
 
-            <Group justify="center" gap="xl" p={isMobile ? "lg" : 0}>
+            <Group
+                justify="center"
+                gap={isMobile ? "sm" : "xl"}
+                p={isMobile ? "md" : 0}
+            >
                 {personas.map(({ image, title, description }) => (
                     <Radio
                         key={title}
