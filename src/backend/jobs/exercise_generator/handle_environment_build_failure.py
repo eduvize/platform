@@ -33,7 +33,7 @@ def listen_for_environment_build_failure_events():
                 continue
             
             logging.info("Removing exercise and environment records")
-            course_repo.set_exercise_setup_error(exercise_id=exercise.id)
+            course_repo.set_exercise_setup_error(exercise_id=exercise.id, detail=data.error)
             
             consumer.commit(message)
         except Exception as e:

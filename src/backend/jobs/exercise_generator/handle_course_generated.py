@@ -1,6 +1,6 @@
 import logging
 import uuid
-from ai.prompts import GenerateExercisesPrompt
+from ai.prompts import GenerateExercisesPrompt, SelectExerciseLessonsPrompt
 from app.repositories import CourseRepository, PlaygroundRepository
 from common.messaging import Topic, KafkaConsumer, KafkaProducer
 from domain.topics import CourseGeneratedTopic, BuildPlaygroundTopic
@@ -20,8 +20,8 @@ def create_exercise(
     logging.info("Creating environment record for exercise")
     environment_id = playground_repo.create_environment(
         user_id=user_id,
-        docker_base_image=exercise.docker_base_image,
-        description=exercise.initial_environment_state_expected
+        docker_base_image=exercise.docker_image,
+        description=exercise.scenario
     )
     logging.info(f"Environment created: {environment_id}")
 
@@ -31,7 +31,7 @@ def create_exercise(
         lesson_id=lesson_id,
         environment_id=environment_id,
         title=exercise.title,
-        summary=exercise.detailed_summary,
+        summary=exercise.scenario,
         objectives=exercise.objectives
     )
     logging.info(f"Exercise created: {exercise_id}")
@@ -44,8 +44,7 @@ def create_exercise(
             purpose="exercise",
             environment_id=environment_id,
             resource_id=exercise_id,
-            base_image=exercise.docker_base_image,
-            description=exercise.initial_environment_state_expected
+            data=exercise
         )
     )
     
@@ -80,11 +79,13 @@ def listen_for_course_generated_events():
                 consumer.commit(message)
                 continue
             
+            total_lessons = sum([len(module.lessons) for module in course.modules])
+            
+            lessons_to_generate = SelectExerciseLessonsPrompt().get_best_lessons(course, max_lessons=total_lessons / 2)
+            
             # Iterate over each lesson in each module to generate potential exercises
-            for module in course.modules:
-                logging.info(f"Generating exercises for module: {module.title}")
-                
-                for lesson in module.lessons:
+            for lesson in lessons_to_generate:
+                try:
                     logging.info(f"Generating exercises for lesson: {lesson.title}")
                     
                     lesson_content = "\n".join([
@@ -94,8 +95,8 @@ def listen_for_course_generated_events():
                     
                     lesson_content = f"""
 Course: {course.title}
-Current Module: {module.title}
-Current Lesson for Exercise: {lesson.title}
+Current Lesson: {lesson.title}
+Lesson Description: {lesson.description}
 
 Lesson content:
 {lesson_content}                 
@@ -113,6 +114,9 @@ Lesson content:
                             course_repo=course_repo,
                             playground_repo=playground_repo
                         )
+                except Exception as e:
+                    logging.error(f"Failed to generate exercises for lesson: {lesson.title}. Skipping... {e}")
+                    continue
                     
             # Commit the message to the Kafka topic offset
             consumer.commit(message)

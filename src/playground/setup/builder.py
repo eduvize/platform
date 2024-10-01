@@ -1,125 +1,196 @@
+import uuid
 import logging
 import os
 import subprocess
 import sys
 from typing import Optional
-import uuid
+from .models import ExercisePlan, ExerciseFile
+import tempfile
+
+class BuildException(Exception):
+    """
+    Custom exception to be raised when Docker build or push fails.
+    """
+    def __init__(self, message: str):
+        super().__init__(message)
 
 # Set up logging configuration to log at INFO level to stdout
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(levelname)s: %(message)s')
 
-def build_image(openai_key: str, base_image: str, description: str) -> Optional[str]:
-    logging.info(f"""
-    Base image: {base_image}
-    Description: {description}
-    """)
+def build_exercise_image(exercise: ExercisePlan) -> Optional[str]:
+    # Create a temporary directory to work in
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Dockerfile content based on user input
+        dockerfile_content = f"""
+        FROM {exercise.docker_image}
+        WORKDIR /app
 
-    # Dockerfile content based on user input
-    dockerfile_content = f"""
-    FROM python:3.11-slim AS packager
-    RUN apt-get update && apt-get install -y build-essential
-    
-    # Install pyinstaller
-    RUN pip install pyinstaller
-    
-    WORKDIR /setup
-    COPY . .
-    
-    # Install dependencies
-    RUN pip install -r requirements.txt
-    
-    # Create the executable
-    RUN pyinstaller --onefile installer.py
-    
-    FROM {base_image}
-    WORKDIR /app
-    ARG OPENAI
-    ARG SCAFFOLD_DESCRIPTION
+        # Delete user with UID 1000 if it exists
+        RUN uid_to_delete=1000 \\
+            && username_to_delete=$(getent passwd | awk -F: -v uid=$uid_to_delete '$3==uid {{print $1}}') \\
+            && if [ -n "$username_to_delete" ]; then \\
+                userdel -r $username_to_delete; \\
+            fi
 
-    COPY install_dependencies.sh ./install_dependencies.sh
-    RUN chmod +x ./install_dependencies.sh
-    RUN ./install_dependencies.sh
-    
-    # Delete user with UID 1000 if it exists
-    RUN uid_to_delete=1000 \\
-        && username_to_delete=$(getent passwd | awk -F: -v uid=$uid_to_delete '$3==uid {{print $1}}') \\
-        && if [ -n "$username_to_delete" ]; then \\
-            userdel -r $username_to_delete; \\
-        fi
+        # Delete group with GID 1000 if it exists
+        RUN gid_to_delete=1000 \\
+            && groupname_to_delete=$(getent group | awk -F: -v gid=$gid_to_delete '$3==gid {{print $1}}') \\
+            && if [ -n "$groupname_to_delete" ]; then \\
+                groupdel -f $groupname_to_delete; \\
+            fi
 
-    # Delete group with GID 1000 if it exists
-    RUN gid_to_delete=1000 \\
-        && groupname_to_delete=$(getent group | awk -F: -v gid=$gid_to_delete '$3==gid {{print $1}}') \\
-        && if [ -n "$groupname_to_delete" ]; then \\
-            groupdel -f $groupname_to_delete; \\
-        fi
-    
-    # Create a new group and user with UID and GID 1000
-    RUN groupadd -g 1000 user \\
-        && useradd -m -s /bin/bash -d /home/user -u 1000 -g 1000 user
+        # Create a new group and user with UID and GID 1000
+        RUN groupadd -g 1000 user \\
+            && useradd -m -s /bin/bash -d /home/user -u 1000 -g 1000 user
 
-    # Copy the installer executable
-    COPY --from=packager /setup/dist/installer /usr/local/bin/installer
-    
-    # Run the installer
-    RUN installer --base_image "{base_image}" --openai_key $OPENAI --description "$SCAFFOLD_DESCRIPTION"
+        # Install basic packages
+        RUN apt-get update && apt-get install -y git curl wget unzip
 
-    RUN mkdir /userland
-    RUN cp -a /home/user/. /userland/ # Copy the user's home directory to /userland
+        WORKDIR /home/user
+        """
 
-    WORKDIR /home/user
-    
-    CMD sleep infinity
+        # Install the required packages
+        if exercise.system_packages:
+            dockerfile_content += create_apt_install_command(exercise.system_packages)
+        else:
+            dockerfile_content += """
+    RUN apt-get update && rm -rf /var/lib/apt/lists/*
     """
 
-    image_tag = f"registry.crosswinds.cloud/eduvize/playground:{uuid.uuid4().hex}".replace("-", "")
+        # Run the prerequisite commands
+        if exercise.pre_commands:
+            dockerfile_content += create_setup_commands(exercise.pre_commands)
 
-    # Write Dockerfile
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    dockerfile_path = os.path.join(script_dir, "Dockerfile")
-    with open(dockerfile_path, "w") as f:
-        f.write(dockerfile_content)
-
-    # Build the Docker image
-    docker_process = subprocess.Popen(
-        ["docker", "build", "-t", image_tag, script_dir, "--build-arg", f"OPENAI={openai_key}", "--build-arg", f"SCAFFOLD_DESCRIPTION={description}"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True  # To capture the output as text (not bytes)
-    )
-
-    # Log the Docker output
-    for line in docker_process.stdout:
-        logging.info(line.strip())
-
-    # Wait for the Docker build process to finish
-    docker_process.wait()
-
-
-    # Clean up by removing the Dockerfile after the build
-    os.remove(dockerfile_path)
-
-    # Check if the process completed successfully
-    if docker_process.returncode == 0:
-        logging.info("Docker image built successfully!")
-    
-        # Push the image to the registry
-        docker_push_process = subprocess.Popen(
-            ["docker", "push", image_tag],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True
-        )
-
-        # Log the Docker push output
-        for line in docker_push_process.stdout:
-            logging.info(line.strip())
+        # Add files to the Dockerfile
+        for f in exercise.files:
+            dockerfile_content += create_file_copies(f, temp_dir)
             
-        # Wait for the Docker push process to finish
-        docker_push_process.wait()
-        
-        return image_tag
-    else:
-        logging.error(f"Docker build failed with return code {docker_process.returncode}")
-        
-        return None
+        # Run the post-scaffold commands
+        if exercise.post_commands:
+            dockerfile_content += create_setup_commands(exercise.post_commands)
+
+        dockerfile_content += """
+        RUN mkdir /userland
+        RUN cp -a /home/user/. /userland/ # Copy the user's home directory to /userland
+
+        CMD sleep infinity
+        """
+
+        logging.info("Generated Dockerfile content:")
+        logging.info(dockerfile_content)
+
+        image_tag = f"registry.crosswinds.cloud/eduvize/playground:{uuid.uuid4().hex}"
+
+        # Write Dockerfile
+        dockerfile_path = os.path.join(temp_dir, "Dockerfile")
+        with open(dockerfile_path, "w") as f:
+            f.write(dockerfile_content)
+
+        docker_logs: list[str] = []
+
+        # Build the Docker image
+        try:
+            docker_build_command = ["docker", "build", "-t", image_tag, temp_dir]
+            docker_process = subprocess.Popen(
+                docker_build_command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True  # To capture the output as text (not bytes)
+            )
+            
+            try:
+                # Set a timeout of 120 seconds (2 minutes) for the build process
+                stdout, stderr = docker_process.communicate(timeout=120)
+            except subprocess.TimeoutExpired:
+                docker_process.kill()
+                stdout, stderr = docker_process.communicate()
+                logging.error("Docker build process timed out after 2 minutes.")
+                raise BuildException(f"Docker build timed out. Dockerfile content:\n{dockerfile_content}")
+
+            if stderr:
+                logging.error(stderr.strip())
+                docker_logs.append(stderr.strip())
+                
+            if stdout:
+                logging.info(stdout.strip())
+                docker_logs.append(stdout.strip())
+
+            # Check if the process completed successfully
+            if docker_process.returncode == 0:
+                logging.info("Docker image built successfully!")
+
+                # Push the image to the registry
+                docker_push_process = subprocess.Popen(
+                    ["docker", "push", image_tag],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True
+                )
+
+                # Log the Docker push output
+                for line in docker_push_process.stdout:
+                    logging.info(line.strip())
+
+                # Wait for the Docker push process to finish
+                docker_push_process.wait()
+
+                if docker_push_process.returncode == 0:
+                    logging.info("Docker image pushed successfully!")
+                    return image_tag
+                else:
+                    logging.error(f"Docker push failed with return code {docker_push_process.returncode}")
+                    return None
+            else:
+                logging.error(f"Docker build failed with return code {docker_process.returncode}")
+                raise BuildException("\n".join(docker_logs) + f"\nDockerfile content:\n{dockerfile_content}")
+        except BuildException:
+            # Re-raise BuildException without modification
+            raise
+        except Exception as e:
+            logging.error(f"An unexpected error occurred: {e}\nDockerfile content:\n{dockerfile_content}")
+            raise BuildException("\n".join(docker_logs))
+
+def create_apt_install_command(packages: list[str]) -> str:
+    """
+    Creates a command to install the given packages using apt.
+    """
+    packages_str = " ".join(packages)
+    return f"""
+    RUN apt-get update \\
+        && DEBIAN_FRONTEND=noninteractive apt-get install -y {packages_str} \\
+        && rm -rf /var/lib/apt/lists/*
+    """
+
+def create_setup_commands(commands: list[str]) -> str:
+    """
+    Creates a command to run the given setup commands.
+    """
+    command_str = ' && '.join(commands)
+    return f"""
+    RUN {command_str}
+    """
+
+def create_file_copies(file: ExerciseFile, temp_dir: str) -> str:
+    """
+    Write the file content to a temporary file in temp_dir, to be copied into the Docker image.
+    """
+    temp_filename = f"temp_{uuid.uuid4().hex}"
+    local_file_path = os.path.join(temp_dir, temp_filename)
+
+    with open(local_file_path, "w") as f:
+        f.write(file.content)
+
+    dest_dir_path = os.path.dirname(file.path)
+
+    dockerfile_instructions = ""
+
+    if dest_dir_path:
+        dockerfile_instructions += f"""
+RUN mkdir -p {dest_dir_path}
+"""
+
+    dockerfile_instructions += f"""
+COPY {temp_filename} {file.path}
+"""
+
+    return dockerfile_instructions

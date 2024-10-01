@@ -3,7 +3,8 @@ import json
 import logging
 import os
 from confluent_kafka import Consumer, KafkaError, Producer
-from .builder import build_image
+from .builder import build_exercise_image, BuildException
+from .models import ExercisePlan
 
 logging.basicConfig(level=logging.INFO)
 
@@ -20,10 +21,7 @@ producer_config = {
     'bootstrap.servers': os.getenv("KAFKA_BOOTSTRAP_SERVERS"),
 }
 
-# Create a Kafka consumer
 consumer = Consumer(consumer_config)
-
-# Create a Kafka producer
 producer = Producer(producer_config)
 
 # Retry delay in seconds (you can configure this as needed)
@@ -82,48 +80,72 @@ def poll_messages(consumer):
                 purpose = data.get("purpose", None) # The purpose of the environment (i.e exercise)
                 environment_id = data.get("environment_id", None) # The ID of the environment this image is for
                 resource_id = data.get("resource_id", None) # The ID of the resource this environment is associated to (i.e exercise)
-                base_image = data.get("base_image", None) # Base image to use for the Docker image
-                description = data.get("description", None) # A description of what the environment must contain
+                exercise_plan: dict = data.get("data", None) # The exercise plan data
 
-                if not base_image:
-                    logging.error("base_image not provided in the message.")
-                    continue
-
-                if not description:
-                    logging.error("description not provided in the message.")
+                try:
+                    exercise_plan: ExercisePlan = ExercisePlan.model_validate(exercise_plan)
+                except Exception as e:
+                    logging.error(f"Invalid exercise plan data: {e}")
+                    
+                    # Commit the offset
+                    consumer.commit(message=message)
+                    
                     continue
 
                 # Build the image
-                tag = build_image(
-                    openai_key=os.getenv("OPENAI_KEY"),
-                    base_image=base_image,
-                    description=description
-                )
-                
-                if tag:
-                    # Publish environment created event
-                    producer.produce(
-                        topic="environment_created",
-                        value=json.dumps({
-                            "purpose": purpose,
-                            "environment_id": environment_id,
-                            "resource_id": resource_id,
-                            "image_tag": tag
-                        })
+                try:
+                    tag = build_exercise_image(
+                        exercise=exercise_plan,
                     )
-                else:
-                    logging.error("Failed to build the image. Reporting failure")
                     
+                    if tag:
+                        # Publish environment created event
+                        producer.produce(
+                            topic="environment_created",
+                            value=json.dumps({
+                                "purpose": purpose,
+                                "environment_id": environment_id,
+                                "resource_id": resource_id,
+                                "image_tag": tag
+                            })
+                        )
+                    else:
+                        logging.error("Failed to build the image. Reporting failure")
+                        
+                        producer.produce(
+                            topic="environment_build_failed",
+                            value=json.dumps({
+                                "purpose": purpose,
+                                "environment_id": environment_id
+                            })   
+                        )
+                except BuildException as e:
+                    logging.error(f"Failed to build the image: {e}")
+
+                    # Report the failure
                     producer.produce(
                         topic="environment_build_failed",
                         value=json.dumps({
                             "purpose": purpose,
-                            "environment_id": environment_id
-                        })   
-                    )
+                            "environment_id": environment_id,
+                            "error": str(e)
+                        })
+                    )       
+                except Exception as e:
+                    logging.error(f"An unexpected error occurred: {e}")
                     
-                # Commit the offset
-                consumer.commit(message=message)
+                    # Report the failure
+                    producer.produce(
+                        topic="environment_build_failed",
+                        value=json.dumps({
+                            "purpose": purpose,
+                            "environment_id": environment_id,
+                            "error": str(e)
+                        })
+                    )
+                finally:             
+                    # Commit the offset
+                    consumer.commit(message=message)
 
     except KeyboardInterrupt:
         # Gracefully exit on Ctrl+C

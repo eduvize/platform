@@ -23,22 +23,21 @@ export const NavigationPane = ({
     onChangeSection,
 }: NavigationPaneProps) => {
     const { course } = useCourse();
-    const { current_lesson_id } = course;
 
     const currentLesson = useMemo(() => {
         return course.modules
             .map((module) => module.lessons)
             .flat()
-            .find((lesson) => lesson.id === current_lesson_id);
-    }, [current_lesson_id]);
+            .find((lesson) => lesson.id === currentLessonId);
+    }, [currentLessonId]);
 
     const sections = currentLesson?.sections || [];
 
     const currentModule = useMemo(() => {
         return course.modules.find((module) =>
-            module.lessons.some((lesson) => lesson.id === current_lesson_id)
+            module.lessons.some((lesson) => lesson.id === currentLessonId)
         );
-    }, [current_lesson_id]);
+    }, [currentLessonId]);
 
     return (
         <>

@@ -67,8 +67,6 @@ class BaseGPT(BaseModel):
             for msg in self.get_messages(message)
         ]
         
-        logger.info(f"Messages: {messages}")
-        
         if prompt.system_prompt:
             messages.insert(0, ChatCompletionSystemMessageParam(role="system", content=prompt.system_prompt))
         
@@ -178,6 +176,7 @@ class BaseGPT(BaseModel):
             if len(tool_call_dict) > 0:
                 for record in tool_call_dict:
                     logging.info(f"Processing tool: {record.name}")
+                    logging.info(record.arguments)
 
                     # Try to load the JSON - if it fails, return an error to the model for correction
                     try:

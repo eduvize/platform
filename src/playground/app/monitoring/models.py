@@ -4,6 +4,7 @@ from pydantic import BaseModel
 class InternalExerciseObjectiveDto(BaseModel):
     id: uuid.UUID
     objective: str
+    description: str
     test_plan: str
     is_completed: bool
     

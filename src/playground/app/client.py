@@ -19,6 +19,7 @@ shell = None
 user_connection_timer = None
 is_user_connected = False
 environment_type: Optional[Literal["exercise"]] = None
+exercise_id: Optional[uuid.UUID] = None
 
 def self_destruct():
     global is_user_connected
@@ -65,11 +66,9 @@ def disconnect():
         
 @client.event
 def start_exercise_monitoring(data: dict):
-    global environment_type, client
+    global environment_type, client, exercise_id
     environment_type = "exercise"
-    exercise_id = data.get("exercise_id")
-    logger.info(f"Starting exercise monitoring for exercise: {exercise_id}")
-    run_exercise_monitor(client, uuid.UUID(exercise_id))
+    exercise_id = uuid.UUID(data.get("exercise_id"))
       
 @client.event
 def subscribe_to_path(data: dict):
@@ -221,7 +220,7 @@ def save_file(data: dict):
 def user_connected(data: dict):
     logger.info("User connected")
     
-    global is_user_connected
+    global is_user_connected, environment_type, exercise_id
     is_user_connected = True
     
     cancel_user_connection_timer()
@@ -238,6 +237,10 @@ def user_connected(data: dict):
     initialize_environment(image_tag)
             
     shell.start()
+    
+    if environment_type == "exercise":
+        logger.info(f"Starting exercise monitoring for exercise: {exercise_id}")
+        run_exercise_monitor(client, exercise_id)
     
     client.emit("ready")
     
