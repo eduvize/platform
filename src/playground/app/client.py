@@ -69,6 +69,8 @@ def start_exercise_monitoring(data: dict):
     global environment_type, client, exercise_id
     environment_type = "exercise"
     exercise_id = uuid.UUID(data.get("exercise_id"))
+    logger.info(f"Starting exercise monitoring for exercise: {exercise_id}")
+    run_exercise_monitor(client, exercise_id)
       
 @client.event
 def subscribe_to_path(data: dict):
@@ -237,10 +239,6 @@ def user_connected(data: dict):
     initialize_environment(image_tag)
             
     shell.start()
-    
-    if environment_type == "exercise":
-        logger.info(f"Starting exercise monitoring for exercise: {exercise_id}")
-        run_exercise_monitor(client, exercise_id)
     
     client.emit("ready")
     

@@ -141,7 +141,7 @@ Come up with **one to three objectives** that the user should complete by the en
 
 **Instructions:**
 - List the objectives in a numbered format.
-- Keep object titles short and concise, with a more detailed description following.
+- **Keep object titles short and concise**, with a more **detailed description** following.
 """.strip())
         # Let the model think
         responses = gpt_4o_mini.get_responses(self)
