@@ -56,7 +56,7 @@ class Shell:
 
         pid, fd = pty.fork()
         if pid == 0:
-            os.execvp('docker', ['docker', 'exec', '-i', '--env', 'TERM=xterm-256color', '--env', 'HOME=/home/user', 'my_playground_container', 'su', 'user', '-c', 'bash'])
+            os.execvp('docker', ['docker', 'exec', '-i', '--env', 'TERM=xterm-256color', '--env', 'HOME=/home/user', '--env', 'PS1=user@eduvize:\\w\\$ ', 'my_playground_container', 'su', 'user', '-c', 'bash'])
         else:
             self.process_pid = pid  # Store the child PID for later termination
             self.master_fd = fd

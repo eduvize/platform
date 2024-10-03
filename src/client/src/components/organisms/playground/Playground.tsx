@@ -17,7 +17,6 @@ import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "./Playground.css";
 import { FileExplorer, OpenFiles } from "@molecules";
-import { useResizeObserver } from "@mantine/hooks";
 
 interface PlaygroundProps {
     hideTerminal?: boolean;
@@ -27,14 +26,12 @@ interface PlaygroundProps {
 export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
     const viewport = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<Terminal | null>(null);
-    const [stackRef, rect] = useResizeObserver();
     const fitAddonRef = useRef<FitAddon>(new FitAddon());
     const { connected, state, status, reconnecting } =
         usePlaygroundConnectivity();
     const { sendInput, resize, subscribe, unsubscribe } = useCommandLine();
     const [showTerminal, setShowTerminal] = useState(!hideTerminal);
     const [focusedFile, setFocusedFile] = useState<string | null>(null);
-    const [editorHeight, setEditorHeight] = useState<number | null>(null);
     const [terminalHeight, setTerminalHeight] = useState<number>(130);
 
     useEffect(() => {
@@ -58,7 +55,6 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
         terminalRef.current = new Terminal({
             cursorBlink: true,
             macOptionIsMeta: true,
-            fontSize: 14,
         });
 
         terminalRef.current.loadAddon(fitAddonRef.current);
@@ -120,7 +116,7 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
                                     {connected &&
                                         state === "initializing" &&
                                         !status &&
-                                        "Creating development environment..."}
+                                        "Waiting for environment..."}
                                     {connected &&
                                         state === "initializing" &&
                                         status !== null &&
