@@ -111,8 +111,7 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
 
                             {!reconnecting && (
                                 <>
-                                    {!connected &&
-                                        "Connecting to playground..."}
+                                    {!connected && "Connecting to sandbox..."}
                                     {connected &&
                                         state === "initializing" &&
                                         !status &&
