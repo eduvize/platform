@@ -20,7 +20,6 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(levelname)s
 def build_exercise_image(exercise: ExercisePlan) -> Optional[str]:
     # Create a temporary directory to work in
     with tempfile.TemporaryDirectory() as temp_dir:
-        # Dockerfile content with OS detection in each RUN command
         dockerfile_content = f"""
 FROM {exercise.docker_image}
 WORKDIR /app
@@ -160,7 +159,6 @@ CMD sleep infinity
                 logging.error(f"Docker build failed with return code {docker_process.returncode}")
                 raise BuildException("\n".join(docker_logs) + f"\nDockerfile content:\n{dockerfile_content}")
         except BuildException:
-            # Re-raise BuildException without modification
             raise
         except Exception as e:
             logging.error(f"An unexpected error occurred: {e}\nDockerfile content:\n{dockerfile_content}")

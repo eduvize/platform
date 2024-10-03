@@ -52,9 +52,6 @@ def validate_objective(exercise: InternalExerciseDto, objective: InternalExercis
         api_key=get_openai_key()
     )
     
-    home_dir_listing = get_directory_listing("/")
-    dir_listing_str = "\n".join(home_dir_listing)
-    
     messages = [
         {
             "role": "system",
@@ -130,6 +127,7 @@ Please validate the objective and provide a final assessment once you are done. 
         
         messages.append(choice.message)
         
+        # Process tools
         if choice.finish_reason == "tool_calls":
             logging.info(f"Tool call count: {len(choice.message.tool_calls)}")
             

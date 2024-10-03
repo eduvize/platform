@@ -11,10 +11,10 @@ logging.basicConfig(level=logging.INFO)
 # Configuration for the consumer
 consumer_config = {
     'bootstrap.servers': os.getenv("KAFKA_BOOTSTRAP_SERVERS"),
-    'max.poll.interval.ms': 1800000,
+    'max.poll.interval.ms': 180000, # 3 minutes
     'group.id': 'playground-builder',
     'auto.offset.reset': 'earliest',
-    'enable.auto.commit': False  # Disable auto commit
+    'enable.auto.commit': False
 }
 
 producer_config = {
@@ -24,7 +24,7 @@ producer_config = {
 consumer = Consumer(consumer_config)
 producer = Producer(producer_config)
 
-# Retry delay in seconds (you can configure this as needed)
+# Retry delay in seconds
 RETRY_DELAY = 10
 
 def subscribe_to_topic(consumer):
@@ -49,7 +49,6 @@ def poll_messages(consumer):
     logging.info("Polling for messages")
     try:
         while True:
-            # Poll for a message (wait up to 1 second)
             message = consumer.poll(timeout=1.0)
 
             # If no message, continue the loop
@@ -112,6 +111,7 @@ def poll_messages(consumer):
                     else:
                         logging.error("Failed to build the image. Reporting failure")
                         
+                        # Publish environment build failed event, this won't allow for a retry
                         producer.produce(
                             topic="environment_build_failed",
                             value=json.dumps({
@@ -122,7 +122,7 @@ def poll_messages(consumer):
                 except BuildException as e:
                     logging.error(f"Failed to build the image: {e}")
 
-                    # Report the failure
+                    # Publish environment build failed event with error message
                     producer.produce(
                         topic="environment_build_failed",
                         value=json.dumps({
@@ -133,7 +133,7 @@ def poll_messages(consumer):
                 except Exception as e:
                     logging.error(f"An unexpected error occurred: {e}")
                     
-                    # Report the failure
+                    # Public environment build failed event with error message
                     producer.produce(
                         topic="environment_build_failed",
                         value=json.dumps({
@@ -150,7 +150,6 @@ def poll_messages(consumer):
         # Gracefully exit on Ctrl+C
         pass
     finally:
-        # Close the consumer gracefully
         consumer.close()
 
 if __name__ == "__main__":

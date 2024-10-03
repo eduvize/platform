@@ -108,9 +108,6 @@ playground_image_builder:
   image: registry.crosswinds.cloud/eduvize/playground-image-builder:latest
   replicas: 1
   envSecretMap:
-    - name: OPENAI_KEY
-      secret: openai
-      key: api-key
     - name: REGISTRY
       secret: playground-image-registry
       key: host

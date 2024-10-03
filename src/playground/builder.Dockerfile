@@ -2,7 +2,6 @@ FROM docker:dind
 ENV REGISTRY=""
 ENV REGISTRY_USER=""
 ENV REGISTRY_CRED=""
-ENV OPENAI=""
 
 # Install dependencies
 RUN apk add --no-cache \

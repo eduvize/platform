@@ -115,6 +115,9 @@ def run_container(image_tag, container_name="my_playground_container"):
         
         # Set permissions to 777 for all files in /home/user
         subprocess.run(["docker", "exec", container_name, "chmod", "-R", "777", "/home/user"], check=True)
+        
+        # Delete the /app directory in the container
+        subprocess.run(["docker", "exec", container_name, "rm", "-rf", "/app"], check=True)
 
         logging.info(f"Container {container_name} is now running.")
     except subprocess.CalledProcessError as e:
