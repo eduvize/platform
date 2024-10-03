@@ -381,12 +381,34 @@ class CourseRepository:
             session.exec(update_query)
             session.commit()
             
+    def remove_exercise_setup_error(self, exercise_id: uuid.UUID) -> None:
+        with Session(engine) as session:
+            update_query = (
+                update(CourseExercise)
+                .where(CourseExercise.id == exercise_id)
+                .values(is_unavailable=False, error_details=None)
+            )
+            
+            session.exec(update_query)
+            session.commit()
+            
     def set_objective_status(self, objective_id: uuid.UUID, is_complete: bool) -> None:
         with Session(engine) as session:
             update_query = (
                 update(CourseExerciseObjective)
                 .where(CourseExerciseObjective.id == objective_id)
                 .values(is_completed=is_complete)
+            )
+            
+            session.exec(update_query)
+            session.commit()
+    
+    def increment_exercise_build_attempts(self, exercise_id: uuid.UUID) -> None:
+        with Session(engine) as session:
+            update_query = (
+                update(CourseExercise)
+                .where(CourseExercise.id == exercise_id)
+                .values(rebuild_attempts=CourseExercise.rebuild_attempts + 1)
             )
             
             session.exec(update_query)

@@ -1,5 +1,5 @@
 import logging
-from app.repositories import PlaygroundRepository
+from app.repositories import PlaygroundRepository, CourseRepository
 from common.messaging import Topic, KafkaConsumer
 from domain.topics import EnvironmentCreatedTopic
 from domain.enums.playground_enums import EnvironmentType
@@ -11,6 +11,7 @@ def listen_for_environment_created_events():
     logging.info("Listening for environment created events")
     
     playground_repo = PlaygroundRepository()
+    course_repo = CourseRepository()
 
     consumer = KafkaConsumer(
         topic=Topic.ENVIRONMENT_CREATED,
@@ -27,6 +28,9 @@ def listen_for_environment_created_events():
                 continue
             
             logging.info(f"Setting environment image tag: {data.image_tag} for environment: {data.environment_id}")
+            
+            course_repo.remove_exercise_setup_error(data.resource_id)
+            
             playground_repo.set_environment_image_tag_and_type(
                 environment_id=data.environment_id,
                 image_tag=data.image_tag,

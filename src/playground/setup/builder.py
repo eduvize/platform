@@ -3,7 +3,7 @@ import logging
 import os
 import subprocess
 import sys
-from typing import Optional
+from typing import Optional, List
 from .models import ExercisePlan, ExerciseFile
 import tempfile
 
@@ -20,42 +20,57 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(levelname)s
 def build_exercise_image(exercise: ExercisePlan) -> Optional[str]:
     # Create a temporary directory to work in
     with tempfile.TemporaryDirectory() as temp_dir:
-        # Dockerfile content based on user input
+        # Dockerfile content with OS detection in each RUN command
         dockerfile_content = f"""
-        FROM {exercise.docker_image}
-        WORKDIR /app
+FROM {exercise.docker_image}
+WORKDIR /app
 
-        # Delete user with UID 1000 if it exists
-        RUN uid_to_delete=1000 \\
-            && username_to_delete=$(getent passwd | awk -F: -v uid=$uid_to_delete '$3==uid {{print $1}}') \\
-            && if [ -n "$username_to_delete" ]; then \\
-                userdel -r $username_to_delete; \\
-            fi
+# Delete user with UID 1000 if it exists
+RUN if [ -f /etc/alpine-release ]; then \\
+        deluser --remove-home user || true; \\
+    elif [ -f /etc/debian_version ]; then \\
+        userdel -r user || true; \\
+    fi
 
-        # Delete group with GID 1000 if it exists
-        RUN gid_to_delete=1000 \\
-            && groupname_to_delete=$(getent group | awk -F: -v gid=$gid_to_delete '$3==gid {{print $1}}') \\
-            && if [ -n "$groupname_to_delete" ]; then \\
-                groupdel -f $groupname_to_delete; \\
-            fi
+# Delete group with GID 1000 if it exists
+RUN if [ -f /etc/alpine-release ]; then \\
+        delgroup user || true; \\
+    elif [ -f /etc/debian_version ]; then \\
+        groupdel -f user || true; \\
+    fi
 
-        # Create a new group and user with UID and GID 1000
-        RUN groupadd -g 1000 user \\
-            && useradd -m -s /bin/bash -d /home/user -u 1000 -g 1000 user
+# Create a new group and user with UID and GID 1000
+RUN if [ -f /etc/alpine-release ]; then \\
+        addgroup -g 1000 user && adduser -D -u 1000 -G user user; \\
+    elif [ -f /etc/debian_version ]; then \\
+        groupadd -g 1000 user && useradd -m -s /bin/bash -d /home/user -u 1000 -g user user; \\
+    else \\
+        echo "Unsupported OS"; exit 1; \\
+    fi
 
-        # Install basic packages
-        RUN apt-get update && apt-get install -y git curl wget unzip
+# Install basic packages
+RUN if [ -f /etc/alpine-release ]; then \\
+        apk update && apk add --no-cache git curl wget unzip; \\
+    elif [ -f /etc/debian_version ]; then \\
+        apt-get update && apt-get install -y git curl wget unzip && rm -rf /var/lib/apt/lists/*; \\
+    else \\
+        echo "Unsupported OS"; exit 1; \\
+    fi
 
-        WORKDIR /home/user
-        """
+WORKDIR /home/user
+"""
 
         # Install the required packages
         if exercise.system_packages:
-            dockerfile_content += create_apt_install_command(exercise.system_packages)
+            dockerfile_content += create_package_install_commands(exercise.system_packages)
         else:
             dockerfile_content += """
-    RUN apt-get update && rm -rf /var/lib/apt/lists/*
-    """
+RUN if [ -f /etc/alpine-release ]; then \\
+        apk update; \\
+    elif [ -f /etc/debian_version ]; then \\
+        apt-get update && rm -rf /var/lib/apt/lists/*; \\
+    fi
+"""
 
         # Run the prerequisite commands
         if exercise.pre_commands:
@@ -64,17 +79,18 @@ def build_exercise_image(exercise: ExercisePlan) -> Optional[str]:
         # Add files to the Dockerfile
         for f in exercise.files:
             dockerfile_content += create_file_copies(f, temp_dir)
-            
+
         # Run the post-scaffold commands
         if exercise.post_commands:
             dockerfile_content += create_setup_commands(exercise.post_commands)
 
+        # Common operations that don't depend on OS type
         dockerfile_content += """
-        RUN mkdir /userland
-        RUN cp -a /home/user/. /userland/ # Copy the user's home directory to /userland
+RUN mkdir /userland
+RUN cp -a /home/user/. /userland/ # Copy the user's home directory to /userland
 
-        CMD sleep infinity
-        """
+CMD sleep infinity
+"""
 
         logging.info("Generated Dockerfile content:")
         logging.info(dockerfile_content)
@@ -86,7 +102,7 @@ def build_exercise_image(exercise: ExercisePlan) -> Optional[str]:
         with open(dockerfile_path, "w") as f:
             f.write(dockerfile_content)
 
-        docker_logs: list[str] = []
+        docker_logs: List[str] = []
 
         # Build the Docker image
         try:
@@ -97,7 +113,7 @@ def build_exercise_image(exercise: ExercisePlan) -> Optional[str]:
                 stderr=subprocess.PIPE,
                 text=True  # To capture the output as text (not bytes)
             )
-            
+
             try:
                 # Set a timeout of 120 seconds (2 minutes) for the build process
                 stdout, stderr = docker_process.communicate(timeout=120)
@@ -110,7 +126,7 @@ def build_exercise_image(exercise: ExercisePlan) -> Optional[str]:
             if stderr:
                 logging.error(stderr.strip())
                 docker_logs.append(stderr.strip())
-                
+
             if stdout:
                 logging.info(stdout.strip())
                 docker_logs.append(stdout.strip())
@@ -150,25 +166,32 @@ def build_exercise_image(exercise: ExercisePlan) -> Optional[str]:
             logging.error(f"An unexpected error occurred: {e}\nDockerfile content:\n{dockerfile_content}")
             raise BuildException("\n".join(docker_logs))
 
-def create_apt_install_command(packages: list[str]) -> str:
+def create_package_install_commands(packages: List[str]) -> str:
     """
-    Creates a command to install the given packages using apt.
+    Creates a command to install the given packages using the appropriate package manager.
     """
     packages_str = " ".join(packages)
     return f"""
-    RUN apt-get update \\
-        && DEBIAN_FRONTEND=noninteractive apt-get install -y {packages_str} \\
-        && rm -rf /var/lib/apt/lists/*
-    """
+RUN if [ -f /etc/alpine-release ]; then \\
+        apk add --no-cache {packages_str}; \\
+    elif [ -f /etc/debian_version ]; then \\
+        apt-get install -y {packages_str} && rm -rf /var/lib/apt/lists/*; \\
+    fi
+"""
 
-def create_setup_commands(commands: list[str]) -> str:
+def create_setup_commands(commands: List[str]) -> str:
     """
     Creates a command to run the given setup commands.
     """
+    # Join commands with '&&' to ensure they run sequentially
     command_str = ' && '.join(commands)
     return f"""
-    RUN {command_str}
-    """
+RUN if [ -f /etc/alpine-release ]; then \\
+        {command_str}; \\
+    elif [ -f /etc/debian_version ]; then \\
+        {command_str}; \\
+    fi
+"""
 
 def create_file_copies(file: ExerciseFile, temp_dir: str) -> str:
     """

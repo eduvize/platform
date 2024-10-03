@@ -128,8 +128,7 @@ def poll_messages(consumer):
                         value=json.dumps({
                             "purpose": purpose,
                             "environment_id": environment_id,
-                            "error": str(e)
-                        })
+                            "error": str(e)                        })
                     )       
                 except Exception as e:
                     logging.error(f"An unexpected error occurred: {e}")

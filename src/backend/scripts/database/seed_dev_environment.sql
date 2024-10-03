@@ -188,7 +188,8 @@ CREATE TABLE IF NOT EXISTS course_exercises (
     title TEXT NOT NULL,
     summary TEXT NOT NULL,
     is_unavailable BOOLEAN NOT NULL DEFAULT FALSE,
-    error_details TEXT
+    error_details TEXT,
+    rebuild_attempts INT NOT NULL DEFAULT 0,
 );
 
 -- Create table for exercise objectives
