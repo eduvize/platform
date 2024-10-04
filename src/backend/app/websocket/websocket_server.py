@@ -5,7 +5,7 @@ from app.repositories import PlaygroundRepository
 from app.utilities.jwt import decode_token, InvalidJWTToken
 from common.cache import set_key
 from config import get_playground_token_secret
-from .connection_lifecycle import handle_instance_connection, handle_user_connection, handle_instance_disconnect, handle_user_disconnect
+from .connection_lifecycle import handle_instance_connection, handle_user_connection, handle_instance_disconnect, handle_user_disconnect, handle_instance_ready
 from .cache_keys import get_instance_ready_cache_key
 
 logging.basicConfig(level=logging.INFO)
@@ -84,12 +84,12 @@ async def ready(sid: str):
     if client_type == "instance" and session_id:
         logger.info(f"Instance {session_id} is ready")
         
-        set_key(
-            key=get_instance_ready_cache_key(session_id),
-            value="1",
+        await handle_instance_ready(
+            server=socket_server,
+            sid=sid,
+            session_id=session_id
         )
-        await socket_server.emit("instance_ready", room=session_id, skip_sid=sid)
-
+        
 @socket_server.event
 async def disconnect(sid: str):
     client_type, session_id, environment_id = await get_connection_information(sid)
@@ -235,6 +235,15 @@ async def directory_contents(sid: str, data: dict):
         logger.info(f"Sending directory contents to user for {data['path']} in session {session_id}")
         
         await socket_server.emit("directory_contents", data, room=session_id, skip_sid=sid)
+        
+@socket_server.event
+async def exercise_objective_status(sid: str, data: dict):
+    client_type, session_id, env_id = await get_connection_information(sid)
+    
+    if client_type == "instance" and session_id:
+        logger.info(f"Updating exercise objective status for {data['objective_id']} in session {session_id}")
+        
+        await socket_server.emit("exercise_objective_status", data, room=session_id, skip_sid=sid)
         
 async def get_connection_information(sid: str) -> Tuple[Literal["user", "instance", None], Optional[str], Optional[str]]:
     """

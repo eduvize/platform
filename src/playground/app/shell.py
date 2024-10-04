@@ -25,6 +25,11 @@ class Shell:
         self.client = client
         self.stop_signal = threading.Event()
         self.terminated = False
+
+    def start(self):
+        self.terminated = False
+        self.stop_signal = threading.Event()
+        
         self.directory_monitor = DirectoryMonitor(
             directory="/userland", 
             callback=lambda dir_path: 
@@ -33,10 +38,6 @@ class Shell:
                     "entries": get_top_level_filesystem_entries(dir_path)
                 }) if not self.terminated else None
         )
-
-    def start(self):
-        self.terminated = False
-        self.stop_signal = threading.Event()
         
         logger.info("Starting directory monitor")
         self.directory_monitor.start_watching()
@@ -54,12 +55,9 @@ class Shell:
                         self.client.emit('terminal_output', output)
 
         pid, fd = pty.fork()
-        if pid == 0:  # Child process
-            os.environ['TERM'] = 'xterm-256color'
-            os.environ['HOME'] = '/home/user'
-            # Execute the docker exec command to run bash in the container as "user"
-            os.execvp('docker', ['docker', 'exec', '-i', '-t', 'my_playground_container', 'su', 'user', '-c', 'bash'])
-        else:  # Parent process
+        if pid == 0:
+            os.execvp('docker', ['docker', 'exec', '-i', '--env', 'TERM=xterm-256color', '--env', 'HOME=/home/user', '--env', 'PS1=user@eduvize:\\w\\$ ', 'my_playground_container', 'su', 'user', '-c', 'bash'])
+        else:
             self.process_pid = pid  # Store the child PID for later termination
             self.master_fd = fd
             self.output_thread = threading.Thread(target=read, args=(fd,))

@@ -39,7 +39,7 @@ spec:
             {{- end}}
           volumeMounts:
             - name: "{{ include "eduvize.fullname" . }}-s3-volume"
-              mountPath: /data
+              mountPath: /bitnami/minio/data
       volumes:
         - name: "{{ include "eduvize.fullname" . }}-s3-volume"
           persistentVolumeClaim:

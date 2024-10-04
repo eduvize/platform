@@ -26,7 +26,7 @@ COPY requirements.txt .
 # Install the requirements
 RUN pip3 install -r requirements.txt
 
-WORKDIR /controller
+WORKDIR /app
 COPY app .
 
 WORKDIR /

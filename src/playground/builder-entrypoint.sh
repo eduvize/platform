@@ -1,6 +1,13 @@
 #!/bin/sh
 
 echo "Starting Docker daemon..."
+
+# Check if /var/run/docker.pid exists
+if [ -f /var/run/docker.pid ]; then
+    echo "Removing stale Docker PID file..."
+    rm /var/run/docker.pid
+fi
+
 dockerd &
 until docker info >/dev/null 2>&1; do
     echo "Waiting for dockerd to start..."

@@ -15,6 +15,6 @@ unset REGISTRY_CRED
 unset REGISTRY_USER
 unset REGISTRY
 
-echo "Running controller.run..."
+echo "Running playground controller..."
 cd /
-python -m controller.run
+python -m app.run

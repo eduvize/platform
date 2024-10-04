@@ -3,30 +3,28 @@ import json
 import logging
 import os
 from confluent_kafka import Consumer, KafkaError, Producer
-from .builder import build_image
+from .builder import build_exercise_image, BuildException
+from .models import ExercisePlan
 
 logging.basicConfig(level=logging.INFO)
 
 # Configuration for the consumer
 consumer_config = {
     'bootstrap.servers': os.getenv("KAFKA_BOOTSTRAP_SERVERS"),
-    'max.poll.interval.ms': 1800000,
+    'max.poll.interval.ms': 180000, # 3 minutes
     'group.id': 'playground-builder',
     'auto.offset.reset': 'earliest',
-    'enable.auto.commit': False  # Disable auto commit
+    'enable.auto.commit': False
 }
 
 producer_config = {
     'bootstrap.servers': os.getenv("KAFKA_BOOTSTRAP_SERVERS"),
 }
 
-# Create a Kafka consumer
 consumer = Consumer(consumer_config)
-
-# Create a Kafka producer
 producer = Producer(producer_config)
 
-# Retry delay in seconds (you can configure this as needed)
+# Retry delay in seconds
 RETRY_DELAY = 10
 
 def subscribe_to_topic(consumer):
@@ -51,7 +49,6 @@ def poll_messages(consumer):
     logging.info("Polling for messages")
     try:
         while True:
-            # Poll for a message (wait up to 1 second)
             message = consumer.poll(timeout=1.0)
 
             # If no message, continue the loop
@@ -79,55 +76,80 @@ def poll_messages(consumer):
                 # Load the message as json
                 data = json.loads(message.value().decode("utf-8"))
 
-                purpose = data.get("purpose", None)
-                resource_id = data.get("resource_id", None)
-                base_image = data.get("base_image", None)
-                description = data.get("description", None)
+                purpose = data.get("purpose", None) # The purpose of the environment (i.e exercise)
+                environment_id = data.get("environment_id", None) # The ID of the environment this image is for
+                resource_id = data.get("resource_id", None) # The ID of the resource this environment is associated to (i.e exercise)
+                exercise_plan: dict = data.get("data", None) # The exercise plan data
 
-                if not base_image:
-                    logging.error("base_image not provided in the message.")
-                    continue
-
-                if not description:
-                    logging.error("description not provided in the message.")
+                try:
+                    exercise_plan: ExercisePlan = ExercisePlan.model_validate(exercise_plan)
+                except Exception as e:
+                    logging.error(f"Invalid exercise plan data: {e}")
+                    
+                    # Commit the offset
+                    consumer.commit(message=message)
+                    
                     continue
 
                 # Build the image
-                tag = build_image(
-                    openai_key=os.getenv("OPENAI_KEY"),
-                    base_image=base_image,
-                    description=description
-                )
-                
-                if tag:
-                    # Publish environment created event
-                    producer.produce(
-                        topic="environment_created",
-                        value=json.dumps({
-                            "purpose": purpose,
-                            "resource_id": resource_id,
-                            "image_tag": tag
-                        })
+                try:
+                    tag = build_exercise_image(
+                        exercise=exercise_plan,
                     )
-                else:
-                    logging.error("Failed to build the image. Reporting failure")
                     
+                    if tag:
+                        # Publish environment created event
+                        producer.produce(
+                            topic="environment_created",
+                            value=json.dumps({
+                                "purpose": purpose,
+                                "environment_id": environment_id,
+                                "resource_id": resource_id,
+                                "image_tag": tag
+                            })
+                        )
+                    else:
+                        logging.error("Failed to build the image. Reporting failure")
+                        
+                        # Publish environment build failed event, this won't allow for a retry
+                        producer.produce(
+                            topic="environment_build_failed",
+                            value=json.dumps({
+                                "purpose": purpose,
+                                "environment_id": environment_id
+                            })   
+                        )
+                except BuildException as e:
+                    logging.error(f"Failed to build the image: {e}")
+
+                    # Publish environment build failed event with error message
                     producer.produce(
                         topic="environment_build_failed",
                         value=json.dumps({
                             "purpose": purpose,
-                            "resource_id": resource_id
-                        })   
-                    )
+                            "environment_id": environment_id,
+                            "error": str(e)                        })
+                    )       
+                except Exception as e:
+                    logging.error(f"An unexpected error occurred: {e}")
                     
-                # Commit the offset
-                consumer.commit(message=message)
+                    # Public environment build failed event with error message
+                    producer.produce(
+                        topic="environment_build_failed",
+                        value=json.dumps({
+                            "purpose": purpose,
+                            "environment_id": environment_id,
+                            "error": str(e)
+                        })
+                    )
+                finally:             
+                    # Commit the offset
+                    consumer.commit(message=message)
 
     except KeyboardInterrupt:
         # Gracefully exit on Ctrl+C
         pass
     finally:
-        # Close the consumer gracefully
         consumer.close()
 
 if __name__ == "__main__":

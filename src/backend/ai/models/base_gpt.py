@@ -176,6 +176,7 @@ class BaseGPT(BaseModel):
             if len(tool_call_dict) > 0:
                 for record in tool_call_dict:
                     logging.info(f"Processing tool: {record.name}")
+                    logging.info(record.arguments)
 
                     # Try to load the JSON - if it fails, return an error to the model for correction
                     try:
@@ -317,6 +318,8 @@ Correct the errors in tool arguments and try again.
                     content=message.message
                 )
             ]
+        else:
+            raise ValueError(f"Unknown message role: {message.role}")
         
     def get_tool(self, tool: BaseTool) -> dict:
         return ChatCompletionToolParam(

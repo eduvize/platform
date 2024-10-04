@@ -1,4 +1,4 @@
-import { usePlaygroundFilesystem } from "@context/playground/hooks";
+import { usePlaygroundFilesystem, useReadme } from "@context/playground/hooks";
 import { Group, Tabs, Tooltip, Text, ActionIcon } from "@mantine/core";
 import Markdown from "react-markdown";
 import { FileEditor } from "./FileEditor";
@@ -7,22 +7,50 @@ import { IconX } from "@tabler/icons-react";
 import { useResizeObserver } from "@mantine/hooks";
 
 interface OpenFilesProps {
-    height: string;
+    height: number;
     selectedFile?: string | null;
 }
+
+const FileTab = ({
+    path,
+    onClose,
+}: {
+    path: string;
+    onClose: (path: string) => void;
+}) => {
+    const fileName = path.split("/").pop();
+
+    return (
+        <Tabs.Tab value={path} p="xs">
+            <Group align="center" gap="xs">
+                <Tooltip label={path} position="bottom">
+                    <Text size="sm">{fileName}</Text>
+                </Tooltip>
+                <ActionIcon
+                    size={12}
+                    variant="transparent"
+                    c="gray"
+                    pt={1}
+                    onClick={() => onClose(path)}
+                >
+                    <IconX />
+                </ActionIcon>
+            </Group>
+        </Tabs.Tab>
+    );
+};
 
 export const OpenFiles = ({
     height,
     selectedFile: overridePath,
 }: OpenFilesProps) => {
     const openedRef = useRef<string[]>([]);
-    const tabListRef = useRef<HTMLDivElement>(null);
-    const [tabContainerRef, tabContainerRect] = useResizeObserver();
+    const [tabListRef, tabListRect] = useResizeObserver();
+    const readme = useReadme();
     const { openFiles, closeFile, entries } = usePlaygroundFilesystem();
     const [selectedFile, setSelectedFile] = useState<string | null>(
         overridePath || null
     );
-    const [editorHeight, setEditorHeight] = useState<number | null>(null);
 
     const doesPathExist = (path: string) => {
         const parts = path.split("/");
@@ -42,15 +70,6 @@ export const OpenFiles = ({
 
         return current.some((entry) => entry.name === parts[parts.length - 1]);
     };
-
-    useEffect(() => {
-        setEditorHeight(
-            tabContainerRect?.height
-                ? tabContainerRect.height -
-                      (tabListRef.current?.clientHeight || 0)
-                : null
-        );
-    }, [tabContainerRect]);
 
     useEffect(() => {
         setSelectedFile(overridePath || "__welcome__");
@@ -88,60 +107,45 @@ export const OpenFiles = ({
         }
     }, [openFiles, selectedFile]);
 
-    const FileTab = ({ path }: { path: string }) => {
-        const fileName = path.split("/").pop();
-
-        return (
-            <Tabs.Tab value={path}>
-                <Group align="center" gap="xs">
-                    <Tooltip label={path} position="bottom">
-                        <Text>{fileName}</Text>
-                    </Tooltip>
-                    <ActionIcon
-                        size={12}
-                        variant="transparent"
-                        c="gray"
-                        pt={1}
-                        onClick={() => closeFile(path)}
-                    >
-                        <IconX />
-                    </ActionIcon>
-                </Group>
-            </Tabs.Tab>
-        );
-    };
-
     return (
         <Tabs
             value={selectedFile || "__welcome__"}
             w="100%"
             h="100%"
             onChange={setSelectedFile}
-            ref={tabContainerRef}
         >
             <Tabs.List ref={tabListRef}>
-                <Tabs.Tab value="__welcome__">
-                    <Text>README</Text>
+                <Tabs.Tab value="__welcome__" p="xs">
+                    <Text size="sm">README</Text>
                 </Tabs.Tab>
                 {openFiles.map((path) => (
-                    <FileTab key={path} path={path} />
+                    <FileTab key={path} path={path} onClose={closeFile} />
                 ))}
             </Tabs.List>
 
             <Tabs.Panel value="__welcome__">
-                <Markdown>
-                    {`
+                {readme || (
+                    <Markdown>
+                        {`
 ## Welcome to the Playground
 You can create new files and directories using the file explorer on the left, or by using the command line.
 
 In the future, this tab will be replaced with a description of what you'd be working on and the tools provided to you.
 `}
-                </Markdown>
+                    </Markdown>
+                )}
             </Tabs.Panel>
 
             {openFiles.map((path) => (
-                <Tabs.Panel key={path} value={path}>
-                    <FileEditor path={path} height={`${editorHeight}px`} />
+                <Tabs.Panel
+                    key={path}
+                    value={path}
+                    mah={`${height - tabListRect.height}px`}
+                >
+                    <FileEditor
+                        path={path}
+                        height={height - tabListRect.height}
+                    />
                 </Tabs.Panel>
             ))}
         </Tabs>

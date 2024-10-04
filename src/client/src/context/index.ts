@@ -3,3 +3,4 @@ export * from "./auth";
 export * from "./user";
 export * from "./chat";
 export * from "./playground";
+export * from "./exercise";

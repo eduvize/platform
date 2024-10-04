@@ -82,7 +82,7 @@ class ChatService:
 
         response_generator = self.get_prompt_generator(
             session=session,
-            input=message
+            input_msg=message
         )
         
         # Iterate until complete, then save messages to the database
@@ -166,7 +166,7 @@ class ChatService:
     def get_prompt_generator(
         self,
         session: ChatSession,
-        input: str
+        input_msg: str
     ) -> Generator[CompletionChunk, None, List[BaseChatMessage]]:
         p_type = PromptType(session.prompt_type)
         
@@ -182,7 +182,7 @@ class ChatService:
             prompt = LessonDiscussionPrompt()
             return prompt.get_responses(
                 history=model_messages,
-                message=input,
+                new_message=input_msg,
                 lesson_content="\n\n".join(
                     [
                         f"{section.title}\n{section.content}" 

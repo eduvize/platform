@@ -1,3 +1,6 @@
+import uuid
+from domain.enums.playground_enums import EnvironmentType
+
 def get_liveness_cache_key(session_id: str) -> str:
     """
     Generates a cache key for the liveness status of a session instance.
@@ -45,3 +48,16 @@ def get_image_tag_cache_key(environment_id: str) -> str:
         str: The cache key.
     """
     return f"playground_environment:{environment_id}:image_tag"
+
+
+def get_environment_id_cache_key(session_id: str) -> str:
+    """
+    Generates a cache key for the environment ID of a session instance.
+
+    Args:
+        session_id (str): The ID of the session to generate the key for.
+
+    Returns:
+        str: The cache key.
+    """
+    return f"playground_session:{session_id}:environment_id"

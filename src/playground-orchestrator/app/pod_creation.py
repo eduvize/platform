@@ -65,6 +65,7 @@ def create_new_pod(session_id: str, image_tag: str, environment_id: str):
                         privileged=True
                     ),
                     env=[
+                        build_secret_var("OPENAI_KEY", "openai", "api-key"),
                         build_secret_var("REGISTRY", "playground-image-registry", "host"),
                         build_secret_var("REGISTRY_USER", "playground-image-registry", "user"),
                         build_secret_var("REGISTRY_CRED", "playground-image-registry", "password"),

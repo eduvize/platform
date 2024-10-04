@@ -12,7 +12,6 @@ class CourseBase(SQLModel):
     is_generating: bool                     = Field(default=True, nullable=False)
     generation_progress: int                = Field(default=0, nullable=False)
     current_lesson_id: Optional[uuid.UUID]  = Field(default=None, nullable=True)
-    lesson_index: int                       = Field(default=0, nullable=False)
     completed_at_utc: Optional[datetime]    = Field(default=None, nullable=True)
     
 class Course(CourseBase, table=True):

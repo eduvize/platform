@@ -17,40 +17,22 @@ import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "./Playground.css";
 import { FileExplorer, OpenFiles } from "@molecules";
-import { useResizeObserver } from "@mantine/hooks";
 
 interface PlaygroundProps {
     hideTerminal?: boolean;
-    height?: number | string;
+    height: number;
 }
 
 export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
     const viewport = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<Terminal | null>(null);
-    const [stackRef, rect] = useResizeObserver();
     const fitAddonRef = useRef<FitAddon>(new FitAddon());
     const { connected, state, status, reconnecting } =
         usePlaygroundConnectivity();
     const { sendInput, resize, subscribe, unsubscribe } = useCommandLine();
     const [showTerminal, setShowTerminal] = useState(!hideTerminal);
     const [focusedFile, setFocusedFile] = useState<string | null>(null);
-    const [editorHeight, setEditorHeight] = useState<number | null>(null);
     const [terminalHeight, setTerminalHeight] = useState<number>(130);
-
-    const heightProperty =
-        typeof height === "number"
-            ? `${height}px`
-            : typeof height === "string"
-            ? height
-            : "400px";
-
-    useEffect(() => {
-        if (rect) {
-            const { width, height } = rect;
-
-            setEditorHeight(height - terminalHeight);
-        }
-    }, [rect]);
 
     useEffect(() => {
         if (hideTerminal) {
@@ -119,7 +101,7 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
 
     if (!connected || state !== "ready" || reconnecting) {
         return (
-            <Card withBorder mih={heightProperty}>
+            <Card withBorder mih={`${height}px`}>
                 <Center pos="absolute" left="0" top="0" w="100%" h="100%">
                     <Stack align="center">
                         <Loader type="bars" size="lg" />
@@ -129,12 +111,11 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
 
                             {!reconnecting && (
                                 <>
-                                    {!connected &&
-                                        "Connecting to playground..."}
+                                    {!connected && "Connecting to sandbox..."}
                                     {connected &&
                                         state === "initializing" &&
                                         !status &&
-                                        "Initializing playground session..."}
+                                        "Waiting for environment..."}
                                     {connected &&
                                         state === "initializing" &&
                                         status !== null &&
@@ -149,48 +130,48 @@ export const Playground = ({ hideTerminal, height }: PlaygroundProps) => {
     }
 
     return (
-        <Card withBorder p={0}>
-            <Grid>
-                <Grid.Col span={12}>
-                    <Group
-                        gap="xs"
-                        h={heightProperty}
-                        wrap="nowrap"
-                        align="flex-start"
-                    >
-                        <Box bg="dark" h="100%">
-                            <FileExplorer
-                                w="200px"
-                                onSelect={(type, path) => {
-                                    if (type === "file") {
-                                        setFocusedFile(path);
-                                    }
+        <Grid>
+            <Grid.Col span={12}>
+                <Group
+                    gap="xs"
+                    h={`${height}px`}
+                    wrap="nowrap"
+                    align="flex-start"
+                >
+                    <Box bg="dark" h="100%">
+                        <FileExplorer
+                            w="200px"
+                            onSelect={(type, path) => {
+                                if (type === "file") {
+                                    setFocusedFile(path);
+                                }
+                            }}
+                        />
+                    </Box>
+
+                    <Stack w="100%" h="100%" gap={0}>
+                        <OpenFiles
+                            selectedFile={focusedFile}
+                            height={
+                                height - (showTerminal ? terminalHeight : 0)
+                            }
+                        />
+
+                        {showTerminal && (
+                            <div
+                                ref={viewport}
+                                style={{
+                                    height: `${terminalHeight}px`,
+                                    width: "100%",
+                                    borderTop:
+                                        "1px solid var(--mantine-color-gray-7)",
+                                    padding: "4px",
                                 }}
                             />
-                        </Box>
-
-                        <Stack w="100%" h="100%" ref={stackRef} gap={0}>
-                            <OpenFiles
-                                selectedFile={focusedFile}
-                                height={`${editorHeight}px`}
-                            />
-
-                            {showTerminal && (
-                                <div
-                                    ref={viewport}
-                                    style={{
-                                        height: `${terminalHeight}px`,
-                                        width: "100%",
-                                        borderTop:
-                                            "1px solid var(--mantine-color-gray-7)",
-                                        padding: "4px",
-                                    }}
-                                />
-                            )}
-                        </Stack>
-                    </Group>
-                </Grid.Col>
-            </Grid>
-        </Card>
+                        )}
+                    </Stack>
+                </Group>
+            </Grid.Col>
+        </Grid>
     );
 };

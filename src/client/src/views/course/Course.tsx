@@ -3,21 +3,11 @@ import { CourseProvider } from "@context/course";
 import { Space } from "@mantine/core";
 import { useCourse } from "@context/course/hooks";
 import { useDocumentTitle } from "@mantine/hooks";
-import { Lesson, CourseOverview } from "@organisms";
-import { ChatProvider } from "@context/chat";
+import { CourseOverview } from "@organisms";
 
 const Component = () => {
-    const params = useParams();
     const { course } = useCourse();
     useDocumentTitle(`${course.title} | Eduvize`);
-
-    if (params.lesson_id)
-        return (
-            <Lesson
-                courseId={params.course_id as string}
-                lessonId={params.lesson_id}
-            />
-        );
 
     return <CourseOverview />;
 };

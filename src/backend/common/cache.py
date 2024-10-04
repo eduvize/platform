@@ -62,8 +62,9 @@ def get_key(key: str) -> Optional[str]:
     """
     
     client = _get_client()
+    value = client.get(key)
     
-    return client.get(key)
+    return value.decode('utf-8') if value else None
 
 def add_to_set(
     key: str, 

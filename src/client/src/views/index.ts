@@ -6,3 +6,4 @@ export * from "./home";
 export * from "./router";
 export * from "./course";
 export * from "./playground-test";
+export * from "./lesson";

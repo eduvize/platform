@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { ChatMessage, PendingTool } from "@molecules";
 import { useChat, usePendingTools, useToolResults } from "@context/chat/hooks";
-import { Box, Input, ScrollArea, Stack } from "@mantine/core";
+import { Box, Flex, Input, ScrollArea, Stack } from "@mantine/core";
 
 interface ChatProps {
-    height: string;
+    maxHeight?: number | string;
     greetingMessage?: string;
     toolDescriptionMap?: Record<string, string>;
     onTool?: (name: string, data: any) => void;
@@ -17,7 +17,7 @@ interface ChatProps {
  * a user-friendly description of the tool being processed, and onTool is used to handle the results of tools.
  */
 export const Chat = ({
-    height,
+    maxHeight,
     greetingMessage,
     toolDescriptionMap,
     onTool,
@@ -60,11 +60,14 @@ export const Chat = ({
     }, [toolResults]);
 
     return (
-        <Stack gap={0}>
+        <Flex direction="column" w="100%">
             <ScrollArea.Autosize
+                display="flex"
+                flex="1 0 auto"
+                h={maxHeight}
                 viewportRef={viewport}
-                h={height}
-                p="lg"
+                pr={0}
+                pt="xl"
                 scrollbars="y"
                 onScroll={() => {
                     isAtBottomRef.current =
@@ -78,8 +81,8 @@ export const Chat = ({
             >
                 <Stack
                     gap="md"
-                    m="md"
                     pb={pendingToolNames.length ? "xl" : undefined}
+                    pr="sm"
                 >
                     {messages.map((message) => (
                         <ChatMessage {...message} />
@@ -115,6 +118,6 @@ export const Chat = ({
                 }}
                 disabled={processing}
             />
-        </Stack>
+        </Flex>
     );
 };

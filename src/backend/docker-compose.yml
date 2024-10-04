@@ -128,7 +128,7 @@ services:
       - MINIO_DEFAULT_BUCKETS=eduvize:public
       - MINIO_REGION=us-east-1
     volumes:
-      - s3_data:/data
+      - s3_data:/bitnami/minio/data
     networks:
       - eduvize
 

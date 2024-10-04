@@ -53,6 +53,20 @@ export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
         }
     }, [openFiles.length]);
 
+    useEffect(() => {
+        let timeout: any = -1;
+
+        if (entries.length === 0) {
+            timeout = setTimeout(() => {
+                expandPath("/");
+            }, 1000);
+        }
+
+        return () => {
+            clearTimeout(timeout);
+        };
+    }, [entries.length]);
+
     const handleAddFile = (dir: string) => {
         if (!tree.expandedState[dir]) {
             tree.expand(dir);
@@ -272,6 +286,7 @@ export const FileExplorer = ({ w, onSelect }: FileExplorerProps) => {
                 data={data}
                 selectOnClick
                 expandOnClick
+                pl="sm"
                 renderNode={({ node, expanded, elementProps }) =>
                     node.label === "__new__" ? (
                         <Input

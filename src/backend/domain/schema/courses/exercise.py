@@ -4,7 +4,10 @@ from sqlmodel import SQLModel, Field, Relationship
 import domain.schema as schema
 
 class CourseExerciseObjectiveBase(SQLModel):
-    objective: str = Field(nullable=False)
+    objective: str      = Field(nullable=False)
+    description: str    = Field(nullable=False)
+    test_plan: str      = Field(nullable=False)
+    is_completed: bool  = Field(default=False)
     
 class CourseExerciseObjective(CourseExerciseObjectiveBase, table=True):
     __tablename__ = "course_exercise_objectives"
@@ -24,5 +27,8 @@ class CourseExercise(CourseExerciseBase, table=True):
     id: uuid.UUID                           = Field(default_factory=uuid.uuid4, primary_key=True)
     lesson_id: uuid.UUID                    = Field(foreign_key="course_lessons.id")
     environment_id: uuid.UUID               = Field(foreign_key="playground_environments.id")
+    is_unavailable: bool                    = Field(default=False)
+    error_details: Optional[str]            = Field(default=None, nullable=True)
+    rebuild_attempts: int                   = Field(default=0)
     lesson: "schema.courses.lesson.Lesson"  = Relationship(back_populates="exercises")
     objectives: List[CourseExerciseObjective] = Relationship(back_populates="exercise")

@@ -3,6 +3,7 @@ import uuid
 from sqlmodel import Session, select
 from domain.schema.playground import PlaygroundSession, PlaygroundEnvironment
 from common.database import engine
+from domain.enums.playground_enums import EnvironmentType
 
 class PlaygroundRepository:
     async def create_playground_session(self, environment_id: uuid.UUID, hostname_override: Optional[str]) -> uuid.UUID:
@@ -21,7 +22,7 @@ class PlaygroundRepository:
         self,
         user_id: uuid.UUID,
         docker_base_image: str,
-        description: str,
+        description: str
     ) -> uuid.UUID:
         with Session(engine) as session:
             environment = PlaygroundEnvironment(
@@ -44,10 +45,12 @@ class PlaygroundRepository:
             environment = session.get(PlaygroundEnvironment, environment_id)
             return environment
         
-    def set_environment_image_tag(
+    def set_environment_image_tag_and_type(
         self,
         environment_id: uuid.UUID,
         image_tag: str,
+        env_type: EnvironmentType,
+        resource_id: uuid.UUID,
     ):
         with Session(engine) as session:
             environment = session.get(PlaygroundEnvironment, environment_id)
@@ -56,6 +59,8 @@ class PlaygroundRepository:
                 raise ValueError("Environment not found")
             
             environment.image_tag = image_tag
+            environment.type = env_type
+            environment.resource_id = resource_id
             session.commit()
             
     def remove_environment(self, environment_id: uuid.UUID):

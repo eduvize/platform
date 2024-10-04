@@ -4,9 +4,10 @@ import uuid
 
 from sqlalchemy import update
 from sqlmodel import Session, select
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, with_loader_criteria
 from domain.schema.courses import Course, Module, Lesson, Section, CourseExercise, CourseExerciseObjective
 from domain.dto.courses.course import CourseDto
+from domain.dto.courses.exercise_plan import ExerciseObjectivePlan
 from common.database import engine
 
 class CourseRepository:
@@ -117,14 +118,13 @@ class CourseRepository:
     def set_current_lesson(
         self,
         course_id: uuid.UUID,
-        lesson_id: uuid.UUID,
-        section_index: int
+        lesson_id: uuid.UUID
     ) -> None:
         with Session(engine) as session:
             update_query = (
                 update(Course)
                 .where(Course.id == course_id)
-                .values(current_lesson_id=lesson_id, lesson_index=section_index)
+                .values(current_lesson_id=lesson_id)
             )
             
             session.exec(update_query)
@@ -228,6 +228,8 @@ class CourseRepository:
             return len(lessons)
         
     def get_lesson(self, lesson_id: uuid.UUID) -> Optional[Lesson]:
+        from sqlalchemy.orm import with_loader_criteria
+
         with Session(engine) as session:
             query = (
                 select(Lesson)
@@ -235,16 +237,21 @@ class CourseRepository:
                 .options(
                     joinedload(Lesson.sections),
                     joinedload(Lesson.exercises)
-                    .joinedload(CourseExercise.objectives)
+                    .joinedload(CourseExercise.objectives),
+                    with_loader_criteria(
+                        CourseExercise, CourseExercise.is_unavailable == False
+                    ),
                 )
             )
-            
-            resultset = session.exec(query)
-            lesson = resultset.first()
-            
+
+            result = session.exec(query)
+            lesson = result.first()
+
             return lesson
         
     def get_course(self, course_id: uuid.UUID) -> Optional[Course]:
+        from sqlalchemy.orm import with_loader_criteria
+
         with Session(engine) as session:
             query = (
                 select(Course)
@@ -257,23 +264,44 @@ class CourseRepository:
                     .joinedload(Module.lessons)
                     .joinedload(Lesson.exercises)
                     .joinedload(CourseExercise.objectives),
+                    with_loader_criteria(
+                        CourseExercise, CourseExercise.is_unavailable == False
+                    ),
                 )
             )
-            
-            resultset = session.exec(query)
-            course = resultset.first()
-            
+
+            result = session.exec(query)
+            course = result.first()
+
             if course is None:
                 return None
-            
+
             # Order by module, lesson, section "order" field
             course.modules.sort(key=lambda x: x.order)
             for module in course.modules:
                 module.lessons.sort(key=lambda x: x.order)
                 for lesson in module.lessons:
                     lesson.sections.sort(key=lambda x: x.order)
-                    
+
             return course
+        
+    def get_exercise(
+        self,
+        exercise_id: uuid.UUID
+    ) -> Optional[CourseExercise]:
+        with Session(engine) as session:
+            query = (
+                select(CourseExercise)
+                .where(CourseExercise.id == exercise_id)
+                .options(
+                    joinedload(CourseExercise.objectives)
+                )
+            )
+            
+            resultset = session.exec(query)
+            exercise = resultset.first()
+            
+            return exercise
         
     def create_exercise(
         self,
@@ -281,7 +309,7 @@ class CourseRepository:
         environment_id: uuid.UUID, 
         title: str, 
         summary: str, 
-        objectives: list[str]
+        objectives: list[ExerciseObjectivePlan]
     ) -> uuid.UUID:
         with Session(engine) as session:
             exercise_entity = CourseExercise(
@@ -295,7 +323,10 @@ class CourseRepository:
             
             for objective in objectives:
                 objective_entity = CourseExerciseObjective(
-                    objective=objective,
+                    objective=objective.objective,
+                    description=objective.description,
+                    test_plan=objective.test_plan,
+                    is_completed=False,
                     exercise_id=exercise_entity.id
                 )
                 
@@ -332,7 +363,7 @@ class CourseRepository:
             
             return exercise
             
-    def remove_exercise(self, exercise_id: uuid.UUID) -> None:
+    def set_exercise_setup_error(self, exercise_id: uuid.UUID, detail: Optional[str] = None) -> None:
         """
         Removes an exercise and its objectives from the database
 
@@ -341,16 +372,44 @@ class CourseRepository:
         """
         
         with Session(engine) as session:
-            query = (
-                select(CourseExercise)
+            update_query = (
+                update(CourseExercise)
                 .where(CourseExercise.id == exercise_id)
+                .values(is_unavailable=True, error_details=detail)
             )
             
-            resultset = session.exec(query)
-            exercise = resultset.first()
+            session.exec(update_query)
+            session.commit()
             
-            if exercise is None:
-                raise ValueError("Exercise not found")
+    def remove_exercise_setup_error(self, exercise_id: uuid.UUID) -> None:
+        with Session(engine) as session:
+            update_query = (
+                update(CourseExercise)
+                .where(CourseExercise.id == exercise_id)
+                .values(is_unavailable=False, error_details=None)
+            )
             
-            session.delete(exercise)
+            session.exec(update_query)
+            session.commit()
+            
+    def set_objective_status(self, objective_id: uuid.UUID, is_complete: bool) -> None:
+        with Session(engine) as session:
+            update_query = (
+                update(CourseExerciseObjective)
+                .where(CourseExerciseObjective.id == objective_id)
+                .values(is_completed=is_complete)
+            )
+            
+            session.exec(update_query)
+            session.commit()
+    
+    def increment_exercise_build_attempts(self, exercise_id: uuid.UUID) -> None:
+        with Session(engine) as session:
+            update_query = (
+                update(CourseExercise)
+                .where(CourseExercise.id == exercise_id)
+                .values(rebuild_attempts=CourseExercise.rebuild_attempts + 1)
+            )
+            
+            session.exec(update_query)
             session.commit()

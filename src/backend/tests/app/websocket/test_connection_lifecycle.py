@@ -231,7 +231,7 @@ async def test_handle_instance_connection_baseline(
     assert mock_server.emit.call_count == 1
     
     # Assert the liveness cache key was set
-    mock_set_key.assert_any_call(key=get_liveness_cache_key("test_session_id"), value=ANY, expiration=ANY)
+    mock_set_key.assert_any_call(key=get_liveness_cache_key("test_session_id"), value=ANY)
 
 @pytest.mark.asyncio
 @patch("app.websocket.connection_lifecycle.get_key")
@@ -283,7 +283,7 @@ async def test_handle_instance_connection_with_active_user(
     assert mock_server.emit.call_count == 2
     
     # Assert the liveness cache key was set
-    mock_set_key.assert_any_call(key=get_liveness_cache_key("test_session_id"), value=ANY, expiration=ANY)
+    mock_set_key.assert_any_call(key=get_liveness_cache_key("test_session_id"), value=ANY)
 
 @pytest.mark.asyncio
 @patch("app.websocket.connection_lifecycle.delete_key")

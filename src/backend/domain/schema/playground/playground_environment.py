@@ -1,12 +1,15 @@
+import uuid
 from datetime import datetime
 from typing import Optional
-import uuid
-from sqlmodel import SQLModel, Field, Relationship, ForeignKey
+from sqlmodel import SQLModel, Field
+from domain.enums.playground_enums import EnvironmentType
 
 class PlaygroundEnvironmentBase(SQLModel):
-    image_tag: Optional[str]    = Field(nullable=True)
-    docker_base_image: str      = Field(nullable=False)
-    description: str            = Field(nullable=False)
+    image_tag: Optional[str]            = Field(nullable=True)
+    docker_base_image: str              = Field(nullable=False)
+    description: str                    = Field(nullable=False)
+    type: Optional[EnvironmentType]     = Field(nullable=True)
+    resource_id: Optional[uuid.UUID]    = Field(nullable=True)
 
 class PlaygroundEnvironment(PlaygroundEnvironmentBase, table=True):
     __tablename__ = "playground_environments"

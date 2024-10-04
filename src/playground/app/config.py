@@ -30,3 +30,6 @@ def get_environment_id() -> Optional[str]:
 
 def get_image_tag() -> Optional[str]:
     return os.getenv("IMAGE_TAG", None)
+
+def get_openai_key() -> str:
+    return os.getenv("OPENAI_KEY")

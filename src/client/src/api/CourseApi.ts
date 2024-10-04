@@ -16,8 +16,11 @@ class CourseApi extends BaseApi {
         return this.post("generate", plan);
     }
 
-    markSectionCompleted(courseId: string): Promise<CourseProgressionDto> {
-        return this.post(`${courseId}/section-complete`, {});
+    markLessonComplete(
+        courseId: string,
+        lessonId: string
+    ): Promise<CourseProgressionDto> {
+        return this.post(`${courseId}/lesson/${lessonId}/complete`, {});
     }
 
     getCourses(): Promise<CourseListingDto[]> {

@@ -97,14 +97,27 @@ def run_container(image_tag, container_name="my_playground_container"):
         # Build a list of --env arguments for each environment variable
         env_args = [f"--env={key}={value}" for key, value in env.items() if value is not None]
 
-        # Make /userland 777
-        subprocess.run(["chmod", "777", "/userland"], check=True)
-
         # Run the container with the specified environment variables
         subprocess.run(
             ["docker", "run", "--name", container_name, "--rm", "-d", "-v", "/userland:/home/user", *env_args, image_tag],
             check=True
         )
+        
+        # Make /userland 777
+        subprocess.run(["chmod", "777", "-R", "/userland"], check=True)
+        
+        # Run docker command to copy /userland files to /home/user, then delete the temporary /userland directory
+        subprocess.run(["docker", "exec", container_name, "cp", "-a", "/userland/.", "/home/user"], check=True)
+        subprocess.run(["docker", "exec", container_name, "rm", "-rf", "/userland"], check=True)
+        
+        # Make all files in /home/user owned by user
+        subprocess.run(["docker", "exec", container_name, "chown", "-R", "user:user", "/home/user"], check=True)
+        
+        # Set permissions to 777 for all files in /home/user
+        subprocess.run(["docker", "exec", container_name, "chmod", "-R", "777", "/home/user"], check=True)
+        
+        # Delete the /app directory in the container
+        subprocess.run(["docker", "exec", container_name, "rm", "-rf", "/app"], check=True)
 
         logging.info(f"Container {container_name} is now running.")
     except subprocess.CalledProcessError as e:

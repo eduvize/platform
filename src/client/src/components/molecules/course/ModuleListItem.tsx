@@ -9,6 +9,7 @@ import {
     Stack,
     Tooltip,
     Text,
+    Space,
 } from "@mantine/core";
 import { LessonDto, ModuleDto } from "@models/dto";
 import {
@@ -23,6 +24,7 @@ interface ModuleListItemProps extends ModuleDto {
     expanded: boolean;
     onToggle: () => void;
     onLessonSelect: (lessonId: string) => void;
+    onExerciseSelect: (exerciseId: string) => void;
 }
 
 export const ModuleListItem = ({
@@ -35,6 +37,7 @@ export const ModuleListItem = ({
     expanded,
     onToggle,
     onLessonSelect,
+    onExerciseSelect,
 }: ModuleListItemProps) => {
     const isLessonDisabled = (lessonOrder: number): boolean => {
         if (order === 0 && lessonOrder === 0) return false;
@@ -103,28 +106,32 @@ export const ModuleListItem = ({
                     <Grid.Col span={12}>
                         <List listStyleType="none">
                             {lessons.map((lesson, lessonIndex) => (
-                                <ListItem key={lessonIndex}>
-                                    <Button
-                                        c={
-                                            isLessonCompleted(lesson.order)
-                                                ? "lightgreen"
-                                                : isLessonDisabled(lessonIndex)
-                                                ? "dimmed"
-                                                : "blue"
-                                        }
-                                        variant="subtle"
-                                        disabled={isLessonDisabled(
-                                            lesson.order
-                                        )}
-                                        onClick={() =>
-                                            onLessonSelect(lesson.id)
-                                        }
-                                    >
-                                        {`Lesson ${lesson.order + 1}: ${
-                                            lesson.title
-                                        }`}
-                                    </Button>
-                                </ListItem>
+                                <Stack gap={0}>
+                                    <ListItem key={lessonIndex}>
+                                        <Button
+                                            c={
+                                                isLessonCompleted(lesson.order)
+                                                    ? "lightgreen"
+                                                    : isLessonDisabled(
+                                                          lessonIndex
+                                                      )
+                                                    ? "dimmed"
+                                                    : "blue"
+                                            }
+                                            variant="subtle"
+                                            disabled={isLessonDisabled(
+                                                lesson.order
+                                            )}
+                                            onClick={() =>
+                                                onLessonSelect(lesson.id)
+                                            }
+                                        >
+                                            {`Lesson ${lesson.order + 1}: ${
+                                                lesson.title
+                                            }`}
+                                        </Button>
+                                    </ListItem>
+                                </Stack>
                             ))}
                         </List>
                     </Grid.Col>
