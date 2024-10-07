@@ -7,7 +7,7 @@ import { CourseHero, ModuleListItem } from "@molecules";
 export const CourseOverview = () => {
     const navigate = useNavigate();
     const {
-        course: { id, modules, description, current_lesson_id, lesson_index },
+        course: { id, modules, description, current_lesson_id },
     } = useCourse();
 
     const currentLesson = useMemo(() => {
@@ -22,7 +22,7 @@ export const CourseOverview = () => {
         }
 
         return null;
-    }, [current_lesson_id, lesson_index]);
+    }, [current_lesson_id]);
 
     const currentModule = useMemo(() => {
         if (!currentLesson) return null;
@@ -36,7 +36,7 @@ export const CourseOverview = () => {
         }
 
         return null;
-    }, [currentLesson, lesson_index]);
+    }, [currentLesson]);
 
     const getStatus = (moduleOrder: number) => {
         if (moduleOrder < currentModule!.order) {
