@@ -3,12 +3,16 @@ import { Group } from "@mantine/core";
 import { CourseListing } from "@molecules";
 import { useNavigate } from "react-router-dom";
 
-export const CourseList = () => {
+interface CourseListProps {
+    onNewCourseClick: () => void;
+}
+
+export const CourseList = ({ onNewCourseClick }: CourseListProps) => {
     const navigate = useNavigate();
     const courses = useCourses();
 
     return (
-        <Group p="lg">
+        <Group p="lg" gap="xl">
             {courses.map((course) => (
                 <CourseListing
                     key={course.id}
@@ -18,6 +22,8 @@ export const CourseList = () => {
                     }}
                 />
             ))}
+
+            <CourseListing is_new onClick={onNewCourseClick} />
         </Group>
     );
 };

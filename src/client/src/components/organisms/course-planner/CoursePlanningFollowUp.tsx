@@ -61,7 +61,7 @@ export const CoursePlanningFollowUp = ({
                     <FollowUpField
                         {...input}
                         value={data[input.name]}
-                        onChange={(value) =>
+                        onChange={(value: any) =>
                             setData({ ...data, [input.name]: value })
                         }
                     />
