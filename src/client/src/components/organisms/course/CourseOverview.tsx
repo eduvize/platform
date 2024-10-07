@@ -63,24 +63,49 @@ export const CourseOverview = () => {
         return "not-started";
     };
 
-    // State to manage which modules are expanded
-    const [expandedModules, setExpandedModules] = useState<{
-        [key: number]: boolean;
-    }>(
-        modules.reduce((acc, module, index) => {
-            return {
-                ...acc,
-                [index]: ["in-progress"].includes(getStatus(module.order)),
-            };
-        }, {})
-    );
+    const completedLessonsPercentage = useMemo(() => {
+        let totalLessons = 0;
+        let completedLessons = 0;
 
-    const toggleModule = (index: number) => {
-        setExpandedModules((prevState) => ({
-            ...prevState,
-            [index]: !prevState[index], // Toggle the specific module
-        }));
-    };
+        modules.forEach((module) => {
+            totalLessons += module.lessons.length;
+            if (module.order < currentModule!.order) {
+                completedLessons += module.lessons.length;
+            } else if (module.order === currentModule!.order) {
+                completedLessons += currentLesson!.order;
+            }
+        });
+
+        return Math.round((completedLessons / totalLessons) * 100);
+    }, [modules, currentModule, currentLesson]);
+
+    const estimatedTimeRemaining = useMemo(() => {
+        let totalMinutes = 0;
+        let isCurrentLessonFound = false;
+
+        for (const module of modules) {
+            for (const lesson of module.lessons) {
+                if (lesson.id === currentLesson?.id) {
+                    isCurrentLessonFound = true;
+                }
+                if (isCurrentLessonFound) {
+                    for (const section of lesson.sections) {
+                        // Estimate time based on content length
+                        // Assume 1 minute per 100 words
+                        totalMinutes += Math.ceil(
+                            section.content.split(" ").length / 100
+                        );
+                    }
+                }
+            }
+        }
+
+        if (totalMinutes < 60) {
+            return { value: totalMinutes, unit: "min" };
+        } else {
+            return { value: Math.ceil(totalMinutes / 60), unit: "hr" };
+        }
+    }, [modules, currentLesson]);
 
     return (
         <Container size="sm" pt="xl">
@@ -170,8 +195,16 @@ export const CourseOverview = () => {
                                         size={180}
                                         thickness={7}
                                         sections={[
-                                            { value: 80, color: "#51cf66" },
-                                            { value: 20, color: "transparent" },
+                                            {
+                                                value: completedLessonsPercentage,
+                                                color: "#51cf66",
+                                            },
+                                            {
+                                                value:
+                                                    100 -
+                                                    completedLessonsPercentage,
+                                                color: "transparent",
+                                            },
                                         ]}
                                         label={
                                             <Text
@@ -179,9 +212,9 @@ export const CourseOverview = () => {
                                                 c="#51cf66"
                                                 fw={900}
                                                 ta="center"
-                                                size={60}
+                                                size="60px"
                                             >
-                                                80
+                                                {completedLessonsPercentage}
                                             </Text>
                                         }
                                     />
@@ -209,9 +242,11 @@ export const CourseOverview = () => {
                                                     ff="Roboto"
                                                     c="#1479b2"
                                                     fw={900}
-                                                    size={60}
+                                                    size="60px"
                                                 >
-                                                    10
+                                                    {
+                                                        estimatedTimeRemaining.value
+                                                    }
                                                 </Text>
 
                                                 <Stack
@@ -219,12 +254,14 @@ export const CourseOverview = () => {
                                                     justify="flex-end"
                                                 >
                                                     <Text
-                                                        size={24}
+                                                        size="24px"
                                                         fw={900}
                                                         c="#1479b2"
                                                         mt={26}
                                                     >
-                                                        hr
+                                                        {
+                                                            estimatedTimeRemaining.unit
+                                                        }
                                                     </Text>
                                                 </Stack>
                                             </Group>
@@ -237,7 +274,7 @@ export const CourseOverview = () => {
                                         c="#c9c9c9"
                                         w="60%"
                                     >
-                                        estimated hours remaining
+                                        estimated time remaining
                                     </Text>
                                 </Stack>
                             </Group>
@@ -262,10 +299,6 @@ export const CourseOverview = () => {
                         <ModuleListItem
                             currentLesson={currentLesson!}
                             status={getStatus(module.order)}
-                            expanded={expandedModules[index]}
-                            onToggle={() => {
-                                toggleModule(index);
-                            }}
                             onLessonSelect={(lessonId) => {
                                 navigate(
                                     `/dashboard/course/${id}/lesson/${lessonId}`

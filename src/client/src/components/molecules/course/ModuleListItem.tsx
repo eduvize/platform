@@ -5,8 +5,6 @@ import { IconCircleCheckFilled, IconLock } from "@tabler/icons-react";
 interface ModuleListItemProps extends ModuleDto {
     currentLesson: LessonDto;
     status: "completed" | "in-progress" | "not-started";
-    expanded: boolean;
-    onToggle: () => void;
     onLessonSelect: (lessonId: string) => void;
     onExerciseSelect: (exerciseId: string) => void;
 }
@@ -16,12 +14,8 @@ export const ModuleListItem = ({
     title,
     description,
     lessons,
-    onToggle,
     status,
 }: ModuleListItemProps) => {
-    const moduleMinLesson = lessons[0].order;
-    const moduleMaxLesson = lessons[lessons.length - 1].order;
-
     const isModuleCompleted = status === "completed";
 
     const activeIndex = isModuleCompleted
@@ -34,11 +28,7 @@ export const ModuleListItem = ({
                 <Grid.Col span={12}>
                     <Stack gap={0}>
                         <Grid>
-                            <Grid.Col
-                                span="auto"
-                                onClick={onToggle}
-                                style={{ cursor: "pointer" }}
-                            >
+                            <Grid.Col span="auto" style={{ cursor: "pointer" }}>
                                 <Text size="lg" c="white">
                                     {title}
                                 </Text>
