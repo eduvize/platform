@@ -1,22 +1,6 @@
-import {
-    Button,
-    Card,
-    Collapse,
-    Grid,
-    Group,
-    List,
-    ListItem,
-    Stack,
-    Tooltip,
-    Text,
-    Space,
-} from "@mantine/core";
+import { Card, Grid, Stack, Text, Stepper, Box, Radio } from "@mantine/core";
 import { LessonDto, ModuleDto } from "@models/dto";
-import {
-    IconCircleCheckFilled,
-    IconProgressCheck,
-    IconLock,
-} from "@tabler/icons-react";
+import { IconCircleCheckFilled, IconLock } from "@tabler/icons-react";
 
 interface ModuleListItemProps extends ModuleDto {
     currentLesson: LessonDto;
@@ -28,34 +12,21 @@ interface ModuleListItemProps extends ModuleDto {
 }
 
 export const ModuleListItem = ({
-    order,
+    currentLesson,
     title,
     description,
     lessons,
-    currentLesson,
-    status,
-    expanded,
     onToggle,
-    onLessonSelect,
-    onExerciseSelect,
+    status,
 }: ModuleListItemProps) => {
-    const isLessonDisabled = (lessonOrder: number): boolean => {
-        if (order === 0 && lessonOrder === 0) return false;
+    const moduleMinLesson = lessons[0].order;
+    const moduleMaxLesson = lessons[lessons.length - 1].order;
 
-        if (status === "not-started") return true;
+    const isModuleCompleted = status === "completed";
 
-        if (lessonOrder > currentLesson.order) return true;
-
-        return false;
-    };
-
-    const isLessonCompleted = (lessonOrder: number): boolean => {
-        if (lessonOrder < currentLesson!.order) {
-            return true;
-        }
-
-        return false;
-    };
+    const activeIndex = isModuleCompleted
+        ? lessons.length - 1
+        : lessons.findIndex((lesson) => lesson.order === currentLesson.order);
 
     return (
         <Card withBorder>
@@ -68,74 +39,106 @@ export const ModuleListItem = ({
                                 onClick={onToggle}
                                 style={{ cursor: "pointer" }}
                             >
-                                <Group justify="space-between">
-                                    <Text size="lg">{title}</Text>
-
-                                    {status === "completed" && (
-                                        <IconCircleCheckFilled
-                                            color="lightgreen"
-                                            size={28}
-                                        />
-                                    )}
-                                    {status === "in-progress" && (
-                                        <IconProgressCheck
-                                            color="goldenrod"
-                                            size={28}
-                                        />
-                                    )}
-                                    {status === "not-started" && (
-                                        <Tooltip label="Unlock by completing previous modules">
-                                            <IconLock color="gray" size={28} />
-                                        </Tooltip>
-                                    )}
-                                </Group>
+                                <Text size="lg" c="white">
+                                    {title}
+                                </Text>
                             </Grid.Col>
                         </Grid>
 
-                        <Text size="sm" c="dimmed">
+                        <Text size="sm" c="#c9c9c9">
                             {description}
                         </Text>
                     </Stack>
                 </Grid.Col>
 
-                <Collapse
-                    in={expanded}
-                    transitionDuration={300}
-                    transitionTimingFunction="linear"
-                >
-                    <Grid.Col span={12}>
-                        <List listStyleType="none">
-                            {lessons.map((lesson, lessonIndex) => (
-                                <Stack gap={0}>
-                                    <ListItem key={lessonIndex}>
-                                        <Button
-                                            c={
-                                                isLessonCompleted(lesson.order)
-                                                    ? "lightgreen"
-                                                    : isLessonDisabled(
-                                                          lessonIndex
-                                                      )
-                                                    ? "dimmed"
-                                                    : "blue"
-                                            }
-                                            variant="subtle"
-                                            disabled={isLessonDisabled(
-                                                lesson.order
-                                            )}
-                                            onClick={() =>
-                                                onLessonSelect(lesson.id)
-                                            }
-                                        >
-                                            {`Lesson ${lesson.order + 1}: ${
-                                                lesson.title
-                                            }`}
-                                        </Button>
-                                    </ListItem>
-                                </Stack>
-                            ))}
-                        </List>
-                    </Grid.Col>
-                </Collapse>
+                <Grid.Col span={12}>
+                    <Stepper
+                        active={
+                            isModuleCompleted ? lessons.length + 1 : activeIndex
+                        }
+                        color="green"
+                        orientation="vertical"
+                    >
+                        {lessons.map((lesson, lessonIndex) => (
+                            <Stepper.Step
+                                label={`Lesson ${lesson.order + 1}: ${
+                                    lesson.title
+                                }`}
+                                description={lesson.description}
+                                completedIcon={
+                                    <Box pos="relative" w={32} h={32} left={-1}>
+                                        <Box
+                                            pos="absolute"
+                                            top={8}
+                                            left={10}
+                                            bg="white"
+                                            w={16}
+                                            h={16}
+                                        ></Box>
+
+                                        <IconCircleCheckFilled
+                                            color="#51cf66"
+                                            size={36}
+                                            style={{
+                                                position: "absolute",
+                                            }}
+                                        />
+                                    </Box>
+                                }
+                                progressIcon={
+                                    <Radio
+                                        checked
+                                        size="lg"
+                                        variant="outline"
+                                        styles={{
+                                            radio: {
+                                                border: "2px solid #51cf66",
+                                                background: "transparent",
+                                            },
+                                            icon: {
+                                                color: "#51cf66",
+                                            },
+                                        }}
+                                    />
+                                }
+                                icon={
+                                    <Box
+                                        style={{
+                                            border: "1px solid #3d3d3d",
+                                            width: 32,
+                                            height: 32,
+                                            borderRadius: "50%",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                        }}
+                                    >
+                                        <IconLock size={18} />
+                                    </Box>
+                                }
+                                styles={{
+                                    stepIcon: {
+                                        padding: 0,
+                                        backgroundColor: "transparent",
+                                        borderColor: "transparent",
+                                    },
+                                    stepWrapper: {
+                                        padding: 0,
+                                    },
+                                    stepLabel: {
+                                        fontSize: "0.9rem",
+                                        fontWeight: 500,
+                                        color: "#fff",
+                                    },
+                                    stepDescription: {
+                                        fontSize: "0.8rem",
+                                        color: "#6d6d6d",
+                                    },
+                                }}
+                            />
+                        ))}
+                    </Stepper>
+                </Grid.Col>
             </Grid>
         </Card>
     );

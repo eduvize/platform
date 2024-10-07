@@ -1,6 +1,19 @@
 import { useMemo, useState } from "react";
 import { useCourse } from "@context/course/hooks";
-import { Card, Container, Stack, Text } from "@mantine/core";
+import {
+    Button,
+    Card,
+    Container,
+    Divider,
+    Grid,
+    Group,
+    Radio,
+    RingProgress,
+    Space,
+    Stack,
+    Text,
+    Title,
+} from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import { CourseHero, ModuleListItem } from "@molecules";
 
@@ -70,21 +83,179 @@ export const CourseOverview = () => {
     };
 
     return (
-        <Container size="md" pt="xl">
+        <Container size="sm" pt="xl">
             <Stack>
                 <Stack gap="md">
                     <CourseHero />
 
-                    <Card>
-                        <Text size="md" c="white">
-                            {description}
-                        </Text>
+                    <Card withBorder p="lg" px="xl">
+                        <Space h="lg" />
+
+                        <Stack>
+                            <Title order={4} fw={500} c="white">
+                                Course Summary
+                            </Title>
+
+                            <Text size="md" c="#c9c9c9">
+                                {description}
+                            </Text>
+
+                            <Divider />
+
+                            <Title order={4} fw={500} c="white">
+                                Current lesson:
+                            </Title>
+
+                            <Grid>
+                                <Grid.Col span={1}>
+                                    <Stack
+                                        h="100%"
+                                        justify="center"
+                                        align="center"
+                                    >
+                                        <Radio
+                                            checked
+                                            size="xl"
+                                            variant="outline"
+                                            styles={{
+                                                radio: {
+                                                    border: "2px solid #51cf66",
+                                                    background: "transparent",
+                                                },
+                                                icon: {
+                                                    color: "#51cf66",
+                                                },
+                                            }}
+                                        />
+                                    </Stack>
+                                </Grid.Col>
+
+                                <Grid.Col span={11}>
+                                    <Stack gap={0}>
+                                        <Title order={6} fw={500} c="white">
+                                            {currentLesson?.title}
+                                        </Title>
+
+                                        <Text size="sm" c="dimmed">
+                                            {currentLesson?.description}
+                                        </Text>
+                                    </Stack>
+                                </Grid.Col>
+                            </Grid>
+
+                            <Group>
+                                <Button
+                                    variant="filled"
+                                    bg="blue"
+                                    fw={300}
+                                    mt="xs"
+                                    h={44}
+                                    onClick={() => {
+                                        navigate(
+                                            `/dashboard/course/${id}/lesson/${currentLesson?.id}`
+                                        );
+                                    }}
+                                >
+                                    Continue Lesson
+                                </Button>
+                            </Group>
+                        </Stack>
+                    </Card>
+
+                    <Card withBorder p="lg" px="xl">
+                        <Stack>
+                            <Group justify="center">
+                                <Stack gap={0} align="center">
+                                    <RingProgress
+                                        size={180}
+                                        thickness={7}
+                                        sections={[
+                                            { value: 80, color: "#51cf66" },
+                                            { value: 20, color: "transparent" },
+                                        ]}
+                                        label={
+                                            <Text
+                                                ff="Roboto"
+                                                c="#51cf66"
+                                                fw={900}
+                                                ta="center"
+                                                size={60}
+                                            >
+                                                80
+                                            </Text>
+                                        }
+                                    />
+
+                                    <Text
+                                        ta="center"
+                                        size="sm"
+                                        c="#c9c9c9"
+                                        w="50%"
+                                    >
+                                        % of lessons complete
+                                    </Text>
+                                </Stack>
+
+                                <Stack gap={0} align="center">
+                                    <RingProgress
+                                        size={180}
+                                        thickness={5}
+                                        sections={[
+                                            { value: 100, color: "#383838" },
+                                        ]}
+                                        label={
+                                            <Group gap={0} justify="center">
+                                                <Text
+                                                    ff="Roboto"
+                                                    c="#1479b2"
+                                                    fw={900}
+                                                    size={60}
+                                                >
+                                                    10
+                                                </Text>
+
+                                                <Stack
+                                                    h="100%"
+                                                    justify="flex-end"
+                                                >
+                                                    <Text
+                                                        size={24}
+                                                        fw={900}
+                                                        c="#1479b2"
+                                                        mt={26}
+                                                    >
+                                                        hr
+                                                    </Text>
+                                                </Stack>
+                                            </Group>
+                                        }
+                                    />
+
+                                    <Text
+                                        ta="center"
+                                        size="sm"
+                                        c="#c9c9c9"
+                                        w="60%"
+                                    >
+                                        estimated hours remaining
+                                    </Text>
+                                </Stack>
+                            </Group>
+
+                            <Divider />
+
+                            <Group justify="space-between">
+                                <Text size="sm">
+                                    course started: 10/05/2024
+                                </Text>
+
+                                <Text size="sm">
+                                    course completed: --/--/----
+                                </Text>
+                            </Group>
+                        </Stack>
                     </Card>
                 </Stack>
-
-                <Text tt="uppercase" size="xl">
-                    Course Syllabus
-                </Text>
 
                 <Stack>
                     {modules.map((module, index) => (
