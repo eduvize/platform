@@ -16,6 +16,7 @@ import {
     CourseMotivation,
     CurrentSubjectExperience,
 } from "@models/enums";
+import { useNavigate } from "react-router-dom";
 
 const MOTIVATION_LABELS: Record<string, string> = {
     [CourseMotivation.Career]: "Career Advancement",
@@ -44,6 +45,7 @@ interface FirstStepProps {
 }
 
 export const FirstStep = ({ form, onContinue }: FirstStepProps) => {
+    const navigate = useNavigate();
     const experienceDescription = useMemo(() => {
         switch (form.values.experience) {
             case CurrentSubjectExperience.New:
@@ -214,6 +216,14 @@ export const FirstStep = ({ form, onContinue }: FirstStepProps) => {
             </Input.Wrapper>
 
             <Group justify="flex-end" mt="xl">
+                <Button
+                    variant="filled"
+                    color="dark"
+                    onClick={() => navigate("/dashboard/courses")}
+                >
+                    Cancel
+                </Button>
+
                 <Button variant="gradient" onClick={onContinue}>
                     Continue
                 </Button>

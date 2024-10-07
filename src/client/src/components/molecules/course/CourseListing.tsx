@@ -1,81 +1,84 @@
-import {
-    Text,
-    Card,
-    Progress,
-    Box,
-    LoadingOverlay,
-    RingProgress,
-    Center,
-    Flex,
-} from "@mantine/core";
+import { Text, Card, Box, Flex } from "@mantine/core";
 import { CourseListingDto } from "@models/dto";
 import classes from "./CourseListing.module.css";
+import { IconCircleCheckFilled, IconPlus } from "@tabler/icons-react";
 
-interface CourseListingProps extends CourseListingDto {
-    onClick: () => void;
-}
+type CourseListingProps =
+    | (Partial<CourseListingDto> & { is_new: true; onClick: () => void })
+    | (CourseListingDto & { is_new?: false; onClick: () => void });
 
 export const CourseListing = ({
+    is_new,
     title,
     cover_image_url,
     progress,
     is_generating,
-    generation_progress,
     onClick,
 }: CourseListingProps) => {
     return (
         <Box pos="relative">
-            <LoadingOverlay
-                visible={is_generating}
-                loaderProps={{
-                    display: "none",
-                }}
-                overlayProps={{
-                    opacity: 0.8,
-                    children: (
-                        <Flex h="100%" align="flex-end" justify="center">
-                            <RingProgress
-                                sections={[
-                                    {
-                                        value: generation_progress,
-                                        color: "white",
-                                    },
-                                ]}
-                                thickness={4}
-                                size={48}
-                                mb="xl"
-                            />
-                        </Flex>
-                    ),
-                }}
-            />
-
             <Card
+                pos="relative"
                 withBorder
                 className={classes.courseCard}
-                pos="relative"
-                bg={`url(${cover_image_url}) center / cover`}
+                bg={
+                    is_new
+                        ? undefined
+                        : `url(${cover_image_url}) center / cover`
+                }
                 onClick={onClick}
+                styles={{
+                    root: {
+                        padding: 0,
+                    },
+                }}
             >
-                <Text
-                    size="xl"
-                    c="white"
-                    fw={700}
-                    style={{
-                        textShadow: "0px 0px 8px #000",
-                    }}
-                >
-                    {title}
-                </Text>
+                {!is_new && progress === 100 && (
+                    <Box pos="absolute" top={8} right={16} w={24} h={24}>
+                        <Box
+                            pos="absolute"
+                            top={8}
+                            left={10}
+                            bg="white"
+                            w={12}
+                            h={12}
+                        ></Box>
+                        <IconCircleCheckFilled
+                            color="#51cf66"
+                            size={32}
+                            style={{ position: "absolute" }}
+                        />
+                    </Box>
+                )}
 
-                {!is_generating && (
-                    <Progress
-                        pos="absolute"
-                        bottom="0"
-                        left="0"
-                        w="100%"
-                        value={progress}
-                    />
+                {!is_new && (
+                    <Flex h="100%" align="flex-end">
+                        <Box bg="rgba(0, 0, 0, 0.6)" p="xs">
+                            <Text size="lg" c="white" fw={700}>
+                                {title}
+                            </Text>
+
+                            <Text
+                                size="sm"
+                                fw={600}
+                                c={
+                                    !is_generating && progress >= 100
+                                        ? "green"
+                                        : "blue"
+                                }
+                            >
+                                {is_generating
+                                    ? `${progress}% generated`
+                                    : `${progress}% complete`}
+                            </Text>
+                        </Box>
+                    </Flex>
+                )}
+
+                {is_new && (
+                    <Flex w="100%" h="100%" align="center" justify="center">
+                        <IconPlus color="white" size={48} />
+                    </Flex>
                 )}
             </Card>
         </Box>

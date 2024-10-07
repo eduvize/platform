@@ -1,23 +1,11 @@
-import { Container, Grid, List, ScrollArea, Stack, Text } from "@mantine/core";
+import { Text, Grid, ScrollArea, Card, Title } from "@mantine/core";
 import { CoursePlanner } from "@views/course-planner";
-import {
-    NavLink,
-    Route,
-    Routes,
-    useMatch,
-    useNavigate,
-} from "react-router-dom";
-import classes from "./Courses.module.css";
+import { Route, Routes, useMatch, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { CourseList } from "@organisms";
 import { useOnboarding } from "@context/user/hooks";
 import { Banner } from "@molecules";
 import { IconAlertTriangle } from "@tabler/icons-react";
-
-interface NavItemProps {
-    to: string;
-    label: string;
-}
 
 export const Courses = () => {
     const navigate = useNavigate();
@@ -30,53 +18,8 @@ export const Courses = () => {
         navigate("/dashboard/courses/active");
     }, [isMainScreen]);
 
-    const NavItem = ({ to, label }: NavItemProps) => {
-        return (
-            <NavLink
-                to={to}
-                key={to}
-                className={({ isActive, isPending }) => {
-                    return isActive ? classes.active : undefined;
-                }}
-            >
-                <List.Item className={classes.link} py="xs" px="sm">
-                    {label}
-                </List.Item>
-            </NavLink>
-        );
-    };
-
     return (
         <Grid h="calc(100vh - 56px)">
-            <Grid.Col
-                span="content"
-                bg="dark"
-                h="calc(100vh - 56px)"
-                style={{
-                    borderRight: "1px solid var(--mantine-color-gray-7)",
-                }}
-            >
-                <Stack justify="space-between" h="100%">
-                    <List listStyleType="none" w="300px" p="sm">
-                        <NavItem
-                            to={"/dashboard/courses/active"}
-                            label="My Courses"
-                        />
-                        <NavItem
-                            to={"/dashboard/courses/previous"}
-                            label="Completed Courses"
-                        />
-                    </List>
-
-                    <List listStyleType="none" w="300px" p="sm">
-                        <NavItem
-                            to="/dashboard/courses/new"
-                            label="Create a Course"
-                        />
-                    </List>
-                </Stack>
-            </Grid.Col>
-
             <Grid.Col span="auto">
                 <ScrollArea.Autosize h="calc(100vh - 75px)">
                     {!is_profile_complete && (
@@ -108,7 +51,20 @@ We leverage this information to provide you with the best possible experience, i
                         <Route
                             path="active"
                             handle="active"
-                            element={<CourseList />}
+                            element={
+                                <>
+                                    <Card m="lg" withBorder p="xl" pl="md">
+                                        <Title order={3} fw={500} c="white">
+                                            My Courses
+                                        </Title>
+                                    </Card>
+                                    <CourseList
+                                        onNewCourseClick={() => {
+                                            navigate("/dashboard/courses/new");
+                                        }}
+                                    />
+                                </>
+                            }
                         />
                         <Route
                             path="new"
