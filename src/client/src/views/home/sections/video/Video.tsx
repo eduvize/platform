@@ -1,14 +1,5 @@
-import {
-    BackgroundImage,
-    Center,
-    Container,
-    Flex,
-    Space,
-    Title,
-    Text,
-} from "@mantine/core";
+import { BackgroundImage, Container, Flex, Space, Title } from "@mantine/core";
 import { IconPlayerPlay } from "@tabler/icons-react";
-import classes from "./Video.module.css";
 
 export const Video = () => {
     return (
@@ -20,7 +11,6 @@ export const Video = () => {
                 mt="sm"
                 tt="uppercase"
                 size={32}
-                ff="Roboto"
             >
                 Discover the Power of Eduvize
             </Title>
