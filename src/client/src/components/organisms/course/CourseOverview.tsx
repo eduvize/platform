@@ -304,11 +304,6 @@ export const CourseOverview = () => {
                                     `/dashboard/course/${id}/lesson/${lessonId}`
                                 );
                             }}
-                            onExerciseSelect={(exerciseId) => {
-                                navigate(
-                                    `/dashboard/course/${id}/exercise/${exerciseId}`
-                                );
-                            }}
                             {...module}
                         />
                     ))}

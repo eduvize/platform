@@ -6,7 +6,6 @@ interface ModuleListItemProps extends ModuleDto {
     currentLesson: LessonDto;
     status: "completed" | "in-progress" | "not-started";
     onLessonSelect: (lessonId: string) => void;
-    onExerciseSelect: (exerciseId: string) => void;
 }
 
 export const ModuleListItem = ({
@@ -15,6 +14,7 @@ export const ModuleListItem = ({
     description,
     lessons,
     status,
+    onLessonSelect,
 }: ModuleListItemProps) => {
     const isModuleCompleted = status === "completed";
 
@@ -48,6 +48,13 @@ export const ModuleListItem = ({
                         }
                         color="green"
                         orientation="vertical"
+                        onStepClick={(step) => {
+                            if (lessons[step].order > currentLesson.order) {
+                                return;
+                            }
+
+                            onLessonSelect(lessons[step].id);
+                        }}
                     >
                         {lessons.map((lesson, lessonIndex) => (
                             <Stepper.Step
