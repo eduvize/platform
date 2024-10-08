@@ -189,7 +189,7 @@ export const CourseOverview = () => {
 
                     <Card withBorder p="lg" px="xl">
                         <Stack>
-                            <Group justify="center">
+                            <Group justify="center" gap="xl">
                                 <Stack gap={0} align="center">
                                     <RingProgress
                                         size={180}
