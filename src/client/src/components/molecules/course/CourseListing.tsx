@@ -21,13 +21,21 @@ export const CourseListing = ({
             <Card
                 pos="relative"
                 withBorder
-                className={classes.courseCard}
+                className={`${classes.courseCard} ${
+                    is_generating ? "new" : classes.courseReady
+                }`}
                 bg={
                     is_new
                         ? undefined
                         : `url(${cover_image_url}) center / cover`
                 }
-                onClick={onClick}
+                onClick={() => {
+                    if (is_generating) {
+                        return;
+                    }
+
+                    onClick();
+                }}
                 styles={{
                     root: {
                         padding: 0,

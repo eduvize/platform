@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useCourse } from "@context/course/hooks";
 import {
     Button,
@@ -20,7 +20,14 @@ import { CourseHero, ModuleListItem } from "@molecules";
 export const CourseOverview = () => {
     const navigate = useNavigate();
     const {
-        course: { id, modules, description, current_lesson_id },
+        course: {
+            id,
+            modules,
+            description,
+            current_lesson_id,
+            created_at_utc,
+            completed_at_utc,
+        },
     } = useCourse();
 
     const currentLesson = useMemo(() => {
@@ -35,7 +42,7 @@ export const CourseOverview = () => {
         }
 
         return null;
-    }, [current_lesson_id]);
+    }, [current_lesson_id, modules]);
 
     const currentModule = useMemo(() => {
         if (!currentLesson) return null;
@@ -49,7 +56,7 @@ export const CourseOverview = () => {
         }
 
         return null;
-    }, [currentLesson]);
+    }, [currentLesson, modules]);
 
     const getStatus = (moduleOrder: number) => {
         if (moduleOrder < currentModule!.order) {
@@ -106,6 +113,28 @@ export const CourseOverview = () => {
             return { value: Math.ceil(totalMinutes / 60), unit: "hr" };
         }
     }, [modules, currentLesson]);
+
+    // Format the created_at_utc date
+    const formattedCreatedDate = useMemo(() => {
+        if (!created_at_utc) return "--/--/----";
+        const date = new Date(created_at_utc);
+        return date.toLocaleDateString("en-US", {
+            month: "2-digit",
+            day: "2-digit",
+            year: "numeric",
+        });
+    }, [created_at_utc]);
+
+    // Format the completed_at_utc date
+    const formattedCompletedDate = useMemo(() => {
+        if (!completed_at_utc) return "--/--/----";
+        const date = new Date(completed_at_utc);
+        return date.toLocaleDateString("en-US", {
+            month: "2-digit",
+            day: "2-digit",
+            year: "numeric",
+        });
+    }, [completed_at_utc]);
 
     return (
         <Container size="sm" pt="xl">
@@ -283,11 +312,11 @@ export const CourseOverview = () => {
 
                             <Group justify="space-between">
                                 <Text size="sm">
-                                    course started: 10/05/2024
+                                    course started: {formattedCreatedDate}
                                 </Text>
 
                                 <Text size="sm">
-                                    course completed: --/--/----
+                                    course completed: {formattedCompletedDate}
                                 </Text>
                             </Group>
                         </Stack>
@@ -295,8 +324,9 @@ export const CourseOverview = () => {
                 </Stack>
 
                 <Stack>
-                    {modules.map((module, index) => (
+                    {modules.map((module) => (
                         <ModuleListItem
+                            key={module.title}
                             currentLesson={currentLesson!}
                             status={getStatus(module.order)}
                             onLessonSelect={(lessonId) => {

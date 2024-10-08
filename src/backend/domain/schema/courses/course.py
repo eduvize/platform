@@ -12,6 +12,7 @@ class CourseBase(SQLModel):
     is_generating: bool                     = Field(default=True, nullable=False)
     generation_progress: int                = Field(default=0, nullable=False)
     current_lesson_id: Optional[uuid.UUID]  = Field(default=None, nullable=True)
+    created_at_utc: datetime                = Field(default_factory=datetime.utcnow, nullable=False)
     completed_at_utc: Optional[datetime]    = Field(default=None, nullable=True)
     
 class Course(CourseBase, table=True):
@@ -19,7 +20,6 @@ class Course(CourseBase, table=True):
     
     id: uuid.UUID               = Field(default_factory=uuid.uuid4, primary_key=True)
     user_id: uuid.UUID          = Field(default=None, foreign_key="users.id")
-    created_at_utc: datetime    = Field(default_factory=datetime.utcnow, nullable=False)
     
     modules: List[Module]       = Relationship(back_populates="course")
     
