@@ -13,6 +13,7 @@ export const CourseListing = ({
     cover_image_url,
     progress,
     is_generating,
+    generation_progress,
     onClick,
 }: CourseListingProps) => {
     return (
@@ -68,7 +69,7 @@ export const CourseListing = ({
                                 }
                             >
                                 {is_generating
-                                    ? `${progress}% generated`
+                                    ? `${generation_progress}% generated`
                                     : `${progress}% complete`}
                             </Text>
                         </Box>
