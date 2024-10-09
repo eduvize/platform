@@ -118,8 +118,3 @@ class BasePrompt:
         
     def add_agent_message(self, message: str, tool_calls: Optional[List[BaseToolCallWithResult]] = None) -> None:
         self.messages.append(BaseChatMessage(role=ChatRole.AGENT, message=message, tool_calls=tool_calls or []))
-        
-    def with_input(self, message: str) -> "BasePrompt":
-        self.add_user_message(message)
-        
-        return self
