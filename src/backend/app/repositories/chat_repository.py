@@ -5,13 +5,14 @@ from typing import List, Optional
 
 from sqlmodel import Session, select
 from sqlalchemy.orm import joinedload
+from sqlalchemy.ext.asyncio import AsyncSession
 from domain.schema.chat import ChatMessage, ChatSession, ChatToolCall
-from common.database import engine
+from common.database import async_engine
 
 logger = logging.getLogger("ChatRepository")
 
 class ChatRepository:
-    def create_chat_session(
+    async def create_chat_session(
         self,
         user_id: uuid.UUID,
         prompt_type: str,
@@ -27,19 +28,19 @@ class ChatRepository:
             ChatSession: The created chat session
         """
         
-        with Session(engine) as session:
+        async with AsyncSession(async_engine) as session:
             chat_session = ChatSession(
                 user_id=user_id,
                 prompt_type=prompt_type,
                 resource_id=resource_id
             )
             session.add(chat_session)
-            session.commit()
-            session.refresh(chat_session)
+            await session.commit()
+            await session.refresh(chat_session)
             
             return chat_session
     
-    def add_chat_message(
+    async def add_chat_message(
         self, 
         session_id: uuid.UUID,
         is_user: bool,
@@ -56,19 +57,19 @@ class ChatRepository:
             ChatMessage: The added message
         """
         
-        with Session(engine) as session:
+        async with AsyncSession(async_engine) as session:
             chat_message = ChatMessage(
                 session_id=session_id,
                 is_user=is_user,
                 content=content
             )
             session.add(chat_message)
-            session.commit()
-            session.refresh(chat_message)
+            await session.commit()
+            await session.refresh(chat_message)
             
             return chat_message
         
-    def add_tool_message(
+    async def add_tool_message(
         self,
         message_id: uuid.UUID,
         call_id: str,
@@ -76,7 +77,7 @@ class ChatRepository:
         arguments: str,
         result: str
     ):
-        with Session(engine) as session:
+        async with AsyncSession(async_engine) as session:
             tool_call = ChatToolCall(
                 message_id=message_id,
                 tool_call_id=call_id,
@@ -85,9 +86,9 @@ class ChatRepository:
                 result=result
             )
             session.add(tool_call)
-            session.commit()
+            await session.commit()
         
-    def get_session(
+    async def get_session(
         self,
         session_id: uuid.UUID
     ) -> Optional[ChatSession]:
@@ -101,11 +102,12 @@ class ChatRepository:
             Optional[ChatSession]: The chat session, if found
         """
         
-        with Session(engine) as session:
+        async with AsyncSession(async_engine) as session:
             query = select(ChatSession).where(ChatSession.id == session_id)
-            return session.exec(query).unique().first()
+            result = await session.execute(query)
+            return result.scalar_one_or_none()
         
-    def get_chat_messages(
+    async def get_chat_messages(
         self,
         session_id: uuid.UUID
     ) -> List[ChatMessage]:
@@ -122,7 +124,7 @@ class ChatRepository:
         
         logger.info(f"Getting chat messages for session {session_id}")
         
-        with Session(engine) as session:
+        async with AsyncSession(async_engine) as session:
             query = select(ChatMessage).where(
                 ChatMessage.session_id == session_id
             )
@@ -133,7 +135,8 @@ class ChatRepository:
             query = query.order_by(ChatMessage.created_at_utc.desc())
             query = query.limit(50)
             
-            messages = session.exec(query).unique().all()
+            result = await session.execute(query)
+            messages = result.unique().all()
             messages.reverse()
             
             return messages

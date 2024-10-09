@@ -107,7 +107,7 @@ class CourseService:
         # Set the cover image URL to the public URL
         course_dto.cover_image_url = get_public_object_url(StoragePurpose.COURSE_ASSET, cover_image_obj_id)
         
-        course_id = self.course_repo.create_course(
+        course_id = await self.course_repo.create_course(
             user_id=user.id, 
             course_dto=course_dto
         )
@@ -134,7 +134,7 @@ class CourseService:
         if user is None:
             raise ValueError("User not found")
         
-        course = self.course_repo.get_course(course_id)
+        course = await self.course_repo.get_course(course_id)
         
         if course is None:
             raise ValueError("Course not found")
@@ -165,7 +165,7 @@ class CourseService:
                     lesson_id=current_lesson.id
                 )
                 
-        next_lesson = self.course_repo.get_next_lesson(
+        next_lesson = await self.course_repo.get_next_lesson(
             course_id=course.id,
             current_lesson_id=course.current_lesson_id
         )
@@ -178,12 +178,12 @@ class CourseService:
             next_lesson_id = next_lesson.id
         
         if next_lesson_id:
-            self.course_repo.set_current_lesson(
+            await self.course_repo.set_current_lesson(
                 course_id=course.id,
                 lesson_id=next_lesson_id,
             )
         else:
-            self.course_repo.set_course_completion(course.id)
+            await self.course_repo.set_course_completion(course.id)
             
         return CourseProgressionDto.model_construct(
             is_course_complete=next_lesson_id is None,
@@ -199,10 +199,10 @@ class CourseService:
         if user is None:
             raise ValueError("User not found")
         
-        courses = self.course_repo.get_courses(user.id)
+        courses = await self.course_repo.get_courses(user.id)
         
-        def calculate_progress(course: Course) -> int:
-            total_lessons = self.course_repo.get_lesson_count(course.id)
+        async def calculate_progress(course: Course) -> int:
+            total_lessons = await self.course_repo.get_lesson_count(course.id)
             current_lesson = next((
                 lesson
                 for module in course.modules
@@ -221,7 +221,7 @@ class CourseService:
                 title=course.title,
                 description=course.description,
                 cover_image_url=course.cover_image_url,
-                progress=calculate_progress(course),
+                progress=await calculate_progress(course),
                 is_generating=course.is_generating,
                 generation_progress=course.generation_progress
             )
@@ -238,7 +238,7 @@ class CourseService:
         if user is None:
             raise ValueError("User not found")
         
-        course = self.course_repo.get_course(course_id)
+        course = await self.course_repo.get_course(course_id)
         
         if course is None:
             raise ValueError("Course not found")
@@ -249,7 +249,7 @@ class CourseService:
         self,
         exercise_id: uuid.UUID
     ) -> CourseExercise:
-        exercise = self.course_repo.get_exercise(exercise_id)
+        exercise = await self.course_repo.get_exercise(exercise_id)
         
         if exercise is None:
             raise ValueError("Exercise not found")
@@ -262,7 +262,7 @@ class CourseService:
         objective_id: uuid.UUID,
         is_complete: bool
     ) -> None:
-        self.course_repo.set_objective_status(objective_id, is_complete)
+        await self.course_repo.set_objective_status(objective_id, is_complete)
 
     def generate_cover_image(self, subject: str) -> str:
         response = self.openai.images.generate(
@@ -275,8 +275,8 @@ class CourseService:
         
         return response.data[0].url
     
-    def get_exercises(self, course_id: uuid.UUID) -> Optional[list[ExercisePlan]]:
-        course = self.course_repo.get_course(course_id)
+    async def get_exercises(self, course_id: uuid.UUID) -> Optional[list[ExercisePlan]]:
+        course = await self.course_repo.get_course(course_id)
         
         if course is None:
             raise ValueError("Course not found")
