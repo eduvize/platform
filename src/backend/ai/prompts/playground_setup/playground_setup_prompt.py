@@ -30,7 +30,7 @@ Keep in mind, the current working directory is reset after each step - so any sh
 All files must be written to the /home/user directory, ensure your commands provide this path.
 """.strip())
         
-    def get_setup_spec(self, description: str) -> EnvironmentSetupInstructions:
+    async def get_setup_spec(self, description: str) -> EnvironmentSetupInstructions:
         from ai.models.gpt_4o import GPT4o
         model = GPT4o()
         
@@ -39,7 +39,7 @@ All files must be written to the /home/user directory, ensure your commands prov
 """.strip())
 
         self.use_tool(ProvideInstructionsTool, force=True)
-        model.get_responses(self)
+        await model.get_responses(self)
         instructions_call = self.get_tool_call(ProvideInstructionsTool)
         
         if not instructions_call.result:

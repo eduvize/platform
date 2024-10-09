@@ -42,11 +42,14 @@ async def send_message(
 ):
     # This function generates a stream of messages
     async def message_stream():
-        async for message in chat_service.get_response(
+        async for message, is_final in chat_service.get_response(
             user_id=user_id, 
             session_id=session_id, 
             message=payload.message
         ):
+            if is_final:
+                # If it's the final message, we don't need to yield it
+                break
             yield f"{message.model_dump_json()}\n\n"
             await asyncio.sleep(0.01)
 

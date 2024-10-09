@@ -1,6 +1,6 @@
 import uuid
 import logging
-from typing import AsyncGenerator, Generator, List, Optional
+from typing import AsyncGenerator, List, Optional
 from fastapi import Depends
 from ai.common import BaseChatMessage, BaseToolCallWithResult, ChatRole
 from .user_service import UserService
@@ -80,33 +80,33 @@ class ChatService:
         
         logger.info(f"Preparing to generate chat response for user {user.id}, session {session.id}")
 
-        response_generator = await self.get_prompt_generator(
+        response_generator = self.get_prompt_generator(
             session=session,
             input_msg=message
         )
         
-        # Iterate until complete, then save messages to the database
-        while True:
-            try:
-                yield next(response_generator)
-            except StopIteration as e:
-                messages: List[BaseChatMessage] = e.value
-                
-                await self._add_message(
-                    session_id=session_id, 
-                    is_user=True, 
-                    message=message
-                )
-                
-                for new_message in messages:
-                    await self._add_message(
-                        session_id=session_id, 
-                        is_user=new_message.role == ChatRole.USER, 
-                        message=new_message.message, 
-                        tool_calls=new_message.tool_calls
-                    )
-                
-                break
+        try:
+            async for chunk in response_generator:
+                yield chunk
+        except StopAsyncIteration:
+            # The generator has been exhausted, which is expected behavior
+            pass
+        
+        messages: List[BaseChatMessage] = response_generator.aclose()
+        
+        await self._add_message(
+            session_id=session_id, 
+            is_user=True, 
+            message=message
+        )
+        
+        for new_message in messages:
+            await self._add_message(
+                session_id=session_id, 
+                is_user=new_message.role == ChatRole.USER, 
+                message=new_message.message, 
+                tool_calls=new_message.tool_calls
+            )
     
     def _get_chat_messages(
         self,
@@ -167,7 +167,7 @@ class ChatService:
         self,
         session: ChatSession,
         input_msg: str
-    ) -> Generator[CompletionChunk, None, List[BaseChatMessage]]:
+    ) -> AsyncGenerator[CompletionChunk, None]:
         p_type = PromptType(session.prompt_type)
         
         messages = await self.chat_repository.get_chat_messages(session.id)
@@ -180,7 +180,7 @@ class ChatService:
             lesson = await self.course_repository.get_lesson(session.resource_id)
             
             prompt = LessonDiscussionPrompt()
-            return prompt.get_responses(
+            async for chunk in prompt.get_responses(
                 history=model_messages,
                 new_message=input_msg,
                 lesson_content="\n\n".join(
@@ -189,6 +189,7 @@ class ChatService:
                         for section in lesson.sections
                     ]
                 )
-            )
-            
-        raise ValueError("Invalid prompt type")
+            ):
+                yield chunk
+        else:
+            raise ValueError("Invalid prompt type")

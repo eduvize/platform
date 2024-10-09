@@ -1,40 +1,46 @@
 import logging
-from typing import Generator, List, Tuple
+from typing import AsyncGenerator, List, Tuple
 from ai.prompts import BasePrompt
 from ai.common import BaseChatMessage, BaseChatResponse, BaseTool
 from domain.dto.ai import CompletionChunk
 
 class BaseModel:
-    def get_responses(self, prompt: BasePrompt) -> List[BaseChatResponse]:
+    async def get_responses(self, prompt: BasePrompt) -> List[BaseChatResponse]:
         """
-        Performs a streaming request to the AI model and returns the final response synchronously
+        Performs a streaming request to the AI model and returns the final response asynchronously
 
         Args:
             prompt (BasePrompt): The prompt to send to the AI model
 
         Returns:
             List[BaseChatResponse]: The final response from the AI model
-        """
-        generator = self.get_streaming_response(prompt)
 
-        while True:
-            try:
-                next(generator)
-            except StopIteration as e:
-                return e.value
-    
-    def get_streaming_response(self, prompt: BasePrompt) -> Generator[CompletionChunk, None, List[BaseChatResponse]]:
+        Raises:
+            Exception: If an unexpected error occurs during the streaming process
         """
-        Performs a streaming request to the AI model and returns the response as a generator
+        try:
+            async for chunk, is_final in self.get_streaming_response(prompt):
+                if is_final:
+                    # The next yield will contain the final responses
+                    final_chunk, responses = await self.get_streaming_response(prompt).__anext__()
+                    return responses
+        except Exception as e:
+            # Log the unexpected error
+            logging.error(f"Unexpected error in get_responses: {str(e)}")
+            raise
+
+    async def get_streaming_response(self, prompt: BasePrompt) -> AsyncGenerator[Tuple[CompletionChunk, bool], None]:
+        """
+        Performs a streaming request to the AI model and returns the response as an async generator
 
         Args:
             prompt (BasePrompt): The prompt to send to the AI model
 
         Yields:
-            Generator[CompletionChunk, None, List[BaseChatResponse]]: Metadata about the completion chunk
+            Tuple[CompletionChunk, bool]: Metadata about the completion chunk and a boolean indicating if it's the final chunk
             
         Returns:
-            List[BaseChatResponse]: The final response from the AI model
+            None
         """
         raise NotImplementedError("Method not implemented")
     

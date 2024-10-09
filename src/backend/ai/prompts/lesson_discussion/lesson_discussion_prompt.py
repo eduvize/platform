@@ -1,5 +1,5 @@
 import logging
-from typing import Generator, List
+from typing import AsyncGenerator, List
 from ai.prompts.base_prompt import BasePrompt
 from ai.common import BaseChatResponse, BaseChatMessage, ChatRole
 from domain.dto.ai.completion_chunk import CompletionChunk
@@ -11,12 +11,12 @@ You are a helpful assistant who answers questions and helps students comprehend 
 You will not go off topic and will only discuss the lesson content.
 """.strip())
     
-    def get_responses(
+    async def get_responses(
         self,
         history: List[BaseChatMessage],
         lesson_content: str,
         new_message: str
-    ) -> Generator[CompletionChunk, None, List[BaseChatResponse]]:
+    ) -> AsyncGenerator[CompletionChunk, None]:
         from ai.models.gpt_4o import GPT4o
         model = GPT4o()
         
@@ -38,8 +38,5 @@ Lesson content:
         
         response_generator = model.get_streaming_response(self)
         
-        while True:
-            try:
-                yield next(response_generator)
-            except StopIteration as e:
-                return e.value
+        async for chunk in response_generator:
+            yield chunk

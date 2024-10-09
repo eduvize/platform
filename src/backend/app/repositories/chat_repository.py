@@ -23,6 +23,8 @@ class ChatRepository:
 
         Args:
             user_id (uuid.UUID): The user that owns the chat session
+            prompt_type (str): The type of prompt for this session
+            resource_id (Optional[uuid.UUID]): The associated resource ID, if any
 
         Returns:
             ChatSession: The created chat session
@@ -50,8 +52,9 @@ class ChatRepository:
         Adds a message to a chat session
 
         Args:
-            user_id (str): The user that owns the chat session
-            message_dto (ChatMessageDto): The message to add
+            session_id (uuid.UUID): The ID of the chat session
+            is_user (bool): Whether the message is from the user
+            content (Optional[str]): The content of the message
 
         Returns:
             ChatMessage: The added message
@@ -76,7 +79,17 @@ class ChatRepository:
         tool_name: str,
         arguments: str,
         result: str
-    ):
+    ) -> None:
+        """
+        Adds a tool message to a chat message
+
+        Args:
+            message_id (uuid.UUID): The ID of the associated chat message
+            call_id (str): The ID of the tool call
+            tool_name (str): The name of the tool
+            arguments (str): The arguments passed to the tool
+            result (str): The result of the tool call
+        """
         async with AsyncSession(async_engine) as session:
             tool_call = ChatToolCall(
                 message_id=message_id,
@@ -115,7 +128,6 @@ class ChatRepository:
         Gets all messages in a chat session
 
         Args:
-            user_id (uuid.UUID): The user that owns the chat session
             session_id (uuid.UUID): The chat session to get messages for
 
         Returns:
@@ -136,7 +148,7 @@ class ChatRepository:
             query = query.limit(50)
             
             result = await session.execute(query)
-            messages = result.unique().all()
+            messages = result.scalars().unique().all()
             messages.reverse()
             
             return messages

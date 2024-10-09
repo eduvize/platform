@@ -13,11 +13,11 @@ If there is an exact match, you will make sure you provide it as the first optio
         
         self.use_tool(ProvideOptionsTool, force=True)
         
-    def get_options(self) -> List[str]:
+    async def get_options(self) -> List[str]:
         from ...models.gpt_4o_mini import GPT4oMini
         
         model = GPT4oMini()
-        model.get_responses(self)
+        await model.get_responses(self)
         call = self.get_tool_call(ProvideOptionsTool)
         
         if not call.result:
