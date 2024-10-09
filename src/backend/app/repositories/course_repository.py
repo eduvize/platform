@@ -245,7 +245,7 @@ class CourseRepository:
             )
 
             result = await session.execute(query)
-            lesson = result.scalar_one_or_none()
+            lesson = result.unique().scalar_one_or_none()
 
             return lesson
         
