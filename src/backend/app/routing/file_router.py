@@ -19,4 +19,4 @@ async def get_resume_details(file: UploadFile = File(...)):
     
     images = get_images_from_pdf_bytes(await file.read())
     
-    return ResumeScannerPrompt().get_profile_data(images)
+    return await ResumeScannerPrompt().get_profile_data(images)
