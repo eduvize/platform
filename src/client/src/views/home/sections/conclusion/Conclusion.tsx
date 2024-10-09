@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 export const Conclusion = () => {
     return (
         <Stack mt="xl">
-            <Title ff="Roboto" c="white" ta="center">
+            <Title c="white" ta="center">
                 So, what are you waiting for?
             </Title>
 

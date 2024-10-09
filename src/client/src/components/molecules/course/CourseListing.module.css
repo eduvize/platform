@@ -4,7 +4,7 @@
     height: 20em !important;
 }
 
-.courseCard:hover {
+.courseReady:hover {
     cursor: pointer;
-    transform: scale(1.05) rotate(0.3deg);
+    transform: scale(1.05);
 }

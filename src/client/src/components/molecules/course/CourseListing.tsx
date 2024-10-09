@@ -13,6 +13,7 @@ export const CourseListing = ({
     cover_image_url,
     progress,
     is_generating,
+    generation_progress,
     onClick,
 }: CourseListingProps) => {
     return (
@@ -20,13 +21,21 @@ export const CourseListing = ({
             <Card
                 pos="relative"
                 withBorder
-                className={classes.courseCard}
+                className={`${classes.courseCard} ${
+                    is_generating ? "new" : classes.courseReady
+                }`}
                 bg={
                     is_new
                         ? undefined
                         : `url(${cover_image_url}) center / cover`
                 }
-                onClick={onClick}
+                onClick={() => {
+                    if (is_generating) {
+                        return;
+                    }
+
+                    onClick();
+                }}
                 styles={{
                     root: {
                         padding: 0,
@@ -68,7 +77,7 @@ export const CourseListing = ({
                                 }
                             >
                                 {is_generating
-                                    ? `${progress}% generated`
+                                    ? `${generation_progress}% generated`
                                     : `${progress}% complete`}
                             </Text>
                         </Box>
