@@ -63,3 +63,6 @@ sqlalchemy[asyncio]
 requests
 confluent-kafka
 types-confluent-kafka
+aiohttp
+aioredis
+aiokafka
