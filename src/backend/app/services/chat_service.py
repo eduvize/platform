@@ -8,6 +8,7 @@ from .instructor_service import InstructorService
 from app.repositories import ChatRepository, CourseRepository
 from domain.schema.chat.chat_message import ChatMessage
 from domain.schema.chat.chat_session import ChatSession
+from domain.schema.instructors.instructor import Instructor
 from domain.dto.chat.chat_message import ChatMessageDto
 from domain.dto.ai import CompletionChunk
 from domain.enums.chat_enums import PromptType
@@ -107,11 +108,13 @@ class ChatService:
             raise ValueError("User not found")
         
         session = await self.chat_repository.get_session(session_id)
+        instructor = await self.instructor_service.get_instructor_by_id(session.instructor_id)
         
         logger.info(f"Preparing to generate chat response for user {user.id}, session {session.id}")
 
         response_generator = self.get_prompt_generator(
             session=session,
+            instructor=instructor,
             input_msg=message
         )
         
@@ -127,7 +130,8 @@ class ChatService:
         await self._add_message(
             session_id=session_id, 
             is_user=True, 
-            message=message
+            message=message,
+            sender_id=user.id
         )
         
         for new_message in messages:
@@ -135,7 +139,8 @@ class ChatService:
                 session_id=session_id, 
                 is_user=new_message.role == ChatRole.USER, 
                 message=new_message.message, 
-                tool_calls=new_message.tool_calls
+                tool_calls=new_message.tool_calls,
+                sender_id=instructor.id
             )
     
     def _get_chat_messages(
@@ -172,7 +177,8 @@ class ChatService:
             
     async def _add_message(
         self, 
-        session_id: uuid.UUID, 
+        session_id: uuid.UUID,
+        sender_id: uuid.UUID,
         is_user: bool, 
         message: str,
         tool_calls: List[BaseToolCallWithResult] = []
@@ -180,7 +186,8 @@ class ChatService:
         added_msg = await self.chat_repository.add_chat_message(
             session_id=session_id, 
             is_user=is_user, 
-            content=message
+            content=message,
+            sender_id=sender_id
         )
         
         if tool_calls:
@@ -196,6 +203,7 @@ class ChatService:
     async def get_prompt_generator(
         self,
         session: ChatSession,
+        instructor: Instructor,
         input_msg: str
     ) -> AsyncGenerator[CompletionChunk, None]:
         p_type = PromptType(session.prompt_type)
@@ -206,16 +214,6 @@ class ChatService:
         if p_type == PromptType.LESSON:
             if session.resource_id is None:
                 raise ValueError("Resource ID is required for lesson prompt")
-            
-            # Get the user's instructor
-            instructor = await self.instructor_service.get_user_instructor(session.user_id)
-            
-            if not instructor:
-                # Get the first instructor
-                instructor = (await self.instructor_service.get_all_instructors())[0]
-                
-                if not instructor:
-                    raise ValueError("Instructor not found")
 
             lesson = await self.course_repository.get_lesson(session.resource_id)
             

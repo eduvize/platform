@@ -8,6 +8,8 @@ class ChatMessageBase(SQLModel):
     session_id: uuid.UUID               = Field(default=None, foreign_key="chat_sessions.id")
     is_user: bool                       = Field(nullable=False)
     content: Optional[str]              = Field()
+    instructor_id: Optional[uuid.UUID]  = Field(nullable=True, foreign_key="instructors.id")
+    user_id: Optional[uuid.UUID]        = Field(nullable=True, foreign_key="users.id")
     created_at_utc: datetime            = Field(nullable=False, default_factory=datetime.utcnow)
 
 class ChatMessage(ChatMessageBase, table=True):
