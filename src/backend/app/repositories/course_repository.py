@@ -244,8 +244,8 @@ class CourseRepository:
                 )
             )
 
-            result = await session.execute(query)
-            lesson = result.unique().scalar_one_or_none()
+            result = await session.exec(query)
+            lesson = result.unique().one_or_none()
 
             return lesson
         
@@ -259,8 +259,6 @@ class CourseRepository:
         Returns:
             Optional[Course]: The course if found, None otherwise.
         """
-        from sqlalchemy.orm import with_loader_criteria
-
         async for session in get_async_session():
             query = (
                 select(Course)
@@ -273,14 +271,11 @@ class CourseRepository:
                     .joinedload(Module.lessons)
                     .joinedload(Lesson.exercises)
                     .joinedload(CourseExercise.objectives),
-                    with_loader_criteria(
-                        CourseExercise, CourseExercise.is_unavailable == False
-                    ),
                 )
             )
 
-            result = await session.execute(query)
-            course = result.unique().scalar_one_or_none()
+            result = await session.exec(query)
+            course = result.unique().one_or_none()
 
             if course is None:
                 return None
