@@ -166,7 +166,7 @@ async def test_generate_course(
     mock_kafka_inst.return_value = mock_kafka_producer
     mock_kafka_producer.produce_message = AsyncMock()
     
-    course_service.generate_cover_image = Mock(return_value="cover_image_url")
+    course_service.generate_cover_image = AsyncMock(return_value="cover_image_url")
     
     # Mock course repository
     course_service.course_repo.create_course = AsyncMock(return_value=course_id)
@@ -333,12 +333,12 @@ async def test_generate_cover_image(course_service):
     # Mock OpenAI response
     mock_response = MagicMock()
     mock_response.data = [MagicMock(url="generated_image_url")]
-    course_service.openai = MagicMock(images=MagicMock())
-    course_service.openai.images.generate = MagicMock(return_value=mock_response)
+    course_service.openai = MagicMock(images=AsyncMock())
+    course_service.openai.images.generate = AsyncMock(return_value=mock_response)
     
-    result = course_service.generate_cover_image(subject="Python")
+    result = await course_service.generate_cover_image(subject="Python")
     
-    course_service.openai.images.generate.assert_called_once_with(
+    course_service.openai.images.generate.assert_awaited_once_with(
         model="dall-e-3",
         prompt="Icon of Python, dark background, cinema 4d, isomorphic",
         size="1024x1024",

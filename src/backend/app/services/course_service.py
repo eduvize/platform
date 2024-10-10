@@ -2,7 +2,7 @@ import logging
 from typing import Optional
 import uuid
 from fastapi import Depends
-from openai import OpenAI
+from openai import AsyncOpenAI as OpenAI
 
 from domain.dto.courses.exercise_plan import ExercisePlan
 from .user_service import UserService
@@ -101,7 +101,7 @@ class CourseService:
         )
         
         # Generate a cover image for the course
-        cover_image_url = self.generate_cover_image(outline.course_subject)
+        cover_image_url = await self.generate_cover_image(outline.course_subject)
         cover_image_obj_id = await import_from_url(cover_image_url, StoragePurpose.COURSE_ASSET)
         
         # Set the cover image URL to the public URL
@@ -264,8 +264,8 @@ class CourseService:
     ) -> None:
         await self.course_repo.set_objective_status(objective_id, is_complete)
 
-    def generate_cover_image(self, subject: str) -> str:
-        response = self.openai.images.generate(
+    async def generate_cover_image(self, subject: str) -> str:
+        response = await self.openai.images.generate(
             model="dall-e-3",
             prompt=f"Icon of {subject}, dark background, cinema 4d, isomorphic",
             size="1024x1024",
