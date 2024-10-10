@@ -1,6 +1,6 @@
 import { useCourse } from "@context/course/hooks";
 import { Group, UnstyledButton, Divider, Box, Text } from "@mantine/core";
-import { LessonNavItem } from "@molecules";
+import { LessonNavItem } from "@atoms";
 import { IconSquareMinusFilled } from "@tabler/icons-react";
 import { useMemo } from "react";
 import { Link } from "react-router-dom";

@@ -8,11 +8,10 @@ import {
     Space,
     List,
     Checkbox,
-    Avatar,
     Text,
 } from "@mantine/core";
 import { IconSquareMinusFilled } from "@tabler/icons-react";
-import { Chat } from "../chat";
+import { Chat } from "../../organisms/chat";
 import { useResizeObserver, useViewportSize } from "@mantine/hooks";
 import { useEffect, useState } from "react";
 import { useExercise, useExerciseObjectives } from "@context/exercise/hooks";

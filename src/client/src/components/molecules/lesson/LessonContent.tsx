@@ -1,6 +1,6 @@
 import { Stack, Group, Button, Card, Box, Space, Text } from "@mantine/core";
-import { ReadingMaterial } from "@molecules";
-import { Playground } from "../playground";
+import { ReadingMaterial } from "@atoms";
+import { Playground } from "../../organisms/playground";
 import { useExercise, useExerciseObjectives } from "@context/exercise/hooks";
 import { useLesson } from "@context/course/hooks";
 

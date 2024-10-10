@@ -8,7 +8,7 @@ import {
     Group,
     UnstyledButton,
 } from "@mantine/core";
-import { InstructorPane, LessonContent, NavigationPane } from "@organisms";
+import { InstructorPane, LessonContent, NavigationPane } from "@molecules";
 import { IconList } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
