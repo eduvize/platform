@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users
     email TEXT NOT NULL,
     password_hash TEXT,
     pending_verification BOOLEAN NOT NULL DEFAULT FALSE,
+    default_instructor_id UUID NOT NULL,
     verification_code TEXT,
     verification_sent_at_utc TIMESTAMP WITHOUT TIME ZONE,
     created_at_utc TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
@@ -269,6 +270,15 @@ ALTER TABLE course_exercises ADD COLUMN playground_environment_id UUID REFERENCE
 
 -- Add environment_id to course_exercises
 ALTER TABLE course_exercises ADD COLUMN environment_id UUID REFERENCES playground_environments(id);
+
+-- Create table for Instructors
+CREATE TABLE IF NOT EXISTS instructors (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    alias TEXT NOT NULL,
+    image_url TEXT NOT NULL,
+    personality_prompt TEXT NOT NULL
+);
 
 -- Bcrypt hash for the password "testpassword"
 DO $$
