@@ -46,6 +46,6 @@ class InstructorService:
             Optional[Instructor]: The instructor record if found, otherwise None.
         """
         user = await self.user_service.get_user("id", user_id)
-        if user and user.instructor_id:
-            return await self.get_instructor_by_id(user.instructor_id)
+        if user and user.default_instructor_id:
+            return await self.get_instructor_by_id(user.default_instructor_id)
         return None
