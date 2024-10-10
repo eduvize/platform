@@ -6,6 +6,8 @@ export interface ToolCall {
 export interface ChatMessageDto {
     is_user: boolean;
     content: string;
+    user_id?: string;
+    instructor_id?: string;
     create_at_utc: string;
     tool_calls?: ToolCall[];
 }

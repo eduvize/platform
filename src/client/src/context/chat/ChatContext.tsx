@@ -8,6 +8,7 @@ import { createContext } from "use-context-selector";
 
 type Context = {
     localPartyAvatarUrl: string | null;
+    instructorId: string | null;
     messages: ChatMessageDto[];
     pendingTools: string[];
     toolResults: Record<string, any | null>;
@@ -19,6 +20,7 @@ type Context = {
 
 const defaultValue: Context = {
     localPartyAvatarUrl: null,
+    instructorId: null,
     messages: [],
     pendingTools: [],
     toolResults: {},
@@ -48,25 +50,29 @@ export const ChatProvider = ({
     const [toolResults, setToolResults] = useState<Record<string, any | null>>(
         {}
     );
+    const [instructorId, setInstructorId] = useState<string | null>(null);
     const [receiveBuffer, setReceiveBuffer] = useState<string>("");
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [greeting, setGreeting] = useState<string>("");
     const [messages, setMessages] = useState<ChatMessageDto[]>([]);
 
     const handleSetup = () => {
-        ChatApi.createSession(prompt, resourceId).then(({ session_id }) => {
-            setSessionId(session_id);
+        ChatApi.createSession(prompt, resourceId).then(
+            ({ id: session_id, instructor_id }) => {
+                setSessionId(session_id);
+                setInstructorId(instructor_id);
 
-            if (greeting) {
-                setMessages([
-                    {
-                        is_user: false,
-                        content: greeting,
-                        create_at_utc: new Date().toISOString(),
-                    },
-                ]);
+                if (greeting) {
+                    setMessages([
+                        {
+                            is_user: false,
+                            content: greeting,
+                            create_at_utc: new Date().toISOString(),
+                        },
+                    ]);
+                }
             }
-        });
+        );
     };
 
     useEffect(() => {
@@ -184,7 +190,7 @@ export const ChatProvider = ({
         );
     };
 
-    if (!sessionId || !localUser) {
+    if (!sessionId || !localUser || !instructorId) {
         return (
             <Center>
                 <Loader type="dots" />
@@ -196,6 +202,7 @@ export const ChatProvider = ({
         <ChatContext.Provider
             value={{
                 localPartyAvatarUrl: localUser.profile?.avatar_url,
+                instructorId,
                 messages,
                 pendingTools: pendingToolNames,
                 toolResults,

@@ -1,13 +1,17 @@
-import { ChatMessagePayload, CreateSessionResponse } from "@contracts";
+import { ChatMessagePayload } from "@contracts";
 import BaseApi from "./BaseApi";
-import { ChatMessageDto, CompletionChunkDto } from "@models/dto";
+import {
+    ChatMessageDto,
+    ChatSessionDto,
+    CompletionChunkDto,
+} from "@models/dto";
 import { ChatPromptType } from "@models/enums";
 
 class ChatApi extends BaseApi {
     createSession(
         prompt: ChatPromptType,
         resourceId?: string
-    ): Promise<CreateSessionResponse> {
+    ): Promise<ChatSessionDto> {
         const urlParams = new URLSearchParams();
 
         urlParams.append("type", prompt);
@@ -16,9 +20,7 @@ class ChatApi extends BaseApi {
             urlParams.append("id", resourceId);
         }
 
-        return this.get<CreateSessionResponse>(
-            `session?${urlParams.toString()}`
-        );
+        return this.get<ChatSessionDto>(`session?${urlParams.toString()}`);
     }
 
     sendMessage(
