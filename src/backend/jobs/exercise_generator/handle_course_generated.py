@@ -6,7 +6,7 @@ from common.messaging import Topic, KafkaConsumer, KafkaProducer
 from domain.topics import CourseGeneratedTopic, BuildPlaygroundTopic
 from domain.dto.courses.exercise_plan import ExercisePlan
 
-def create_exercise(
+async def create_exercise(
     user_id: uuid.UUID, 
     exercise: ExercisePlan, 
     lesson_id: uuid.UUID,
@@ -18,7 +18,7 @@ def create_exercise(
 
     # Create an environment for the exercise
     logging.info("Creating environment record for exercise")
-    environment_id = playground_repo.create_environment(
+    environment_id = await playground_repo.create_environment(
         user_id=user_id,
         docker_base_image=exercise.docker_image,
         description=exercise.scenario
@@ -27,7 +27,7 @@ def create_exercise(
 
     # Create the exercise
     logging.info("Creating exercise record")
-    exercise_id = course_repo.create_exercise(
+    exercise_id = await course_repo.create_exercise(
         lesson_id=lesson_id,
         environment_id=environment_id,
         title=exercise.title,
@@ -50,7 +50,7 @@ def create_exercise(
     
     logging.info("Sent build playground event")
 
-def listen_for_course_generated_events():
+async def listen_for_course_generated_events():
     """
     Listens for events that indicate a new course has been generated and then generates exercises for each lesson in the course if applicable.
     
@@ -72,7 +72,7 @@ def listen_for_course_generated_events():
         
         try:
             # Get the course
-            course = course_repo.get_course(data.course_id)
+            course = await course_repo.get_course(data.course_id)
             
             if course is None:
                 logging.error(f"Course not found: {data.course_id}. Skipping...")
@@ -81,7 +81,7 @@ def listen_for_course_generated_events():
             
             total_lessons = sum([len(module.lessons) for module in course.modules])
             
-            lessons_to_generate = SelectExerciseLessonsPrompt().get_best_lessons(course, max_lessons=total_lessons / 2)
+            lessons_to_generate = await SelectExerciseLessonsPrompt().get_best_lessons(course, max_lessons=total_lessons / 2)
             
             # Iterate over each lesson in each module to generate potential exercises
             for lesson in lessons_to_generate:
@@ -103,10 +103,10 @@ Lesson content:
 """
                     
                     prompt = GenerateExercisesPrompt()
-                    lesson_exercise = prompt.get_exercise(lesson_content)
+                    lesson_exercise = await prompt.get_exercise(lesson_content)
                     
                     if lesson_exercise:
-                        create_exercise(
+                        await create_exercise(
                             user_id=course.user_id,
                             exercise=lesson_exercise,
                             lesson_id=lesson.id,

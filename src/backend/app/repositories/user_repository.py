@@ -15,8 +15,8 @@ from domain.mapping import (
     map_skill_data, 
     map_discipline_data
 )
-from domain.schema.user import User, UserExternalAuth, UserIdentifiers, UserProfile
-from app.utilities.database import recursive_load_options, set_none_for_unavailable_relationships
+from domain.schema.user import User, UserExternalAuth, UserIdentifiers, UserProfile, UserProfileHobby, UserProfileProfessional, UserProfileStudent
+from app.utilities.database import set_none_for_unavailable_relationships
 from common.database import get_async_session
 
 class UserRepository:
@@ -166,23 +166,33 @@ class UserRepository:
                 query = query.where(User.email == value)
             elif by == "verification_code":
                 query = query.where(
-                    User.verification_code == value and 
-                    User.pending_verification == True and 
-                    User.verification_code is not None
+                    User.verification_code == value,
+                    User.pending_verification == True,
+                    User.verification_code.is_not(None)
                 )
-            
-            if include:
-                for field in include:
-                    query = query.options(*recursive_load_options(User, field))
-                    
+
+            # Join the external auth
             query = query.options(joinedload(User.external_auth))
+            
+            # Join the profile with hobbies, professional, student, and skills
+            # Load the entire profile with all related data
+            query = query.options(
+                joinedload(User.profile).joinedload(UserProfile.hobby).joinedload(UserProfileHobby.reasons),
+                joinedload(User.profile).joinedload(UserProfile.hobby).joinedload(UserProfileHobby.projects),
+                joinedload(User.profile).joinedload(UserProfile.hobby).joinedload(UserProfileHobby.skills),
+                joinedload(User.profile).joinedload(UserProfile.professional).joinedload(UserProfileProfessional.employers),
+                joinedload(User.profile).joinedload(UserProfile.student).joinedload(UserProfileStudent.schools),
+                joinedload(User.profile).joinedload(UserProfile.skills),
+                joinedload(User.profile).joinedload(UserProfile.disciplines),
+            )
         
             result = await session.execute(query)
-            record = result.scalar_one_or_none()
+            record = result.unique().scalar_one_or_none()
             
             if record:
                 set_none_for_unavailable_relationships(record, include)
-            
+     
+                       
             return record
         
     async def set_verification_code(self, user_id: UUID, code: str) -> None:

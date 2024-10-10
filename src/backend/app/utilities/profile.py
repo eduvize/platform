@@ -129,12 +129,10 @@ def get_hobby_text(hobby: UserProfileHobbyDto):
 {projects_str}""";
     
 def get_education_text(education: UserProfileStudentDto):
-    attendance_str = "I am currently attending" if education.is_current else f"I attendeded from {education.start_month} to {education.end_month}"
-    
     schools_str = "\n".join([
         f"""
 ### {school.school_name}
-{attendance_str}
+{"I am currently attending" if school.is_current else f"I attended from {school.start_date} to {school.end_date}"}
 Focus: {school.focus}"""
         for school in education.schools
     ])

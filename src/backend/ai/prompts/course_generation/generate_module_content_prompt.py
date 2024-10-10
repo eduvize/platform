@@ -1,5 +1,3 @@
-import json
-import logging
 from typing import Callable
 from ai.prompts.base_prompt import BasePrompt
 from .models import CourseOutline, ModuleOutline
@@ -82,7 +80,7 @@ Please provide content for the following section: {section.title}. {section.desc
                 
                 if progress_cb:
                     current_section += 1
-                    progress_cb(current_section)
+                    await progress_cb(current_section)
 
             module_dto.lessons.append(lesson_dto)
                 

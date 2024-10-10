@@ -19,17 +19,15 @@ class BaseModel:
             Exception: If an unexpected error occurs during the streaming process
         """
         try:
-            async for chunk, is_final in self.get_streaming_response(prompt):
+            async for _, responses, is_final in self.get_streaming_response(prompt):
                 if is_final:
-                    # The next yield will contain the final responses
-                    final_chunk, responses = await self.get_streaming_response(prompt).__anext__()
                     return responses
         except Exception as e:
             # Log the unexpected error
             logging.error(f"Unexpected error in get_responses: {str(e)}")
             raise
 
-    async def get_streaming_response(self, prompt: BasePrompt) -> AsyncGenerator[Tuple[CompletionChunk, bool], None]:
+    async def get_streaming_response(self, prompt: BasePrompt) -> AsyncGenerator[Tuple[CompletionChunk, list[BaseChatResponse], bool], None]:
         """
         Performs a streaming request to the AI model and returns the response as an async generator
 

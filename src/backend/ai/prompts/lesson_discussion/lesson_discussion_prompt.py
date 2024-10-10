@@ -38,5 +38,4 @@ Lesson content:
         
         response_generator = model.get_streaming_response(self)
         
-        async for chunk in response_generator:
-            yield chunk
+        return response_generator

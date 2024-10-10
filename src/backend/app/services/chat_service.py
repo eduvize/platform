@@ -180,7 +180,7 @@ class ChatService:
             lesson = await self.course_repository.get_lesson(session.resource_id)
             
             prompt = LessonDiscussionPrompt()
-            async for chunk in prompt.get_responses(
+            async for chunk, _, is_final in await prompt.get_responses(
                 history=model_messages,
                 new_message=input_msg,
                 lesson_content="\n\n".join(
@@ -190,6 +190,7 @@ class ChatService:
                     ]
                 )
             ):
-                yield chunk
+                if not is_final:
+                    yield chunk
         else:
             raise ValueError("Invalid prompt type")

@@ -58,7 +58,7 @@ class CourseService:
         
         prompt = GetAdditionalInputsPrompt()
         
-        return prompt.get_inputs(
+        return await prompt.get_inputs(
             plan=plan,
             profile_text=user_profile_text
         )
@@ -87,7 +87,7 @@ class CourseService:
         
         # Generate a course outline based on user requirements and profile
         prompt = GenerateCourseOutlinePrompt()
-        outline = prompt.get_outline(
+        outline = await prompt.get_outline(
             plan=plan,
             profile_text=user_profile_text
         )

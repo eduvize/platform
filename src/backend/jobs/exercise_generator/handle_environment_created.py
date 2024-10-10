@@ -4,7 +4,7 @@ from common.messaging import Topic, KafkaConsumer
 from domain.topics import EnvironmentCreatedTopic
 from domain.enums.playground_enums import EnvironmentType
 
-def listen_for_environment_created_events():
+async def listen_for_environment_created_events():
     """
     Listens for events that indicate a playground image has been built and is ready to add to the exercise entity.
     """
@@ -29,9 +29,9 @@ def listen_for_environment_created_events():
             
             logging.info(f"Setting environment image tag: {data.image_tag} for environment: {data.environment_id}")
             
-            course_repo.remove_exercise_setup_error(data.resource_id)
+            await course_repo.remove_exercise_setup_error(data.resource_id)
             
-            playground_repo.set_environment_image_tag_and_type(
+            await playground_repo.set_environment_image_tag_and_type(
                 environment_id=data.environment_id,
                 image_tag=data.image_tag,
                 env_type=EnvironmentType.EXERCISE,

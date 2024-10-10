@@ -56,7 +56,7 @@ class BaseGPT(BaseModel):
     async def get_streaming_response(
         self, 
         prompt: BasePrompt
-    ) -> AsyncGenerator[Tuple[CompletionChunk, bool], None]:
+    ) -> AsyncGenerator[Tuple[CompletionChunk, list[BaseChatResponse], bool], None]:
         responses: List[BaseChatResponse] = []
         
         # Create an initial message list based on the prompt, this may be added to later
@@ -164,7 +164,7 @@ class BaseGPT(BaseModel):
                             for record in tool_call_dict
                             if prompt.is_tool_public(record.name)
                         ]
-                    ), False
+                    ), [], False
                             
                 if chunk.choices[0].finish_reason:
                     finish_reason = chunk.choices[0].finish_reason
@@ -243,8 +243,8 @@ Correct the errors in tool arguments and try again.
             else:
                 break
 
-            # The final yield includes the responses
-            yield CompletionChunk.model_construct(), responses
+        # The final yield includes the responses
+        yield CompletionChunk.model_construct(), responses, True
         
     def get_messages(
         self, 
