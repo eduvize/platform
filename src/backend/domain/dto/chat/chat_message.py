@@ -25,4 +25,5 @@ class ChatMessageDto(ChatMessageBase):
     is_user: bool
     content: Optional[str] = None
     tool_calls: list[ChatToolCallDto] = []
+    instructor_id: Optional[uuid.UUID] = None
     created_at_utc: datetime

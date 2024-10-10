@@ -9,11 +9,11 @@ UserIdentifiers = Literal["id", "username", "email", "verification_code"]
 UserIncludes = Literal["profile"]
 
 class UserBase(SQLModel):
-    username: str                           = Field(unique=True)
-    email: str                              = Field(unique=True)
-    pending_verification: bool              = Field(default=True, nullable=False)
-    verification_code: Optional[str]
-    created_at_utc: datetime            = Field(nullable=False, default_factory=datetime.utcnow)
+    username: str                               = Field(unique=True)
+    email: str                                  = Field(unique=True)
+    pending_verification: bool                  = Field(default=True, nullable=False)
+    default_instructor_id: uuid.UUID            = Field(nullable=False)
+    created_at_utc: datetime                    = Field(nullable=False, default_factory=datetime.utcnow)
 
 class User(UserBase, table=True):
     __tablename__ = "users"

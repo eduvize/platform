@@ -16,6 +16,7 @@ from domain.mapping import (
     map_discipline_data
 )
 from domain.schema.user import User, UserExternalAuth, UserIdentifiers, UserProfile, UserProfileHobby, UserProfileProfessional, UserProfileStudent
+from domain.schema.instructors import Instructor
 from app.utilities.database import set_none_for_unavailable_relationships
 from common.database import get_async_session
 
@@ -51,6 +52,16 @@ class UserRepository:
         user.profile = UserProfile()
         
         async for session in get_async_session():
+            # Get the first instructor (TODO: Let them choose)
+            instructor_query = select(Instructor).order_by(Instructor.id).limit(1)
+            result = await session.exec(instructor_query)
+            instructor = result.one_or_none()
+            
+            if instructor is None:
+                raise Exception("No instructor found")
+            
+            user.default_instructor_id = instructor.id
+            
             session.add(user)
             await session.commit()
             await session.refresh(user)
@@ -68,9 +79,9 @@ class UserRepository:
         """
         async for session in get_async_session():
             user_query = select(User).where(User.id == user_id)
-            result = await session.execute(user_query)
+            result = await session.exec(user_query)
+            user = result.one_or_none()
             
-            user = result.scalar_one_or_none()
             if user is None:
                 return None
             

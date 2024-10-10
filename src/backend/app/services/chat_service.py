@@ -4,9 +4,11 @@ from typing import AsyncGenerator, List, Optional
 from fastapi import Depends
 from ai.common import BaseChatMessage, BaseToolCallWithResult, ChatRole
 from .user_service import UserService
+from .instructor_service import InstructorService
 from app.repositories import ChatRepository, CourseRepository
 from domain.schema.chat.chat_message import ChatMessage
 from domain.schema.chat.chat_session import ChatSession
+from domain.schema.instructors.instructor import Instructor
 from domain.dto.chat.chat_message import ChatMessageDto
 from domain.dto.ai import CompletionChunk
 from domain.enums.chat_enums import PromptType
@@ -16,16 +18,19 @@ logger = logging.getLogger("ChatService")
 
 class ChatService:
     user_service: UserService
+    instructor_service: InstructorService
     chat_repository: ChatRepository
     course_repository: CourseRepository
     
     def __init__(
         self, 
         user_service: UserService = Depends(UserService),
+        instructor_service: InstructorService = Depends(InstructorService),
         chat_repository: ChatRepository = Depends(ChatRepository),
         course_repository: CourseRepository = Depends(CourseRepository)
     ):
         self.user_service = user_service
+        self.instructor_service = instructor_service
         self.chat_repository = chat_repository
         self.course_repository = course_repository
 
@@ -34,19 +39,45 @@ class ChatService:
         user_id: str,
         prompt_type: PromptType,
         resource_id: Optional[uuid.UUID] = None
-    ) -> uuid.UUID:
+    ) -> ChatSession:
+        """
+        Creates a new chat session for a user.
+
+        Args:
+            user_id (str): The ID of the user creating the session.
+            prompt_type (PromptType): The type of prompt for this chat session.
+            resource_id (Optional[uuid.UUID], optional): The ID of the associated resource, if any. Defaults to None.
+
+        Returns:
+            uuid.UUID: The ID of the newly created chat session.
+
+        Raises:
+            ValueError: If the user or instructor is not found.
+        """
+        # Fetch the user from the database
         user = await self.user_service.get_user("id", user_id)
         
+        # Ensure the user exists
         if not user:
             raise ValueError("User not found")
         
+        # Get the instructor associated with the user
+        instructor = await self.instructor_service.get_user_instructor(user.id)
+        
+        # Ensure the instructor exists
+        if not instructor:
+            raise ValueError("Instructor not found")
+        
+        # Create a new chat session in the repository
         session = await self.chat_repository.create_chat_session(
             user_id=user.id,
             prompt_type=prompt_type.value,
-            resource_id=resource_id
+            resource_id=resource_id,
+            instructor_id=instructor.id
         )
         
-        return session.id
+        # Return the ID of the newly created session
+        return session
 
     async def get_history(
         self,
@@ -77,11 +108,13 @@ class ChatService:
             raise ValueError("User not found")
         
         session = await self.chat_repository.get_session(session_id)
+        instructor = await self.instructor_service.get_instructor_by_id(session.instructor_id)
         
         logger.info(f"Preparing to generate chat response for user {user.id}, session {session.id}")
 
         response_generator = self.get_prompt_generator(
             session=session,
+            instructor=instructor,
             input_msg=message
         )
         
@@ -97,7 +130,8 @@ class ChatService:
         await self._add_message(
             session_id=session_id, 
             is_user=True, 
-            message=message
+            message=message,
+            sender_id=user.id
         )
         
         for new_message in messages:
@@ -105,7 +139,8 @@ class ChatService:
                 session_id=session_id, 
                 is_user=new_message.role == ChatRole.USER, 
                 message=new_message.message, 
-                tool_calls=new_message.tool_calls
+                tool_calls=new_message.tool_calls,
+                sender_id=instructor.id
             )
     
     def _get_chat_messages(
@@ -142,7 +177,8 @@ class ChatService:
             
     async def _add_message(
         self, 
-        session_id: uuid.UUID, 
+        session_id: uuid.UUID,
+        sender_id: uuid.UUID,
         is_user: bool, 
         message: str,
         tool_calls: List[BaseToolCallWithResult] = []
@@ -150,7 +186,8 @@ class ChatService:
         added_msg = await self.chat_repository.add_chat_message(
             session_id=session_id, 
             is_user=is_user, 
-            content=message
+            content=message,
+            sender_id=sender_id
         )
         
         if tool_calls:
@@ -166,6 +203,7 @@ class ChatService:
     async def get_prompt_generator(
         self,
         session: ChatSession,
+        instructor: Instructor,
         input_msg: str
     ) -> AsyncGenerator[CompletionChunk, None]:
         p_type = PromptType(session.prompt_type)
@@ -176,11 +214,12 @@ class ChatService:
         if p_type == PromptType.LESSON:
             if session.resource_id is None:
                 raise ValueError("Resource ID is required for lesson prompt")
-            
+
             lesson = await self.course_repository.get_lesson(session.resource_id)
             
             prompt = LessonDiscussionPrompt()
             async for chunk, _, is_final in await prompt.get_responses(
+                instructor=instructor,
                 history=model_messages,
                 new_message=input_msg,
                 lesson_content="\n\n".join(

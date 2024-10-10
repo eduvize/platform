@@ -15,6 +15,7 @@ class ChatRepository:
     async def create_chat_session(
         self,
         user_id: uuid.UUID,
+        instructor_id: uuid.UUID,
         prompt_type: str,
         resource_id: Optional[uuid.UUID] = None
     ) -> ChatSession:
@@ -33,6 +34,7 @@ class ChatRepository:
         async with AsyncSession(async_engine) as session:
             chat_session = ChatSession(
                 user_id=user_id,
+                instructor_id=instructor_id,
                 prompt_type=prompt_type,
                 resource_id=resource_id
             )
@@ -45,6 +47,7 @@ class ChatRepository:
     async def add_chat_message(
         self, 
         session_id: uuid.UUID,
+        sender_id: uuid.UUID,
         is_user: bool,
         content: Optional[str]
     ) -> ChatMessage:
@@ -64,7 +67,9 @@ class ChatRepository:
             chat_message = ChatMessage(
                 session_id=session_id,
                 is_user=is_user,
-                content=content
+                content=content,
+                instructor_id=sender_id if not is_user else None,
+                user_id=sender_id if is_user else None
             )
             session.add(chat_message)
             await session.commit()

@@ -7,6 +7,7 @@ from app.routing.middleware import token_validator, user_id_extractor
 from app.services import ChatService
 from .contracts.chat_contracts import SendChatMessagePayload, CreateSessionResponse
 from domain.enums.chat_enums import PromptType
+from domain.dto.chat.chat_session import ChatSessionDto
 
 router = APIRouter(
     prefix="/chat",
@@ -16,21 +17,17 @@ router = APIRouter(
     ]
 )
 
-@router.get("/session", response_model=CreateSessionResponse)
+@router.get("/session", response_model=ChatSessionDto)
 async def create_session(
     type: PromptType,
     id: Optional[uuid.UUID] = None,
     chat_service: ChatService = Depends(ChatService),
     user_id: str = Depends(user_id_extractor)
 ):
-    session_id = await chat_service.create_session(
+    return await chat_service.create_session(
         user_id=user_id,
         prompt_type=type,
         resource_id=id
-    )
-    
-    return CreateSessionResponse.model_construct(
-        session_id=session_id
     )
 
 @router.post("/{session_id}")
