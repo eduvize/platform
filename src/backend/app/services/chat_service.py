@@ -39,7 +39,7 @@ class ChatService:
         user_id: str,
         prompt_type: PromptType,
         resource_id: Optional[uuid.UUID] = None
-    ) -> uuid.UUID:
+    ) -> ChatSession:
         """
         Creates a new chat session for a user.
 
@@ -77,7 +77,7 @@ class ChatService:
         )
         
         # Return the ID of the newly created session
-        return session.id
+        return session
 
     async def get_history(
         self,
