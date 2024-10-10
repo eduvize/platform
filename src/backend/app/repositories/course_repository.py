@@ -3,20 +3,21 @@ from typing import Optional
 import uuid
 
 from sqlalchemy import update
-from sqlmodel import Session, select
-from sqlalchemy.orm import joinedload, with_loader_criteria
+from sqlmodel import select
+from sqlalchemy.orm import joinedload
+from sqlalchemy.ext.asyncio import AsyncSession
 from domain.schema.courses import Course, Module, Lesson, Section, CourseExercise, CourseExerciseObjective
 from domain.dto.courses.course import CourseDto
 from domain.dto.courses.exercise_plan import ExerciseObjectivePlan
-from common.database import engine
+from common.database import get_async_session
 
 class CourseRepository:
-    def create_course(
+    async def create_course(
         self,
         user_id: uuid.UUID,
         course_dto: CourseDto
     ):
-        with Session(engine) as session:
+        async for session in get_async_session():
             course_entity = Course(
                 title=course_dto.title,
                 description=course_dto.description,
@@ -25,24 +26,23 @@ class CourseRepository:
             )
             
             session.add(course_entity)
-            session.commit()
-            session.refresh(course_entity)
+            await session.commit()
+            await session.refresh(course_entity)
             
             return course_entity.id
         
-    def create_course_content(
+    async def create_course_content(
         self,
         course_id: uuid.UUID,
         course_dto: CourseDto
     ):
-        with Session(engine) as session:
+        async for session in get_async_session():
             query = (
                 select(Course)
                 .where(Course.id == course_id)
             )
-            resultset = session.exec(query)
-            
-            course_entity = resultset.first()
+            result = await session.exec(query)
+            course_entity = result.one_or_none()
             
             if course_entity is None:
                 raise ValueError("Course not found")
@@ -91,65 +91,65 @@ class CourseRepository:
                         
                         session.add(section_entity)
                         
-            session.commit()
-            session.refresh(course_entity)
+            await session.commit()
+            await session.refresh(course_entity)
             
             # Set the first lesson as the current lesson
             course_entity.current_lesson_id = added_lessons[0].id
             
             # save the course entity
-            session.commit()
+            await session.commit()
             
-    def set_generation_progress(
+    async def set_generation_progress(
         self,
         course_id: uuid.UUID,
         progress: int
     ) -> None:
-        with Session(engine) as session:
+        async for session in get_async_session():
             update_query = (
                 update(Course)
                 .where(Course.id == course_id)
                 .values(generation_progress=progress)
             )
             
-            session.exec(update_query)
-            session.commit()
+            await session.exec(update_query)
+            await session.commit()
             
-    def set_current_lesson(
+    async def set_current_lesson(
         self,
         course_id: uuid.UUID,
         lesson_id: uuid.UUID
     ) -> None:
-        with Session(engine) as session:
+        async for session in get_async_session():
             update_query = (
                 update(Course)
                 .where(Course.id == course_id)
                 .values(current_lesson_id=lesson_id)
             )
             
-            session.exec(update_query)
-            session.commit()
+            await session.exec(update_query)
+            await session.commit()
             
-    def set_course_completion(
+    async def set_course_completion(
         self,
         course_id: uuid.UUID
     ) -> None:
-        with Session(engine) as session:
+        async for session in get_async_session():
             update_query = (
                 update(Course)
                 .where(Course.id == course_id)
                 .values(completed_at_utc=datetime.utcnow())
             )
             
-            session.exec(update_query)
-            session.commit()
+            await session.exec(update_query)
+            await session.commit()
             
-    def get_next_lesson(
+    async def get_next_lesson(
         self,
         course_id: uuid.UUID,
         current_lesson_id: uuid.UUID
     ) -> Optional[Lesson]:
-        with Session(engine) as session:
+        async for session in get_async_session():
             course_query = (
                 select(Course)
                 .where(Course.id == course_id)
@@ -159,8 +159,8 @@ class CourseRepository:
                 )
             )
             
-            resultset = session.exec(course_query)
-            course = resultset.first()
+            result = await session.exec(course_query)
+            course = result.unique().one_or_none()
             
             if course is None:
                 raise ValueError("Course not found")
@@ -196,8 +196,8 @@ class CourseRepository:
             
             return None
             
-    def get_courses(self, user_id: uuid.UUID) -> list[Course]:
-        with Session(engine) as session:
+    async def get_courses(self, user_id: uuid.UUID) -> list[Course]:
+        async for session in get_async_session():
             query = (
                 select(Course)
                 .where(Course.user_id == user_id)
@@ -209,28 +209,28 @@ class CourseRepository:
                 .order_by(Course.created_at_utc, Course.title)
             )
             
-            resultset = session.exec(query).unique()
-            courses = resultset.all()
+            result = await session.exec(query)
+            courses = result.unique().all()
             
             return courses
         
-    def get_lesson_count(self, course_id: uuid.UUID) -> int:
-        with Session(engine) as session:
+    async def get_lesson_count(self, course_id: uuid.UUID) -> int:
+        async for session in get_async_session():
             query = (
                 select(Lesson.id)
                 .join(Module, Lesson.module_id == Module.id)
                 .where(Module.course_id == course_id)
             )
             
-            resultset = session.exec(query)
-            lessons = resultset.all()
+            result = await session.exec(query)
+            lessons = result.all()
             
             return len(lessons)
         
-    def get_lesson(self, lesson_id: uuid.UUID) -> Optional[Lesson]:
+    async def get_lesson(self, lesson_id: uuid.UUID) -> Optional[Lesson]:
         from sqlalchemy.orm import with_loader_criteria
 
-        with Session(engine) as session:
+        async for session in get_async_session():
             query = (
                 select(Lesson)
                 .where(Lesson.id == lesson_id)
@@ -244,15 +244,22 @@ class CourseRepository:
                 )
             )
 
-            result = session.exec(query)
-            lesson = result.first()
+            result = await session.exec(query)
+            lesson = result.unique().one_or_none()
 
             return lesson
         
-    def get_course(self, course_id: uuid.UUID) -> Optional[Course]:
-        from sqlalchemy.orm import with_loader_criteria
+    async def get_course(self, course_id: uuid.UUID) -> Optional[Course]:
+        """
+        Retrieves a course by its ID, including related modules, lessons, sections, exercises, and objectives.
 
-        with Session(engine) as session:
+        Args:
+            course_id (uuid.UUID): The ID of the course to retrieve.
+
+        Returns:
+            Optional[Course]: The course if found, None otherwise.
+        """
+        async for session in get_async_session():
             query = (
                 select(Course)
                 .where(Course.id == course_id)
@@ -264,14 +271,11 @@ class CourseRepository:
                     .joinedload(Module.lessons)
                     .joinedload(Lesson.exercises)
                     .joinedload(CourseExercise.objectives),
-                    with_loader_criteria(
-                        CourseExercise, CourseExercise.is_unavailable == False
-                    ),
                 )
             )
 
-            result = session.exec(query)
-            course = result.first()
+            result = await session.exec(query)
+            course = result.unique().one_or_none()
 
             if course is None:
                 return None
@@ -285,11 +289,11 @@ class CourseRepository:
 
             return course
         
-    def get_exercise(
+    async def get_exercise(
         self,
         exercise_id: uuid.UUID
     ) -> Optional[CourseExercise]:
-        with Session(engine) as session:
+        async for session in get_async_session():
             query = (
                 select(CourseExercise)
                 .where(CourseExercise.id == exercise_id)
@@ -298,12 +302,12 @@ class CourseRepository:
                 )
             )
             
-            resultset = session.exec(query)
-            exercise = resultset.first()
+            result = await session.execute(query)
+            exercise = result.scalar_one_or_none()
             
             return exercise
         
-    def create_exercise(
+    async def create_exercise(
         self,
         lesson_id: uuid.UUID, 
         environment_id: uuid.UUID, 
@@ -311,7 +315,7 @@ class CourseRepository:
         summary: str, 
         objectives: list[ExerciseObjectivePlan]
     ) -> uuid.UUID:
-        with Session(engine) as session:
+        async for session in get_async_session():
             exercise_entity = CourseExercise(
                 lesson_id=lesson_id,
                 title=title,
@@ -332,24 +336,24 @@ class CourseRepository:
                 
                 session.add(objective_entity)
             
-            session.commit()
-            session.refresh(exercise_entity)
+            await session.commit()
+            await session.refresh(exercise_entity)
             
             return exercise_entity.id
         
-    def set_exercise_environment(self, exercise_id: uuid.UUID, environment_id: uuid.UUID) -> None:
-        with Session(engine) as session:
+    async def set_exercise_environment(self, exercise_id: uuid.UUID, environment_id: uuid.UUID) -> None:
+        async for session in get_async_session():
             update_query = (
                 update(CourseExercise)
                 .where(CourseExercise.id == exercise_id)
                 .values(environment_id=environment_id)
             )
             
-            session.exec(update_query)
-            session.commit()
+            await session.execute(update_query)
+            await session.commit()
             
-    def get_exercise_by_environment(self, environment_id: uuid.UUID) -> Optional[CourseExercise]:
-        with Session(engine) as session:
+    async def get_exercise_by_environment(self, environment_id: uuid.UUID) -> Optional[CourseExercise]:
+        async for session in get_async_session():
             query = (
                 select(CourseExercise)
                 .where(CourseExercise.environment_id == environment_id)
@@ -358,12 +362,12 @@ class CourseRepository:
                 )
             )
             
-            resultset = session.exec(query)
-            exercise = resultset.first()
+            result = await session.execute(query)
+            exercise = result.scalar_one_or_none()
             
             return exercise
             
-    def set_exercise_setup_error(self, exercise_id: uuid.UUID, detail: Optional[str] = None) -> None:
+    async def set_exercise_setup_error(self, exercise_id: uuid.UUID, detail: Optional[str] = None) -> None:
         """
         Removes an exercise and its objectives from the database
 
@@ -371,45 +375,45 @@ class CourseRepository:
             exercise_id (uuid.UUID): The ID of the exercise to remove
         """
         
-        with Session(engine) as session:
+        async for session in get_async_session():
             update_query = (
                 update(CourseExercise)
                 .where(CourseExercise.id == exercise_id)
                 .values(is_unavailable=True, error_details=detail)
             )
             
-            session.exec(update_query)
-            session.commit()
+            await session.execute(update_query)
+            await session.commit()
             
-    def remove_exercise_setup_error(self, exercise_id: uuid.UUID) -> None:
-        with Session(engine) as session:
+    async def remove_exercise_setup_error(self, exercise_id: uuid.UUID) -> None:
+        async for session in get_async_session():
             update_query = (
                 update(CourseExercise)
                 .where(CourseExercise.id == exercise_id)
                 .values(is_unavailable=False, error_details=None)
             )
             
-            session.exec(update_query)
-            session.commit()
+            await session.execute(update_query)
+            await session.commit()
             
-    def set_objective_status(self, objective_id: uuid.UUID, is_complete: bool) -> None:
-        with Session(engine) as session:
+    async def set_objective_status(self, objective_id: uuid.UUID, is_complete: bool) -> None:
+        async for session in get_async_session():
             update_query = (
                 update(CourseExerciseObjective)
                 .where(CourseExerciseObjective.id == objective_id)
                 .values(is_completed=is_complete)
             )
             
-            session.exec(update_query)
-            session.commit()
+            await session.execute(update_query)
+            await session.commit()
     
-    def increment_exercise_build_attempts(self, exercise_id: uuid.UUID) -> None:
-        with Session(engine) as session:
+    async def increment_exercise_build_attempts(self, exercise_id: uuid.UUID) -> None:
+        async for session in get_async_session():
             update_query = (
                 update(CourseExercise)
                 .where(CourseExercise.id == exercise_id)
                 .values(rebuild_attempts=CourseExercise.rebuild_attempts + 1)
             )
             
-            session.exec(update_query)
-            session.commit()
+            await session.execute(update_query)
+            await session.commit()

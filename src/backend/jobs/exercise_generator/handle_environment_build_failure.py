@@ -4,7 +4,7 @@ from common.messaging import Topic, KafkaConsumer, KafkaProducer
 from domain.topics import EnvironmentBuildFailedTopic, BuildPlaygroundTopic
 from ai.prompts import GenerateExercisesPrompt
 
-def listen_for_environment_build_failure_events():
+async def listen_for_environment_build_failure_events():
     """
     Listens for events that indicate a playground image could not be built successfully.
     """
@@ -27,14 +27,14 @@ def listen_for_environment_build_failure_events():
                 consumer.commit(message)
                 continue
             
-            exercise = course_repo.get_exercise_by_environment(data.environment_id)
+            exercise = await course_repo.get_exercise_by_environment(data.environment_id)
             
             if exercise is None:
                 logging.error(f"Exercise not found for environment: {data.environment_id}. Skipping...")
                 consumer.commit(message)
                 continue
             
-            course_repo.set_exercise_setup_error(exercise_id=exercise.id, detail=data.error)
+            await course_repo.set_exercise_setup_error(exercise_id=exercise.id, detail=data.error)
             
             if exercise.rebuild_attempts < 2 and data.error:
                 # We'll attempt to rebuild the environment up to two times.
@@ -42,7 +42,7 @@ def listen_for_environment_build_failure_events():
                 logging.info(f"Attempting to rebuild exercise due to errors: {exercise.id}")
                 
                 # Get the lesson
-                lesson = course_repo.get_lesson(exercise.lesson_id)
+                lesson = await course_repo.get_lesson(exercise.lesson_id)
                 
                 # Take all content from data.error up to "Dockerfile content:" if it exists
                 if "Dockerfile content:" in data.error:
@@ -50,7 +50,7 @@ def listen_for_environment_build_failure_events():
                 else:
                     error_content = data.error
                 
-                new_plan = GenerateExercisesPrompt().get_exercise(
+                new_plan = await GenerateExercisesPrompt().get_exercise(
                     lesson_content="\n".join([
                         section.content
                         for section in lesson.sections
@@ -58,7 +58,7 @@ def listen_for_environment_build_failure_events():
                     previous_error=error_content
                 )
                 
-                producer.produce_message(
+                await producer.produce_message(
                     topic=Topic.BUILD_PLAYGROUND,
                     message=BuildPlaygroundTopic(
                         purpose="exercise",
@@ -68,7 +68,7 @@ def listen_for_environment_build_failure_events():
                     )
                 )
                 
-                course_repo.increment_exercise_build_attempts(exercise.id)
+                await course_repo.increment_exercise_build_attempts(exercise.id)
             
             consumer.commit(message)
         except Exception as e:

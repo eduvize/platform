@@ -15,7 +15,7 @@ class ValidationService:
         prompt = AssertionPrompt()
         
         cache_key = _get_cache_key(statement)
-        existing_result = get_key(cache_key)
+        existing_result = await get_key(cache_key)
         
         if existing_result:
             return AssertionResultDto(**json.loads(existing_result))
@@ -27,7 +27,7 @@ class ValidationService:
             reason=reason
         )
         
-        set_key(cache_key, result.model_dump_json())
+        await set_key(cache_key, result.model_dump_json())
         
         return result
         

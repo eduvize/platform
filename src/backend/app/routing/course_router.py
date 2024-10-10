@@ -78,7 +78,7 @@ async def get_exercises(
     course_id: uuid.UUID,
     course_service: CourseService = Depends(CourseService)
 ):
-    return course_service.get_exercises(course_id)
+    return await course_service.get_exercises(course_id)
 
 @router.get("/trigger/{course_id}", dependencies=[Depends(user_id_extractor)])
 async def trigger_course_generation(
@@ -86,7 +86,7 @@ async def trigger_course_generation(
     user_id: str = Depends(user_id_extractor)
 ):
     producer = KafkaProducer()
-    producer.produce_message(
+    await producer.produce_message(
         topic=Topic.COURSE_GENERATED,
         message=CourseGeneratedTopic(user_id=uuid.UUID(user_id), course_id=course_id)
     )

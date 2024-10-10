@@ -1,5 +1,3 @@
-import json
-import logging
 from typing import Callable
 from ai.prompts.base_prompt import BasePrompt
 from .models import CourseOutline, ModuleOutline
@@ -11,7 +9,7 @@ class GenerateModuleContentPrompt(BasePrompt):
     def setup(self) -> None:
         pass
     
-    def generate_module_content(
+    async def generate_module_content(
         self, 
         course: CourseOutline, 
         module: ModuleOutline,
@@ -66,7 +64,7 @@ As I provide you with sections of this lesson, you will create detailed content 
                 self.add_user_message(f"""
 Please provide content for the following section: {section.title}. {section.description}                    
 """.strip())
-                messages = model.get_responses(self)
+                messages = await model.get_responses(self)
                 
                 content = messages[-1].message
                 
@@ -82,7 +80,7 @@ Please provide content for the following section: {section.title}. {section.desc
                 
                 if progress_cb:
                     current_section += 1
-                    progress_cb(current_section)
+                    await progress_cb(current_section)
 
             module_dto.lessons.append(lesson_dto)
                 

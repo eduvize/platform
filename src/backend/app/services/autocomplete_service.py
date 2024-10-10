@@ -5,26 +5,27 @@ from common.cache import add_to_set, get_set
 from domain.enums.autocomplete_enums import AutocompleteLibrarySubject
 
 class AutocompleteService:
-    def get_programming_languages(
+    async def get_programming_languages(
         self, 
         disciplines: List[str], 
         query: str
     ) -> List[str]:
         cache_key = get_cache_key("programming-languages", f"{','.join(disciplines)}:{query}")
-        existing = get_set(cache_key)
+        existing = await get_set(cache_key)  # Add await here
         
         if existing:
             return existing
         
         prompt_input = get_programming_languages_input(disciplines, query)
-        prompt = AutocompletePrompt().with_input(prompt_input)
-        options = prompt.get_options()
+        prompt = AutocompletePrompt()
+        prompt.add_user_message(prompt_input)
+        options = await prompt.get_options()
         
-        add_to_set(cache_key, options)
+        await add_to_set(cache_key, options)
         
         return options
     
-    def get_libraries(
+    async def get_libraries(
         self, 
         subjects: List[str], 
         languages: List[str], 
@@ -39,53 +40,56 @@ class AutocompleteService:
             return []
         
         cache_key = get_cache_key("libraries", f"{','.join(valid_subjects)}:{','.join(languages)}:{query}")
-        existing = get_set(cache_key)
+        existing = await get_set(cache_key)
         
         if existing:
             return existing
         
         prompt_input = get_library_input(valid_subjects, languages, query)
-        prompt = AutocompletePrompt().with_input(prompt_input)
-        options = prompt.get_options()
+        prompt = AutocompletePrompt()
+        prompt.add_user_message(prompt_input)
+        options = await prompt.get_options()
         
-        add_to_set(cache_key, options)
+        await add_to_set(cache_key, options)
         
         return options
     
-    def get_educational_institutions(
+    async def get_educational_institutions(
         self, 
         query: str
     ) -> List[str]:
         cache_key = get_cache_key("educational-institutions", query)
-        existing = get_set(cache_key)
+        existing = await get_set(cache_key)
         
         if existing:
             return existing
         
         prompt_input = get_educational_institutions_input(query)
-        prompt = AutocompletePrompt().with_input(prompt_input)
-        options = prompt.get_options()
+        prompt = AutocompletePrompt()
+        prompt.add_user_message(prompt_input)
+        options = await prompt.get_options()
         
-        add_to_set(cache_key, options)
+        await add_to_set(cache_key, options)
         
         return options
     
-    def get_educational_focuses(
+    async def get_educational_focuses(
         self, 
         school_name: str, 
         query: str
     ) -> List[str]:
         cache_key = get_cache_key("educational-focuses", f"{school_name}:{query}")
-        existing = get_set(cache_key)
+        existing = await get_set(cache_key)
         
         if existing:
             return existing
         
         prompt_input = get_educational_focuses_input(school_name, query)
-        prompt = AutocompletePrompt().with_input(prompt_input)
-        options = prompt.get_options()
+        prompt = AutocompletePrompt()
+        prompt.add_user_message(prompt_input)
+        options = await prompt.get_options()
         
-        add_to_set(cache_key, options)
+        await add_to_set(cache_key, options)
         
         return options
     

@@ -4,8 +4,8 @@ import base64
 
 from . import BaseModel
 from domain.dto.ai.completion_chunk import CompletionChunk, Tool
-from typing import Generator, List, Literal, cast
-from openai import OpenAI, Stream
+from typing import AsyncGenerator, List, Literal, Tuple
+from openai import AsyncOpenAI
 from openai.types.chat.chat_completion_assistant_message_param import FunctionCall
 from openai.types.chat import (
     ChatCompletionSystemMessageParam,
@@ -16,7 +16,6 @@ from openai.types.chat import (
     ChatCompletionContentPartTextParam,
     ChatCompletionContentPartImageParam,
     ChatCompletionMessageToolCall, 
-    ChatCompletionChunk,
     ChatCompletionMessageParam
 )
 from openai.types.chat.chat_completion_named_tool_choice_param import Function as NamedToolFunction, ChatCompletionNamedToolChoiceParam
@@ -45,19 +44,19 @@ class ToolCallRecord:
         self.errors = False
 
 class BaseGPT(BaseModel):
-    client: OpenAI
+    client: AsyncOpenAI
     model_name: str
     
     def __init__(self, model_name: str) -> None:
         api_key = get_openai_key()
         
-        self.client = OpenAI(api_key=api_key)
+        self.client = AsyncOpenAI(api_key=api_key)
         self.model_name = model_name 
     
-    def get_streaming_response(
+    async def get_streaming_response(
         self, 
         prompt: BasePrompt
-    ) -> Generator[CompletionChunk, None, List[BaseChatResponse]]:
+    ) -> AsyncGenerator[Tuple[CompletionChunk, list[BaseChatResponse], bool], None]:
         responses: List[BaseChatResponse] = []
         
         # Create an initial message list based on the prompt, this may be added to later
@@ -91,34 +90,34 @@ class BaseGPT(BaseModel):
                         )
                     )
                     
-                    response = cast(Stream[ChatCompletionChunk], self.client.chat.completions.create(
+                    response = await self.client.chat.completions.create(
                         model=self.model_name,
                         messages=messages,
                         tools=available_tools,
                         tool_choice=tool_choice,
                         stream=True
-                    ))
+                    )
                 elif prompt.tool_choice_filter:
-                    response = cast(Stream[ChatCompletionChunk], self.client.chat.completions.create(
+                    response = await self.client.chat.completions.create(
                         model=self.model_name,
                         messages=messages,
                         tools=available_tools,
                         tool_choice="required",
                         stream=True
-                    ))
+                    )
                 else:    
-                    response = cast(Stream[ChatCompletionChunk], self.client.chat.completions.create(
+                    response = await self.client.chat.completions.create(
                         model=self.model_name,
                         messages=messages,
                         tools=available_tools,
                         stream=True
-                    ))
+                    )
             else:
-                response = cast(Stream[ChatCompletionChunk], self.client.chat.completions.create(
+                response = await self.client.chat.completions.create(
                     model=self.model_name,
                     messages=messages,
                     stream=True
-                ))
+                )
             
             response_content: str = ""
             tool_call_dict: List[ToolCallRecord] = []
@@ -127,7 +126,7 @@ class BaseGPT(BaseModel):
             # Iterate through the completion stream
             # Yield text content as it is received
             # Collect tool calls as they populate
-            for chunk in response:
+            async for chunk in response:
                 tool_calls = chunk.choices[0].delta.tool_calls
                 content = chunk.choices[0].delta.content
                     
@@ -165,7 +164,7 @@ class BaseGPT(BaseModel):
                             for record in tool_call_dict
                             if prompt.is_tool_public(record.name)
                         ]
-                    )
+                    ), [], False
                             
                 if chunk.choices[0].finish_reason:
                     finish_reason = chunk.choices[0].finish_reason
@@ -243,8 +242,9 @@ Correct the errors in tool arguments and try again.
                     break
             else:
                 break
-        
-        return responses
+
+        # The final yield includes the responses
+        yield CompletionChunk.model_construct(), responses, True
         
     def get_messages(
         self, 

@@ -31,13 +31,13 @@ Ex: If the resume says "May 2020", you will use "2020-05-01" or "2020-05-31" res
         
         self.use_tool(ProvideProfileTool, force=True)
         
-    def get_profile_data(self, resume_images: List[bytes]) -> ProfileScan:
+    async def get_profile_data(self, resume_images: List[bytes]) -> ProfileScan:
         from ...models.gpt_4o import GPT4o
         
         self.add_user_message("Process this resume", resume_images)
         
         model = GPT4o()
-        model.get_responses(self)
+        await model.get_responses(self)
         call = self.get_tool_call(ProvideProfileTool)
         
         if not call.result:

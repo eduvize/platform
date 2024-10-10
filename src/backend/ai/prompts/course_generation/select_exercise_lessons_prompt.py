@@ -8,7 +8,7 @@ class SelectExerciseLessonsPrompt(BasePrompt):
     def setup(self) -> None:
         pass
         
-    def get_best_lessons(self, course: Course, max_lessons: int) -> list[Lesson]:
+    async def get_best_lessons(self, course: Course, max_lessons: int) -> list[Lesson]:
         """
         Gets the best lessons from the given list of lessons.
         """
@@ -41,7 +41,7 @@ Select up to **{max_lessons} lessons** that you think will be the most effective
     
         self.use_tool(ProvideExerciseLessonsTool, force=True)
         
-        model.get_responses(self)
+        await model.get_responses(self)
         
         tool_call = self.get_tool_call(ProvideExerciseLessonsTool)
         

@@ -1,0 +1,36 @@
+services:
+  playground-host:
+    build:
+      context: ../playground
+      dockerfile: container.Dockerfile
+    privileged: true
+    env_file:
+      - .env.playground
+    environment:
+      - HOSTNAME=playground-controller
+      - BACKEND_API_ENDPOINT=http://api:8000/api
+      - BACKEND_SOCKETIO_ENDPOINT=http://api:8000
+      - JWT_SIGNING_KEY=devkey123
+      - SESSION_ID=fakeplaygroundsessionid
+      - PURGE_DATA_ON_DISCONNECT=true
+      - ENABLE_SELF_DESTRUCT=false
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    networks:
+      - eduvize
+
+  playground-image-builder:
+    build:
+      context: ../playground
+      dockerfile: builder.Dockerfile
+    privileged: true
+    env_file:
+      - .env.playground
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    networks:
+      - eduvize
+
+networks:
+  eduvize:
+    external: true

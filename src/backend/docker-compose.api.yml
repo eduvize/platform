@@ -1,0 +1,24 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: api.Dockerfile
+    env_file:
+      - .env
+    environment:
+      - S3_ENDPOINT=http://s3:9000
+      - POSTGRES_HOST=database
+      - REDIS_HOST=redis
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - REQUIRE_EMAIL_VALIDATION=false
+      - PLAYGROUND_TOKEN_SECRET=devkey123
+      - OVERRIDE_PLAYGROUND_SESSION_ID=fakeplaygroundsessionid
+      - OVERRIDE_PLAYGROUND_HOSTNAME=playground-host
+    ports:
+      - "8000:8000"
+    networks:
+      - eduvize
+
+networks:
+  eduvize:
+    external: true

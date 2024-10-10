@@ -66,7 +66,7 @@ async def logout(
     access_token: Optional[str] = Depends(get_access_token),
     auth_service: AuthService = Depends(AuthService),
 ):
-    auth_service.logout(
+    await auth_service.logout(
         access_token=access_token, 
         refresh_token=payload.refresh_token
     )

@@ -2,7 +2,8 @@ from datetime import datetime
 from typing import List, Optional, Union
 from sqlalchemy import UUID
 from sqlalchemy.orm import joinedload
-from sqlmodel import Session, select
+from sqlmodel import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from domain.dto.profile import UserProfileDto
 from domain.mapping import (
     map_hobby_data, 
@@ -14,9 +15,9 @@ from domain.mapping import (
     map_skill_data, 
     map_discipline_data
 )
-from domain.schema.user import User, UserExternalAuth, UserIdentifiers, UserProfile
-from common.database import engine
-from app.utilities.database import recursive_load_options, set_none_for_unavailable_relationships
+from domain.schema.user import User, UserExternalAuth, UserIdentifiers, UserProfile, UserProfileHobby, UserProfileProfessional, UserProfileStudent
+from app.utilities.database import set_none_for_unavailable_relationships
+from common.database import get_async_session
 
 class UserRepository:
     """
@@ -30,12 +31,13 @@ class UserRepository:
         set_email_validated: bool = False
     ) -> User:
         """
-        Creates a new ueer record in the database
+        Creates a new user record in the database
 
         Args:
             email_address (str): The user's email address
             username (str): The unique name for the user
             password_hash (str): A hash derived from the user's password
+            set_email_validated (bool): Whether to set the email as validated
 
         Returns:
             User: The newly created user record
@@ -48,10 +50,10 @@ class UserRepository:
         )
         user.profile = UserProfile()
         
-        with Session(engine) as session:
+        async for session in get_async_session():
             session.add(user)
-            session.commit()
-            session.refresh(user)
+            await session.commit()
+            await session.refresh(user)
         
         return user
     
@@ -64,11 +66,11 @@ class UserRepository:
             provider (str): The provider of the external authentication
             external_id (str): The ID of the user on the external provider
         """
-        with Session(engine) as session:
+        async for session in get_async_session():
             user_query = select(User).where(User.id == user_id)
-            resultset = session.exec(user_query)
+            result = await session.execute(user_query)
             
-            user = resultset.first()
+            user = result.scalar_one_or_none()
             if user is None:
                 return None
             
@@ -77,7 +79,7 @@ class UserRepository:
                 external_id=external_id
             )
             
-            session.commit()
+            await session.commit()
     
     async def upsert_profile(self, user_id: UUID, profile: UserProfileDto):
         """
@@ -87,11 +89,11 @@ class UserRepository:
             user_id (UUID): The ID of the user to associate the profile with
             profile (UserProfile): The profile data to store
         """
-        with Session(engine) as session:
+        async for session in get_async_session():
             user_query = select(User).where(User.id == user_id).options(joinedload(User.profile))
-            resultset = session.exec(user_query)
+            result = await session.execute(user_query)
             
-            user = resultset.first()
+            user = result.scalar_one_or_none()
             if user is None:
                 return None
             
@@ -119,7 +121,7 @@ class UserRepository:
             elif user.profile.professional:
                 delete_professional_data(session, user.profile.professional)
                 
-            session.commit()
+            await session.commit()
             
     async def set_avatar_url(self, user_id: UUID, avatar_url: str) -> None:
         """
@@ -129,21 +131,18 @@ class UserRepository:
             user_id (UUID): The ID of the user to set the avatar for
             avatar_url (str): The URL of the avatar
         """
-        with Session(engine) as session:
+        async for session in get_async_session():
             query = select(User).where(User.id == user_id).options(joinedload(User.profile))
-            resultset = session.exec(query)
+            result = await session.execute(query)
             
-            user = resultset.first()
+            user = result.scalar_one_or_none()
             
-            if not user:
-                return
-            
-            if not user.profile:
+            if not user or not user.profile:
                 return
             
             user.profile.avatar_url = avatar_url
             
-            session.commit()
+            await session.commit()
     
     async def get_user(self, by: UserIdentifiers, value: Union[str, UUID], include: Optional[List[str]] = []) -> Optional[User]:
         """
@@ -157,7 +156,7 @@ class UserRepository:
         Returns:
             Optional[User]: The user record if found, otherwise None
         """
-        with Session(engine) as session:
+        async for session in get_async_session():
             query = select(User)
             if by == "id":
                 query = query.where(User.id == value)
@@ -167,23 +166,33 @@ class UserRepository:
                 query = query.where(User.email == value)
             elif by == "verification_code":
                 query = query.where(
-                    User.verification_code == value and 
-                    User.pending_verification == True and 
-                    User.verification_code is not None
+                    User.verification_code == value,
+                    User.pending_verification == True,
+                    User.verification_code.is_not(None)
                 )
-            
-            if include:
-                for field in include:
-                    query = query.options(*recursive_load_options(User, field))
-                    
+
+            # Join the external auth
             query = query.options(joinedload(User.external_auth))
+            
+            # Join the profile with hobbies, professional, student, and skills
+            # Load the entire profile with all related data
+            query = query.options(
+                joinedload(User.profile).joinedload(UserProfile.hobby).joinedload(UserProfileHobby.reasons),
+                joinedload(User.profile).joinedload(UserProfile.hobby).joinedload(UserProfileHobby.projects),
+                joinedload(User.profile).joinedload(UserProfile.hobby).joinedload(UserProfileHobby.skills),
+                joinedload(User.profile).joinedload(UserProfile.professional).joinedload(UserProfileProfessional.employers),
+                joinedload(User.profile).joinedload(UserProfile.student).joinedload(UserProfileStudent.schools),
+                joinedload(User.profile).joinedload(UserProfile.skills),
+                joinedload(User.profile).joinedload(UserProfile.disciplines),
+            )
         
-            resultset = session.exec(query)
-            record = resultset.first()
+            result = await session.execute(query)
+            record = result.unique().scalar_one_or_none()
             
             if record:
                 set_none_for_unavailable_relationships(record, include)
-            
+     
+                       
             return record
         
     async def set_verification_code(self, user_id: UUID, code: str) -> None:
@@ -194,16 +203,17 @@ class UserRepository:
             user_id (UUID): The ID of the user to set the code for
             code (str): The verification code to set
         """
-        with Session(engine) as session:
+        async for session in get_async_session():
             query = select(User).where(User.id == user_id)
-            resultset = session.exec(query)
+            result = await session.execute(query)
             
-            user = resultset.first()
-            user.pending_verification = True
-            user.verification_sent_at_utc = datetime.utcnow()
-            user.verification_code = code
+            user = result.scalar_one_or_none()
+            if user:
+                user.pending_verification = True
+                user.verification_sent_at_utc = datetime.utcnow()
+                user.verification_code = code
             
-            session.commit()
+                await session.commit()
             
     async def mark_verified(self, user_id: UUID) -> None:
         """
@@ -212,12 +222,13 @@ class UserRepository:
         Args:
             user_id (UUID): The ID of the user to mark
         """
-        with Session(engine) as session:
+        async for session in get_async_session():
             query = select(User).where(User.id == user_id)
-            resultset = session.exec(query)
+            result = await session.execute(query)
             
-            user = resultset.first()
-            user.pending_verification = False
-            user.verification_code = None
+            user = result.scalar_one_or_none()
+            if user:
+                user.pending_verification = False
+                user.verification_code = None
             
-            session.commit()
+                await session.commit()

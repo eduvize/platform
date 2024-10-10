@@ -6,7 +6,7 @@ from common.messaging import Topic, KafkaConsumer, KafkaProducer
 from domain.topics import CourseGeneratedTopic, BuildPlaygroundTopic
 from domain.dto.courses.exercise_plan import ExercisePlan
 
-def create_exercise(
+async def create_exercise(
     user_id: uuid.UUID, 
     exercise: ExercisePlan, 
     lesson_id: uuid.UUID,
@@ -18,7 +18,7 @@ def create_exercise(
 
     # Create an environment for the exercise
     logging.info("Creating environment record for exercise")
-    environment_id = playground_repo.create_environment(
+    environment_id = await playground_repo.create_environment(
         user_id=user_id,
         docker_base_image=exercise.docker_image,
         description=exercise.scenario
@@ -27,7 +27,7 @@ def create_exercise(
 
     # Create the exercise
     logging.info("Creating exercise record")
-    exercise_id = course_repo.create_exercise(
+    exercise_id = await course_repo.create_exercise(
         lesson_id=lesson_id,
         environment_id=environment_id,
         title=exercise.title,
@@ -38,7 +38,7 @@ def create_exercise(
     
     # Send event to playground environment builder
     logging.info("Sending build playground event")
-    producer.produce_message(
+    await producer.produce_message(
         topic=Topic.BUILD_PLAYGROUND,
         message=BuildPlaygroundTopic(
             purpose="exercise",
@@ -50,7 +50,7 @@ def create_exercise(
     
     logging.info("Sent build playground event")
 
-def listen_for_course_generated_events():
+async def listen_for_course_generated_events():
     """
     Listens for events that indicate a new course has been generated and then generates exercises for each lesson in the course if applicable.
     
@@ -72,21 +72,31 @@ def listen_for_course_generated_events():
         
         try:
             # Get the course
-            course = course_repo.get_course(data.course_id)
+            logging.info(f"Getting course: {data.course_id}")
+            course = await course_repo.get_course(data.course_id)
             
             if course is None:
-                logging.error(f"Course not found: {data.course_id}. Skipping...")
+                logging.info(f"Course not found: {data.course_id}. Skipping...")
                 consumer.commit(message)
                 continue
             
-            total_lessons = sum([len(module.lessons) for module in course.modules])
+            logging.info(f"Course found: {course.title}")
             
-            lessons_to_generate = SelectExerciseLessonsPrompt().get_best_lessons(course, max_lessons=total_lessons / 2)
+            # Log course details
+            logging.info(f"Course modules: {len(course.modules)}")
+            total_lessons = sum([len(module.lessons) for module in course.modules])
+            logging.info(f"Total lessons: {total_lessons}")
+            
+            logging.info("Selecting lessons to generate exercises for")
+            lessons_to_generate = await SelectExerciseLessonsPrompt().get_best_lessons(course, max_lessons=total_lessons / 2)
+            
+            num_lessons_to_generate = len(lessons_to_generate)
+            logging.info(f"Selected {num_lessons_to_generate} lessons to generate exercises for")
             
             # Iterate over each lesson in each module to generate potential exercises
-            for lesson in lessons_to_generate:
+            for index, lesson in enumerate(lessons_to_generate, 1):
                 try:
-                    logging.info(f"Generating exercises for lesson: {lesson.title}")
+                    logging.info(f"Generating exercises for lesson {index}/{num_lessons_to_generate}: {lesson.title}")
                     
                     lesson_content = "\n".join([
                         section.content
@@ -103,10 +113,12 @@ Lesson content:
 """
                     
                     prompt = GenerateExercisesPrompt()
-                    lesson_exercise = prompt.get_exercise(lesson_content)
+                    logging.info(f"Calling AI to generate exercise for lesson: {lesson.title}")
+                    lesson_exercise = await prompt.get_exercise(lesson_content)
                     
                     if lesson_exercise:
-                        create_exercise(
+                        logging.info(f"Exercise generated for lesson: {lesson.title}")
+                        await create_exercise(
                             user_id=course.user_id,
                             exercise=lesson_exercise,
                             lesson_id=lesson.id,
@@ -114,14 +126,17 @@ Lesson content:
                             course_repo=course_repo,
                             playground_repo=playground_repo
                         )
+                    else:
+                        logging.warning(f"No exercise generated for lesson: {lesson.title}")
                 except Exception as e:
-                    logging.error(f"Failed to generate exercises for lesson: {lesson.title}. Skipping... {e}")
+                    logging.error(f"Failed to generate exercises for lesson: {lesson.title}. Error: {str(e)}")
                     continue
-                    
+            
+            logging.info(f"Finished processing course: {data.course_id}")
             # Commit the message to the Kafka topic offset
             consumer.commit(message)
-        except ValueError as e:  # TODO: This should specifically look for a course not existing rather than a generic ValueError
-            logging.error(f"Failed to generate course content: {e}. Skipping...")
+        except ValueError as e:
+            logging.error(f"Failed to generate course content: {str(e)}. Skipping...")
             consumer.commit(message)
         except Exception as e:
-            logging.error(f"An unexpected error occurred: {e}. Not committing message...")
+            logging.error(f"An unexpected error occurred: {str(e)}. Not committing message...")

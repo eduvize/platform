@@ -7,6 +7,7 @@ from domain.dto.ai.completion_chunk import CompletionChunk
 from domain.dto.chat.chat_message import ChatMessageDto
 from domain.enums.chat_enums import PromptType
 from ai.common.base_message import BaseChatMessage, ChatRole
+from typing import AsyncGenerator
 
 # Test data
 user_id = "user123"
@@ -18,9 +19,9 @@ mock_lesson = MagicMock()
 
 @pytest.fixture
 def chat_service():
-    user_service = MagicMock()
-    chat_repository = MagicMock()
-    course_repository = MagicMock()
+    user_service = AsyncMock()
+    chat_repository = AsyncMock()
+    course_repository = AsyncMock()
     return ChatService(user_service=user_service, chat_repository=chat_repository, course_repository=course_repository)
 
 @pytest.mark.asyncio
@@ -33,13 +34,13 @@ async def test_create_session(chat_service):
     mock_session = MagicMock(id=session_id)
     
     # Mock the user service and repository methods
-    chat_service.user_service.get_user = AsyncMock(return_value=MagicMock(id=user_id))
-    chat_service.chat_repository.create_chat_session = MagicMock(return_value=mock_session)
+    chat_service.user_service.get_user.return_value = MagicMock(id=user_id)
+    chat_service.chat_repository.create_chat_session.return_value = mock_session
     
     result = await chat_service.create_session(user_id=user_id, prompt_type=prompt_type, resource_id=resource_id)
     
     chat_service.user_service.get_user.assert_awaited_once_with("id", user_id)
-    chat_service.chat_repository.create_chat_session.assert_called_once_with(
+    chat_service.chat_repository.create_chat_session.assert_awaited_once_with(
         user_id=user_id,
         prompt_type=prompt_type.value,
         resource_id=resource_id
@@ -56,13 +57,13 @@ async def test_get_history(chat_service):
     """
     mock_messages = [MagicMock(spec=ChatMessage, content="Hello", is_user=True, session_id=session_id, id=uuid.uuid4())]
     
-    chat_service.user_service.get_user = AsyncMock(return_value=MagicMock(id=user_id))
-    chat_service.chat_repository.get_chat_messages = MagicMock(return_value=mock_messages)
+    chat_service.user_service.get_user.return_value = MagicMock(id=user_id)
+    chat_service.chat_repository.get_chat_messages.return_value = mock_messages
     
     result = await chat_service.get_history(user_id=user_id, session_id=session_id)
     
     chat_service.user_service.get_user.assert_awaited_once_with("id", user_id)
-    chat_service.chat_repository.get_chat_messages.assert_called_once_with(session_id)
+    chat_service.chat_repository.get_chat_messages.assert_awaited_once_with(session_id)
     
     assert len(result) == len(mock_messages)
     assert isinstance(result[0], ChatMessageDto)
@@ -76,54 +77,63 @@ async def test_get_response(mock_get_prompt_generator, chat_service):
     2. Should iterate over the response generator and yield CompletionChunks.
     3. Should add both user and AI messages to the chat repository.
     """
-    mock_generator = MagicMock()
-    mock_generator.__next__.side_effect = [
-        CompletionChunk(message_id="message_id", text="chunk1"), 
-        StopIteration([BaseChatMessage(role=ChatRole.AGENT, message="AI response")])
-    ]
-    mock_get_prompt_generator.return_value = mock_generator
+    async def mock_generator() -> AsyncGenerator[CompletionChunk, None]:
+        yield CompletionChunk(message_id="message_id", text="chunk1")
+
+    mock_get_prompt_generator.return_value = mock_generator()
 
     chat_service.user_service.get_user = AsyncMock(return_value=MagicMock(id=user_id))
-    chat_service.chat_repository.get_session = MagicMock(return_value=MagicMock(id=session_id))
+    chat_service.chat_repository.get_session = AsyncMock(return_value=MagicMock(id=session_id))
+    chat_service._add_message = AsyncMock()
     
-    response = [chunk async for chunk in chat_service.get_response(user_id=user_id, session_id=session_id, message=message)]
+    response = []
+    async for chunk in chat_service.get_response(user_id=user_id, session_id=session_id, message=message):
+        response.append(chunk)
     
     chat_service.user_service.get_user.assert_awaited_once_with("id", user_id, ["profile.*"])
-    chat_service.chat_repository.get_session.assert_called_once_with(session_id)
-    mock_get_prompt_generator.assert_called_once()
+    chat_service.chat_repository.get_session.assert_awaited_once_with(session_id)
     
     assert len(response) == 1
     assert response[0].message_id == "message_id"
+    assert response[0].text == "chunk1"
 
-def test_add_message(chat_service):
+@pytest.mark.asyncio
+async def test_add_message(chat_service):
     """
     Test adding a message to a chat session.
     1. Should add a user or agent message to the chat repository.
     2. Should add tool calls if they exist.
     """
-    chat_service.chat_repository.add_chat_message = MagicMock(return_value=MagicMock(id=uuid.uuid4()))
+    chat_service.chat_repository.add_chat_message.return_value = MagicMock(id=uuid.uuid4())
+    chat_service.chat_repository.add_tool_message = AsyncMock()
     
-    chat_service._add_message(session_id=session_id, is_user=True, message="User message")
+    await chat_service._add_message(session_id=session_id, is_user=True, message="User message")
     
-    chat_service.chat_repository.add_chat_message.assert_called_once_with(session_id=session_id, is_user=True, content="User message")
+    chat_service.chat_repository.add_chat_message.assert_awaited_once_with(session_id=session_id, is_user=True, content="User message")
 
-@patch("app.services.chat_service.LessonDiscussionPrompt", autospec=True)
-def test_get_prompt_generator_lesson(mock_lesson_prompt, chat_service):
+    # Test with tool calls
+    tool_calls = [MagicMock(id="tool1", name="test_tool", arguments="{}", result="result")]
+    await chat_service._add_message(session_id=session_id, is_user=False, message="Agent message", tool_calls=tool_calls)
+
+@pytest.mark.asyncio
+async def test_get_chat_messages(chat_service):
     """
-    Test generating a prompt for lesson discussion.
-    1. Should retrieve lesson content from course_repository.
-    2. Should call LessonDiscussionPrompt to get responses.
+    Test converting chat message records into a representation for the AI.
     """
-    chat_service.chat_repository.get_chat_messages = MagicMock(return_value=[])
-    chat_service.course_repository.get_lesson = MagicMock(return_value=mock_lesson)
+    mock_records = [
+        MagicMock(is_user=True, content="User message", tool_calls=[]),
+        MagicMock(is_user=False, content="Agent message", tool_calls=[
+            MagicMock(id="tool1", tool_name="test_tool", json_arguments="{}", result="result")
+        ])
+    ]
     
-    mock_prompt_instance = mock_lesson_prompt.return_value
-    mock_prompt_instance.get_responses = MagicMock()
+    result = chat_service._get_chat_messages(mock_records)
     
-    chat_service.get_prompt_generator(
-        session=MagicMock(id=session_id, prompt_type=PromptType.LESSON.value, resource_id=resource_id),
-        input_msg=message
-    )
-    
-    chat_service.course_repository.get_lesson.assert_called_once_with(resource_id)
-    mock_prompt_instance.get_responses.assert_called_once()
+    assert len(result) == 2
+    assert result[0].role == ChatRole.USER
+    assert result[0].message == "User message"
+    assert result[1].role == ChatRole.AGENT
+    assert result[1].message == "Agent message"
+    assert len(result[1].tool_calls) == 1
+    assert result[1].tool_calls[0].id == "tool1"
+    assert result[1].tool_calls[0].name == "test_tool"

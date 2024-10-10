@@ -11,7 +11,7 @@ You will be objective and sound in your decision and will not consider unreasona
         
         self.use_tool(ProvideAssertionTool, force=True)
         
-    def get_assertion(self, statement: str) -> Tuple[bool, str]:
+    async def get_assertion(self, statement: str) -> Tuple[bool, str]:
         """
         Determine whether or not the given statement is true or false.
 
@@ -27,7 +27,7 @@ You will be objective and sound in your decision and will not consider unreasona
 {statement}""")
 
         model = GPT4oMini()
-        model.get_responses(self)
+        await model.get_responses(self)
         
         call = self.get_tool_call(ProvideAssertionTool)
         

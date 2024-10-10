@@ -26,7 +26,7 @@ You are a creative software engineer tasked with creating a new coding exercise 
   - Pre and post-commands **do not share state** with each other or with the file-writing commands, so make sure the paths are correct for each stage.
 """.strip())
         
-    def get_exercise(self, lesson_content: str, previous_error: Optional[str] = None) -> Optional[ExercisePlan]:
+    async def get_exercise(self, lesson_content: str, previous_error: Optional[str] = None) -> Optional[ExercisePlan]:
         from ai.models.gpt_4o import GPT4o
         from ai.models.gpt_4o_mini import GPT4oMini
         gpt_4o_mini = GPT4oMini()
@@ -59,7 +59,7 @@ Using the lesson provided, come up with a creative exercise that will help the u
   - What they will **learn** from the exercise and how it applies to the lesson.
 """.strip())
         
-        responses = gpt_4o_mini.get_responses(self)
+        responses = await gpt_4o_mini.get_responses(self)
 
         for response in responses:
             if "PASS" in response.message:
@@ -107,7 +107,7 @@ Determine the appropriate **Docker image** (from Docker Hub) to use for the exer
 - Commands **cannot be interactive** in any way, as this will be a headless installation and **no user input can be provided.**
 - **Remember to include `cd` commands if you create new directories during setup.**
 """.strip())
-        responses = gpt_4o.get_responses(self)
+        responses = await gpt_4o.get_responses(self)
 
         for response in responses:
             logging.info(response.message)
@@ -119,7 +119,7 @@ Determine the appropriate **Docker image** (from Docker Hub) to use for the exer
 Are you positive that the commands you've listed are not interactive in any way and do not require ANY user intervention? This includes prompting users to select options, specifying yes or no, and any other terminal entry.
 If you see that any of them do, please come up with workarounds before proceeding. Interactivity **is unsupported** and will **cause the build process to hang.**                    
 """.strip())
-        responses = gpt_4o.get_responses(self)
+        responses = await gpt_4o.get_responses(self)
         
         for response in responses:
             logging.info(response.message)
@@ -145,7 +145,7 @@ Come up with **one to three objectives** that the user should complete by the en
 - List the objectives in a numbered format.
 - **Keep object titles short and concise**, with a more **detailed description** following.
 """.strip())
-        responses = gpt_4o_mini.get_responses(self)
+        responses = await gpt_4o_mini.get_responses(self)
 
         for response in responses:
             logging.info(response.message)
@@ -166,7 +166,7 @@ The path specified should be relative to the **base directory**. For example, if
 **Instructions:**
 - List the files with their paths, **including any base directories you've created**.
 """.strip())
-        responses = gpt_4o.get_responses(self)
+        responses = await gpt_4o.get_responses(self)
 
         for response in responses:
             logging.info(response.message)
@@ -190,7 +190,7 @@ Remember, each command **MUST** be **non-interactive** and **not require user in
 - **DO NOT** include any commands that run a development server or other long-running processes, as this will **cause the Docker image build to hang**.
 - Include any necessary `cd` commands if the working directory needs to change before running the commands.                        
 """)
-        responses = gpt_4o.get_responses(self)
+        responses = await gpt_4o.get_responses(self)
 
         for response in responses:
             logging.info(response.message)
@@ -219,7 +219,7 @@ Using the objectives and files you've provided, come up with a **test plan** for
 - For each objective, write a test plan following the above requirements.
 - Ensure clarity and conciseness in your instructions.
 """.strip())
-        responses = gpt_4o.get_responses(self)
+        responses = await gpt_4o.get_responses(self)
 
         for response in responses:
             logging.info(response.message)
@@ -234,7 +234,7 @@ When we last tried to generate this exercise, we ran into the following problem:
 Can you please review everything we've talked about here and make sure the same issue doesn't happen again?
 You should be looking at **setup commands** and the **docker image** specifically. Please let me know if any of these should be changed.
 """.strip())
-          responses = gpt_4o.get_responses(self)
+          responses = await gpt_4o.get_responses(self)
 
           for response in responses:
               logging.info(response.message)
@@ -255,7 +255,7 @@ Provide the final **exercise model** using the `provide_exercise` tool.
         
         logging.info("Getting exercise responses")
         
-        gpt_4o.get_responses(self)
+        await gpt_4o.get_responses(self)
         
         exercise_call = self.get_tool_call(ProvideExerciseTool)
         

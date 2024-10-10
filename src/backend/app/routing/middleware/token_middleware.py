@@ -9,7 +9,7 @@ from config import get_token_secret, get_playground_token_secret
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-def token_validator(
+async def token_validator(
     token: str = Depends(oauth2_scheme)
 ) -> dict:
     """
@@ -27,7 +27,7 @@ def token_validator(
     try:
         data = decode_token(token, get_token_secret())
     
-        if is_in_set_with_expiration(TOKEN_BLACKLIST_SET, token):
+        if await is_in_set_with_expiration(TOKEN_BLACKLIST_SET, token):
             raise_unauthorized()
             
         return data

@@ -48,7 +48,7 @@ class UserOnboardingService:
             username=user.username,
             verification_link=get_verification_url(verification_code)
         )
-        send_email(user.email, "Wecome to Eduvize", email_body)
+        await send_email(user.email, "Wecome to Eduvize", email_body)
         
         # Reset verification code information in the database
         await self.user_repo.set_verification_code(user_id, verification_code)

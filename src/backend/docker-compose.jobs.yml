@@ -1,0 +1,34 @@
+services:
+  course_generation_job:
+    build:
+      context: .
+      dockerfile: jobs/Dockerfile
+      args:
+        JOB_NAME: course_generator
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=database
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_MAX_POLL_INTERVAL_SECONDS=1800 # 30 minutes
+    networks:
+      - eduvize
+
+  exercise_generation_job:
+    build:
+      context: .
+      dockerfile: jobs/Dockerfile
+      args:
+        JOB_NAME: exercise_generator
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=database
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_MAX_POLL_INTERVAL_SECONDS=1800 # 30 minutes
+    networks:
+      - eduvize
+
+networks:
+  eduvize:
+    external: true

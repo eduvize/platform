@@ -19,7 +19,7 @@ async def get_autocomplete_options(
     Retrieves a list of programming languages for use in an autocomplete field
     """
     discipline_list = disciplines.split(",")
-    return autocomplete_service.get_programming_languages(discipline_list, query)
+    return await autocomplete_service.get_programming_languages(discipline_list, query)
     
 @router.get("/libraries")
 async def get_library_options(
@@ -34,7 +34,7 @@ async def get_library_options(
     subject_list = subjects.split(",")
     language_list = languages.split(",")
     
-    return autocomplete_service.get_libraries(
+    return await autocomplete_service.get_libraries(
         subjects=subject_list, 
         languages=language_list, 
         query=query
@@ -48,7 +48,7 @@ async def get_educational_institution_options(
     """
     Retrieves a list of educational institutions for use in an autocomplete field
     """
-    return autocomplete_service.get_educational_institutions(
+    return await autocomplete_service.get_educational_institutions(
         query=query
     )
 
@@ -61,7 +61,7 @@ async def get_educational_focus_options(
     """
     Retrieves a list of educational focuses for use in an autocomplete field
     """
-    return autocomplete_service.get_educational_focuses(
+    return await autocomplete_service.get_educational_focuses(
         school_name=school_name, 
         query=query
     )

@@ -57,7 +57,7 @@ class PlaygroundService:
     async def temp_create_playground_image(self, base_image: str, description: str):
         kafka_producer = KafkaProducer()
         
-        kafka_producer.produce_message(
+        await kafka_producer.produce_message(
             topic=Topic.BUILD_PLAYGROUND,
             message=BuildPlaygroundTopic(
                 base_image=base_image,

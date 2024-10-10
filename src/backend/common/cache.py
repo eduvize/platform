@@ -1,11 +1,17 @@
-import redis
+import redis.asyncio as redis
 from datetime import timedelta
 from typing import List, Optional, Union
 from config import get_redis_host
 from time import time
 
-    
-def _get_client():
+
+async def _get_client() -> redis.Redis:
+    """
+    Initializes and returns an asynchronous Redis client.
+
+    Returns:
+        redis.Redis: The Redis client instance.
+    """
     redis_host = get_redis_host()
     if ":" in redis_host:
         host, port = redis_host.split(":")
@@ -13,164 +19,158 @@ def _get_client():
     else:
         host = redis_host
         port = 6379
-        
-    return redis.Redis(host=host, port=port)
 
-def set_key(
-    key: str, 
-    value: str, 
-    expiration: int = None
-):
+    return redis.Redis(host=host, port=port, decode_responses=True)
+
+
+async def set_key(
+    key: str,
+    value: str,
+    expiration: Optional[int] = None
+) -> None:
     """
-    Sets a key in the Redis cache
+    Sets a key in the Redis cache.
 
     Args:
-        key (str): The key to set
-        value (str): The value to set
-        expiration (int): The expiration time in seconds
+        key (str): The key to set.
+        value (str): The value to set.
+        expiration (Optional[int]): The expiration time in seconds.
     """
-    
-    client = _get_client()
-    
+    client = await _get_client()
+
     if expiration:
-        expiration_delta = timedelta(seconds=expiration)
-        client.setex(key, expiration_delta, value)
+        await client.setex(key, timedelta(seconds=expiration), value)
     else:
-        client.set(key, value)
-        
-def delete_key(key: str):
+        await client.set(key, value)
+
+
+async def delete_key(key: str) -> None:
     """
-    Deletes a key from the Redis cache
+    Deletes a key from the Redis cache.
 
     Args:
-        key (str): The key to delete
+        key (str): The key to delete.
     """
-    
-    client = _get_client()
-    
-    client.delete(key)
-    
-def get_key(key: str) -> Optional[str]:
+    client = await _get_client()
+    await client.delete(key)
+
+
+async def get_key(key: str) -> Optional[str]:
     """
-    Gets a key from the Redis cache
+    Gets a key from the Redis cache.
 
     Args:
-        key (str): The key to get
+        key (str): The key to get.
 
     Returns:
-        str: The value of the key
+        Optional[str]: The value of the key, or None if not found.
     """
-    
-    client = _get_client()
-    value = client.get(key)
-    
-    return value.decode('utf-8') if value else None
+    client = await _get_client()
+    return await client.get(key)
 
-def add_to_set(
-    key: str, 
+
+async def add_to_set(
+    key: str,
     value: Union[str, List[str]]
-):
+) -> None:
     """
-    Adds a value to a set in the Redis cache
+    Adds a value to a set in the Redis cache.
 
     Args:
-        key (str): The key of the set
-        value (str): The value to add
+        key (str): The key of the set.
+        value (Union[str, List[str]]): The value or list of values to add.
     """
-    
-    client = _get_client()
-    
+    client = await _get_client()
+
     if isinstance(value, list):
-        for v in value:
-            client.sadd(key, v)
+        await client.sadd(key, *value)
     else:
-        client.sadd(key, value)
-        
-def add_to_set_with_expiration(
-    key: str, 
-    value: Union[str, List[str]], 
+        await client.sadd(key, value)
+
+
+async def add_to_set_with_expiration(
+    key: str,
+    value: Union[str, List[str]],
     expiration: int
-):
+) -> None:
     """
     Adds a value to a sorted set in the Redis cache with an expiration time.
     When reading the set, expired values will not be returned and will be removed.
-    
-    Args:
-        key (str): The key of the set
-        value (str): The value to add
-        expiration (int): The expiration time in seconds
-    """
-    
-    client = _get_client()
-    
-    if isinstance(value, list):
-        for v in value:
-            client.zadd(key, {v: int(time() + expiration)})
-    else:
-        client.zadd(key, {value: int(time() + expiration)})
-    
-def remove_from_set(
-    key: str, 
-    value: Union[str, List[str]]
-):
-    """
-    Removes a value from a set in the Redis cache
 
     Args:
-        key (str): The key of the set
-        value (str): The value to remove
+        key (str): The key of the set.
+        value (Union[str, List[str]]): The value or list of values to add.
+        expiration (int): The expiration time in seconds.
     """
-    
-    client = _get_client()
-    
+    client = await _get_client()
+    current_time = int(time()) + expiration
+
     if isinstance(value, list):
-        for v in value:
-            client.srem(key, v)
+        mapping = {v: current_time for v in value}
+        await client.zadd(key, mapping)
     else:
-        client.srem(key, value)
-        
-def remove_from_set_with_expiration(
-    key: str, 
+        await client.zadd(key, {value: current_time})
+
+
+async def remove_from_set(
+    key: str,
     value: Union[str, List[str]]
-):
+) -> None:
+    """
+    Removes a value from a set in the Redis cache.
+
+    Args:
+        key (str): The key of the set.
+        value (Union[str, List[str]]): The value or list of values to remove.
+    """
+    client = await _get_client()
+
+    if isinstance(value, list):
+        await client.srem(key, *value)
+    else:
+        await client.srem(key, value)
+
+
+async def remove_from_set_with_expiration(
+    key: str,
+    value: Union[str, List[str]]
+) -> None:
     """
     Removes a value from a sorted set in the Redis cache with an expiration time.
     When reading the set, expired values will not be returned and will be removed.
-    
+
     Args:
-        key (str): The key of the set
-        value (str): The value to remove
+        key (str): The key of the set.
+        value (Union[str, List[str]]): The value or list of values to remove.
     """
-    
-    client = _get_client()
-    
+    client = await _get_client()
+
     if isinstance(value, list):
-        for v in value:
-            client.zrem(key, v)
+        await client.zrem(key, *value)
     else:
-        client.zrem(key, value)
-        
-def is_in_set(
-    key: str, 
+        await client.zrem(key, value)
+
+
+async def is_in_set(
+    key: str,
     value: str
 ) -> bool:
     """
-    Checks if a value is in a set in the Redis cache
+    Checks if a value is in a set in the Redis cache.
 
     Args:
-        key (str): The key of the set
-        value (str): The value to check
+        key (str): The key of the set.
+        value (str): The value to check.
 
     Returns:
-        bool: True if the value is in the set, False otherwise
+        bool: True if the value is in the set, False otherwise.
     """
-    
-    client = _get_client()
-    
-    return client.sismember(key, value)
+    client = await _get_client()
+    return await client.sismember(key, value)
 
-def is_in_set_with_expiration(
-    key: str, 
+
+async def is_in_set_with_expiration(
+    key: str,
     value: str
 ) -> bool:
     """
@@ -178,48 +178,44 @@ def is_in_set_with_expiration(
     This method removes expired values from the set before checking for the value.
 
     Args:
-        key (str): The key of the set
-        value (str): The value to check
+        key (str): The key of the set.
+        value (str): The value to check.
 
     Returns:
-        bool: True if the value is in the set, False otherwise
+        bool: True if the value is in the set, False otherwise.
     """
-    
-    client = _get_client()
-    
-    client.zremrangebyscore(key, 0, int(time()))
-    
-    return client.zrank(key, value) is not None
-    
-def get_set(key: str) -> List[str]:
+    client = await _get_client()
+    await client.zremrangebyscore(key, 0, int(time()))
+    rank = await client.zrank(key, value)
+    return rank is not None
+
+
+async def get_set(key: str) -> List[str]:
     """
-    Gets all values in a set from the Redis cache
+    Gets all values in a set from the Redis cache.
 
     Args:
-        key (str): The key of the set
+        key (str): The key of the set.
 
     Returns:
-        List[str]: The values in the set
+        List[str]: The values in the set.
     """
-    
-    client = _get_client()
-    
-    return client.smembers(key)
+    client = await _get_client()
+    members = await client.smembers(key)
+    return list(members)
 
-def get_set_with_expiration(key: str) -> List[str]:
+
+async def get_set_with_expiration(key: str) -> List[str]:
     """
     Gets all values in a sorted set from the Redis cache with an expiration time.
     This method removes expired values from the set before returning valid values.
 
     Args:
-        key (str): The key of the set
+        key (str): The key of the set.
 
     Returns:
-        List[str]: The values in the set
+        List[str]: The values in the set.
     """
-    
-    client = _get_client()
-    
-    client.zremrangebyscore(key, 0, int(time()))
-    
-    return client.zrange(key, 0, -1)
+    client = await _get_client()
+    await client.zremrangebyscore(key, 0, int(time()))
+    return await client.zrange(key, 0, -1)

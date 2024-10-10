@@ -24,7 +24,7 @@ You are an AI assistant tasked with reviewing student applications for an online
 - **Rule-Based Questions**: If any of your questions need to follow specific rules, define them clearly in the tool’s schema.
 """.strip())
     
-    def get_inputs(
+    async def get_inputs(
         self,
         plan: CoursePlanDto,
         profile_text: str
@@ -45,7 +45,7 @@ It might be a good idea to review their profile to cross compare with the course
 """.strip())
                     
         # Let the model think
-        responses = model.get_responses(self)
+        responses = await model.get_responses(self)
         for response in responses:
             if response.message:
                 self.add_agent_message(response.message)
@@ -53,7 +53,7 @@ It might be a good idea to review their profile to cross compare with the course
         self.add_user_message("Do you think these questions will help the instructor understand the student's needs better and are conducive to creating a tailored course syllabus?")
         
         # Let the model think again
-        responses = model.get_responses(self)
+        responses = await model.get_responses(self)
         for response in responses:
             if response.message:
                 self.add_agent_message(response.message)
@@ -64,7 +64,7 @@ Good, now generate follow-up questions to gather more specific details. Ensure n
         
         # Now we force it to use the tool to produce the question fields
         self.use_tool(ProvideAdditionalInputsTool, force=True)
-        model.get_responses(self)
+        await model.get_responses(self)
         followup_call = self.get_tool_call(ProvideAdditionalInputsTool)
         
         if not followup_call.result:

@@ -80,7 +80,7 @@ class AuthService:
         
         return self._generate_tokens(str(user.id))
     
-    def logout(self, access_token: str, refresh_token: str):
+    async def logout(self, access_token: str, refresh_token: str):
         """
         Logs out a user by invalidating their access and refresh tokens
 
@@ -98,13 +98,13 @@ class AuthService:
         remaining_token_seconds = exp_token - int(time())
         remaining_refresh_seconds = exp_refresh - int(time())
         
-        add_to_set_with_expiration(
+        await add_to_set_with_expiration(
             key=TOKEN_BLACKLIST_SET, 
             value=access_token, 
             expiration=remaining_token_seconds
         )
         
-        add_to_set_with_expiration(
+        await add_to_set_with_expiration(
             key=TOKEN_BLACKLIST_SET, 
             value=refresh_token, 
             expiration=remaining_refresh_seconds
@@ -124,7 +124,7 @@ class AuthService:
             Tuple[str, str, int]: The generated access token, refresh token and expiration time
         """
         
-        if is_in_set_with_expiration(TOKEN_BLACKLIST_SET, refresh_token):
+        if await is_in_set_with_expiration(TOKEN_BLACKLIST_SET, refresh_token):
             raise ValueError("Invalid refresh token")
         
         payload = decode_token(refresh_token, get_token_secret())
@@ -137,7 +137,7 @@ class AuthService:
         expires_at = int(payload["exp"])
         remaining_seconds = expires_at - int(time())
         
-        add_to_set_with_expiration(
+        await add_to_set_with_expiration(
             key=TOKEN_BLACKLIST_SET, 
             value=refresh_token, 
             expiration=remaining_seconds
