@@ -4,6 +4,7 @@ from typing import AsyncGenerator, List, Optional
 from fastapi import Depends
 from ai.common import BaseChatMessage, BaseToolCallWithResult, ChatRole
 from .user_service import UserService
+from .instructor_service import InstructorService
 from app.repositories import ChatRepository, CourseRepository
 from domain.schema.chat.chat_message import ChatMessage
 from domain.schema.chat.chat_session import ChatSession
@@ -16,16 +17,19 @@ logger = logging.getLogger("ChatService")
 
 class ChatService:
     user_service: UserService
+    instructor_service: InstructorService
     chat_repository: ChatRepository
     course_repository: CourseRepository
     
     def __init__(
         self, 
         user_service: UserService = Depends(UserService),
+        instructor_service: InstructorService = Depends(InstructorService),
         chat_repository: ChatRepository = Depends(ChatRepository),
         course_repository: CourseRepository = Depends(CourseRepository)
     ):
         self.user_service = user_service
+        self.instructor_service = instructor_service
         self.chat_repository = chat_repository
         self.course_repository = course_repository
 
@@ -35,17 +39,43 @@ class ChatService:
         prompt_type: PromptType,
         resource_id: Optional[uuid.UUID] = None
     ) -> uuid.UUID:
+        """
+        Creates a new chat session for a user.
+
+        Args:
+            user_id (str): The ID of the user creating the session.
+            prompt_type (PromptType): The type of prompt for this chat session.
+            resource_id (Optional[uuid.UUID], optional): The ID of the associated resource, if any. Defaults to None.
+
+        Returns:
+            uuid.UUID: The ID of the newly created chat session.
+
+        Raises:
+            ValueError: If the user or instructor is not found.
+        """
+        # Fetch the user from the database
         user = await self.user_service.get_user("id", user_id)
         
+        # Ensure the user exists
         if not user:
             raise ValueError("User not found")
         
+        # Get the instructor associated with the user
+        instructor = await self.instructor_service.get_user_instructor(user.id)
+        
+        # Ensure the instructor exists
+        if not instructor:
+            raise ValueError("Instructor not found")
+        
+        # Create a new chat session in the repository
         session = await self.chat_repository.create_chat_session(
             user_id=user.id,
             prompt_type=prompt_type.value,
-            resource_id=resource_id
+            resource_id=resource_id,
+            instructor_id=instructor.id
         )
         
+        # Return the ID of the newly created session
         return session.id
 
     async def get_history(
