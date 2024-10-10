@@ -41,8 +41,8 @@ class CourseRepository:
                 select(Course)
                 .where(Course.id == course_id)
             )
-            result = await session.execute(query)
-            course_entity = result.scalar_one_or_none()
+            result = await session.exec(query)
+            course_entity = result.one_or_none()
             
             if course_entity is None:
                 raise ValueError("Course not found")
@@ -112,7 +112,7 @@ class CourseRepository:
                 .values(generation_progress=progress)
             )
             
-            await session.execute(update_query)
+            await session.exec(update_query)
             await session.commit()
             
     async def set_current_lesson(
@@ -127,7 +127,7 @@ class CourseRepository:
                 .values(current_lesson_id=lesson_id)
             )
             
-            await session.execute(update_query)
+            await session.exec(update_query)
             await session.commit()
             
     async def set_course_completion(
@@ -141,7 +141,7 @@ class CourseRepository:
                 .values(completed_at_utc=datetime.utcnow())
             )
             
-            await session.execute(update_query)
+            await session.exec(update_query)
             await session.commit()
             
     async def get_next_lesson(
@@ -159,8 +159,8 @@ class CourseRepository:
                 )
             )
             
-            result = await session.execute(course_query)
-            course = result.scalar_one_or_none()
+            result = await session.exec(course_query)
+            course = result.unique().one_or_none()
             
             if course is None:
                 raise ValueError("Course not found")
@@ -209,8 +209,8 @@ class CourseRepository:
                 .order_by(Course.created_at_utc, Course.title)
             )
             
-            result = await session.execute(query)
-            courses = result.unique().scalars().all()
+            result = await session.exec(query)
+            courses = result.unique().all()
             
             return courses
         
@@ -222,8 +222,8 @@ class CourseRepository:
                 .where(Module.course_id == course_id)
             )
             
-            result = await session.execute(query)
-            lessons = result.scalars().all()
+            result = await session.exec(query)
+            lessons = result.all()
             
             return len(lessons)
         

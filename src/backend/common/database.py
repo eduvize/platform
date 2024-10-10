@@ -17,7 +17,7 @@ else:
 # Create an async engine
 async_engine = create_async_engine(
     async_connection_string,
-    echo=True,
+    echo=False,
     future=True
 )
 
