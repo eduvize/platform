@@ -21,7 +21,7 @@ class AutocompleteService:
         prompt.add_user_message(prompt_input)
         options = await prompt.get_options()
         
-        add_to_set(cache_key, options)
+        await add_to_set(cache_key, options)
         
         return options
     
@@ -40,7 +40,7 @@ class AutocompleteService:
             return []
         
         cache_key = get_cache_key("libraries", f"{','.join(valid_subjects)}:{','.join(languages)}:{query}")
-        existing = get_set(cache_key)
+        existing = await get_set(cache_key)
         
         if existing:
             return existing
@@ -50,7 +50,7 @@ class AutocompleteService:
         prompt.add_user_message(prompt_input)
         options = await prompt.get_options()
         
-        add_to_set(cache_key, options)
+        await add_to_set(cache_key, options)
         
         return options
     
@@ -59,7 +59,7 @@ class AutocompleteService:
         query: str
     ) -> List[str]:
         cache_key = get_cache_key("educational-institutions", query)
-        existing = get_set(cache_key)
+        existing = await get_set(cache_key)
         
         if existing:
             return existing
@@ -69,7 +69,7 @@ class AutocompleteService:
         prompt.add_user_message(prompt_input)
         options = await prompt.get_options()
         
-        add_to_set(cache_key, options)
+        await add_to_set(cache_key, options)
         
         return options
     
@@ -79,7 +79,7 @@ class AutocompleteService:
         query: str
     ) -> List[str]:
         cache_key = get_cache_key("educational-focuses", f"{school_name}:{query}")
-        existing = get_set(cache_key)
+        existing = await get_set(cache_key)
         
         if existing:
             return existing
@@ -89,7 +89,7 @@ class AutocompleteService:
         prompt.add_user_message(prompt_input)
         options = await prompt.get_options()
         
-        add_to_set(cache_key, options)
+        await add_to_set(cache_key, options)
         
         return options
     

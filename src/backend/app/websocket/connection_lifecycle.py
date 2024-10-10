@@ -1,5 +1,4 @@
 import logging
-import uuid
 from app.repositories import PlaygroundRepository
 from socketio import AsyncServer
 from common.cache import delete_key, get_key, set_key
@@ -58,18 +57,18 @@ async def handle_user_connection(
     environment_id_cache_key = get_environment_id_cache_key(session_id)
     image_cache_key = get_image_tag_cache_key(environment_id)
     
-    set_key(
+    await set_key(
         key=environment_id_cache_key,
         value=environment_id
     )
     
-    set_key(
+    await set_key(
         key=image_cache_key,
         value=environment.image_tag
     )
     
-    is_alive = get_key(get_liveness_cache_key(session_id))
-    is_ready = get_key(get_instance_ready_cache_key(session_id))
+    is_alive = await get_key(get_liveness_cache_key(session_id))
+    is_ready = await get_key(get_instance_ready_cache_key(session_id))
     
     # Check if the instance is already waiting for the user
     if is_alive is not None:
@@ -92,7 +91,7 @@ async def handle_user_connection(
         
     connected_key = get_user_connected_cache_key(session_id)
     
-    set_key(
+    await set_key(
         key=connected_key,
         value="1",
         expiration=5 * 60 # 5 minutes
@@ -116,15 +115,15 @@ async def handle_instance_connection(
         user_connected_key = get_user_connected_cache_key(session_id)
         image_tag_key = get_image_tag_cache_key(environment_id)
         
-        is_user_connected = get_key(user_connected_key)
-        image_tag = get_key(image_tag_key)
+        is_user_connected = await get_key(user_connected_key)
+        image_tag = await get_key(image_tag_key)
         
         if is_user_connected is not None and image_tag is not None:
             await server.emit("user_connected", {
                 "image_tag": image_tag
             }, room=session_id) # Notify the instance of the user connection
         
-    set_key(
+    await set_key(
         key=get_liveness_cache_key(session_id),
         value="1"
     )
@@ -139,7 +138,7 @@ async def handle_instance_ready(server: AsyncServer, sid: str, session_id: str):
         
         if not environment_id:
             provided_environment_id_cache_key = get_environment_id_cache_key(session_id)
-            environment_id = get_key(provided_environment_id_cache_key)
+            environment_id = await get_key(provided_environment_id_cache_key)
         
         if not environment_id:
             logger.error(f"Instance {session_id} is ready, but no environment ID was found")
@@ -162,7 +161,7 @@ async def handle_instance_ready(server: AsyncServer, sid: str, session_id: str):
             
         await server.emit("instance_ready", room=session_id, skip_sid=sid)
         
-        set_key(
+        await set_key(
             key=get_instance_ready_cache_key(session_id),
             value="1"
         )
@@ -172,12 +171,12 @@ async def handle_user_disconnect(server: AsyncServer, sid: str, session_id: str,
     image_cache_key = get_image_tag_cache_key(environment_id)
     instance_ready_key = get_instance_ready_cache_key(session_id)
     await server.emit("user_disconnected", room=session_id, skip_sid=sid)
-    delete_key(get_user_connected_cache_key(session_id))
-    delete_key(image_cache_key)
-    delete_key(instance_ready_key)
+    await delete_key(get_user_connected_cache_key(session_id))
+    await delete_key(image_cache_key)
+    await delete_key(instance_ready_key)
     
 async def handle_instance_disconnect(server: AsyncServer, sid: str, session_id: str):
     logger.info(f"Instance {session_id} disconnected")
     await server.emit("instance_disconnected", room=session_id, skip_sid=sid)
-    delete_key(get_liveness_cache_key(session_id))
-    delete_key(get_instance_ready_cache_key(session_id))
+    await delete_key(get_liveness_cache_key(session_id))
+    await delete_key(get_instance_ready_cache_key(session_id))
