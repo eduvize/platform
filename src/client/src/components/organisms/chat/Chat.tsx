@@ -82,7 +82,7 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
             <Box pos="relative">
                 <Box
                     pos="absolute"
-                    top={-(AVATAR_SIZE / 6)}
+                    top={-(AVATAR_SIZE / 4)}
                     left="50%"
                     ml={-(AVATAR_SIZE / 2)}
                     style={{ zIndex: 2 }}
