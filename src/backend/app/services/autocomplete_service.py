@@ -11,7 +11,7 @@ class AutocompleteService:
         query: str
     ) -> List[str]:
         cache_key = get_cache_key("programming-languages", f"{','.join(disciplines)}:{query}")
-        existing = get_set(cache_key)
+        existing = await get_set(cache_key)  # Add await here
         
         if existing:
             return existing
