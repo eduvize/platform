@@ -10,6 +10,7 @@ from domain.schema.courses import Course, Lesson, Module, Section, CourseExercis
 from domain.topics import CourseGenerationTopic
 from common.messaging.topics import Topic
 from ai.prompts.course_generation.models import CourseOutline, ModuleOutline, LessonOutline, SectionOutline
+import asyncio
 
 # Sample data
 user_id = str(uuid.uuid4())
@@ -165,10 +166,10 @@ async def test_generate_course(
     mock_kafka_inst.return_value = mock_kafka_producer
     mock_kafka_producer.produce_message = AsyncMock()
     
-    course_service.generate_cover_image = MagicMock(return_value="cover_image_url")
+    course_service.generate_cover_image = Mock(return_value="cover_image_url")
     
     # Mock course repository
-    course_service.course_repo.create_course = MagicMock(return_value=course_id)
+    course_service.course_repo.create_course = AsyncMock(return_value=course_id)
     
     # Call the method under test
     await course_service.generate_course(user_id=user_id, plan=plan)
@@ -199,11 +200,12 @@ async def test_mark_lesson_complete_baseline(course_service):
     
     # Mock user and course
     course_service.user_service.get_user = AsyncMock(return_value=MagicMock(id=user_id))
-    course_service.course_repo.get_course = MagicMock(return_value=course)
+    course_service.course_repo.get_course = AsyncMock(return_value=course)
     
     # Mock repository calls to set lesson progression
-    course_service.course_repo.set_current_lesson = MagicMock()
-    course_service.course_repo.set_course_completion = MagicMock()
+    course_service.course_repo.get_next_lesson = AsyncMock(return_value=None)
+    course_service.course_repo.set_current_lesson = AsyncMock()
+    course_service.course_repo.set_course_completion = AsyncMock()
     
     result = await course_service.mark_lesson_complete(user_id=user_id, course_id=course_id, lesson_id=current_lesson_id)
     
@@ -220,11 +222,11 @@ async def test_mark_lesson_complete_not_current_lesson(course_service):
     
     # Mock user and course
     course_service.user_service.get_user = AsyncMock(return_value=MagicMock(id=user_id))
-    course_service.course_repo.get_course = MagicMock(return_value=course)
+    course_service.course_repo.get_course = AsyncMock(return_value=course)
     
     # Mock repository calls to set lesson progression
-    course_service.course_repo.set_current_lesson = MagicMock()
-    course_service.course_repo.set_course_completion = MagicMock()
+    course_service.course_repo.set_current_lesson = AsyncMock()
+    course_service.course_repo.set_course_completion = AsyncMock()
     
     await course_service.mark_lesson_complete(user_id=user_id, course_id=course_id, lesson_id=uuid.uuid4())
     
@@ -242,12 +244,12 @@ async def test_mark_lesson_complete_last_lesson(course_service):
     
     # Mock user and course
     course_service.user_service.get_user = AsyncMock(return_value=MagicMock(id=user_id))
-    course_service.course_repo.get_course = MagicMock(return_value=cloned_course)
-    course_service.course_repo.get_next_lesson = MagicMock(return_value=None)
+    course_service.course_repo.get_course = AsyncMock(return_value=cloned_course)
+    course_service.course_repo.get_next_lesson = AsyncMock(return_value=None)
     
     # Mock repository calls to set lesson progression
-    course_service.course_repo.set_current_lesson = MagicMock()
-    course_service.course_repo.set_course_completion = MagicMock()
+    course_service.course_repo.set_current_lesson = AsyncMock()
+    course_service.course_repo.set_course_completion = AsyncMock()
     
     await course_service.mark_lesson_complete(user_id=user_id, course_id=course_id, lesson_id=current_lesson_id)
     
@@ -268,14 +270,14 @@ async def test_mark_lesson_complete_without_completing_exercise(course_service):
     
     # Mock user and course
     course_service.user_service.get_user = AsyncMock(return_value=MagicMock(id=user_id))
-    course_service.course_repo.get_course = MagicMock(return_value=cloned_course)
+    course_service.course_repo.get_course = AsyncMock(return_value=cloned_course)
     
     # Mock repository calls to set lesson progression
-    course_service.course_repo.set_current_lesson = MagicMock()
-    course_service.course_repo.set_course_completion = MagicMock()
+    course_service.course_repo.set_current_lesson = AsyncMock()
+    course_service.course_repo.set_course_completion = AsyncMock()
     
     # Mock repository calls to get exercise objectives
-    course_service.course_repo.get_exercise_objectives = MagicMock(return_value=[CourseExerciseObjective()])
+    course_service.course_repo.get_exercise_objectives = AsyncMock(return_value=[CourseExerciseObjective()])
     
     await course_service.mark_lesson_complete(user_id=user_id, course_id=course_id, lesson_id=current_lesson_id)
     
@@ -291,10 +293,10 @@ async def test_get_courses(course_service):
     """
     # Mock user and courses
     course_service.user_service.get_user = AsyncMock(return_value=MagicMock(id=user_id))
-    course_service.course_repo.get_courses = MagicMock(return_value=[course])
+    course_service.course_repo.get_courses = AsyncMock(return_value=[course])
     
     # Mock lesson count retrieval
-    course_service.course_repo.get_lesson_count = MagicMock(return_value=10)
+    course_service.course_repo.get_lesson_count = AsyncMock(return_value=10)
     
     result = await course_service.get_courses(user_id=user_id)
     
@@ -313,7 +315,7 @@ async def test_get_course(course_service):
     """
     # Mock user and course
     course_service.user_service.get_user = AsyncMock(return_value=MagicMock(id=user_id))
-    course_service.course_repo.get_course = MagicMock(return_value=course)
+    course_service.course_repo.get_course = AsyncMock(return_value=course)
     
     result = await course_service.get_course(user_id=user_id, course_id=course_id)
     
@@ -322,15 +324,17 @@ async def test_get_course(course_service):
     
     assert result == course
 
-def test_generate_cover_image(course_service):
+@pytest.mark.asyncio
+async def test_generate_cover_image(course_service):
     """
     Tests generate_cover_image method:
     1. Should generate an image using OpenAI and return the URL.
     """
     # Mock OpenAI response
-    course_service.openai.images = MagicMock()
-    course_service.openai.images.generate = MagicMock()
-    course_service.openai.images.generate.return_value = MagicMock(data=[MagicMock(url="generated_image_url")])
+    mock_response = MagicMock()
+    mock_response.data = [MagicMock(url="generated_image_url")]
+    course_service.openai = MagicMock(images=MagicMock())
+    course_service.openai.images.generate = MagicMock(return_value=mock_response)
     
     result = course_service.generate_cover_image(subject="Python")
     
@@ -343,3 +347,63 @@ def test_generate_cover_image(course_service):
     )
     
     assert result == "generated_image_url"
+
+@pytest.mark.asyncio
+async def test_get_exercises(course_service):
+    """
+    Tests get_exercises method:
+    1. Should return a list of ExercisePlan for the course.
+    """
+    # Mock course and repository
+    mock_course = MagicMock()
+    mock_course.modules = [
+        MagicMock(title="Module 1", lessons=[
+            MagicMock(title="Lesson 1", sections=[MagicMock(content="Lesson 1 content")])
+        ])
+    ]
+    course_service.course_repo.get_course = AsyncMock(return_value=mock_course)
+
+    # Mock GenerateExercisesPrompt
+    mock_prompt = MagicMock()
+    mock_prompt.get_exercise.return_value = MagicMock()
+    with patch("app.services.course_service.GenerateExercisesPrompt", return_value=mock_prompt):
+        result = await course_service.get_exercises(course_id=uuid.uuid4())
+
+    course_service.course_repo.get_course.assert_awaited_once()
+    assert isinstance(result, list)
+    assert len(result) == 1  # One exercise per lesson
+
+@pytest.mark.asyncio
+async def test_get_exercise(course_service):
+    """
+    Tests get_exercise method:
+    1. Should return a specific exercise for the given exercise_id.
+    """
+    mock_exercise = MagicMock()
+    course_service.course_repo.get_exercise = AsyncMock(return_value=mock_exercise)
+
+    exercise_id = uuid.uuid4()
+    result = await course_service.get_exercise(exercise_id=exercise_id)
+
+    course_service.course_repo.get_exercise.assert_awaited_once_with(exercise_id)
+    assert result == mock_exercise
+
+@pytest.mark.asyncio
+async def test_set_objective_status(course_service):
+    """
+    Tests set_objective_status method:
+    1. Should call the repository method to set the objective status.
+    """
+    course_service.course_repo.set_objective_status = AsyncMock()
+
+    exercise_id = uuid.uuid4()
+    objective_id = uuid.uuid4()
+    is_complete = True
+
+    await course_service.set_objective_status(
+        exercise_id=exercise_id,
+        objective_id=objective_id,
+        is_complete=is_complete
+    )
+
+    course_service.course_repo.set_objective_status.assert_awaited_once_with(objective_id, is_complete)

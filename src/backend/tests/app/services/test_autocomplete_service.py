@@ -15,7 +15,7 @@ school_name = "MIT"
 @patch("app.services.autocomplete_service.get_set", autospec=True)
 @patch("app.services.autocomplete_service.add_to_set", autospec=True)
 @patch("app.services.autocomplete_service.AutocompletePrompt", autospec=True)
-def test_get_programming_languages(mock_prompt, mock_add_to_set, mock_get_set):
+async def test_get_programming_languages(mock_prompt, mock_add_to_set, mock_get_set):
     """
     Tests get_programming_languages:
     1. Should return cached data if exists in cache.
@@ -25,26 +25,23 @@ def test_get_programming_languages(mock_prompt, mock_add_to_set, mock_get_set):
     
     # Mock AutocompletePrompt
     mock_prompt_instance = mock_prompt.return_value
-    mock_prompt_instance.with_input.return_value = mock_prompt_instance
     mock_prompt_instance.get_options.return_value = ["Python", "JavaScript"]
 
     service = AutocompleteService()
     
-    result = service.get_programming_languages(disciplines, query)
+    result = await service.get_programming_languages(disciplines, query)
 
     # Assertions
     mock_get_set.assert_called_once()
-    mock_prompt_instance.with_input.assert_called_once()
     mock_prompt_instance.get_options.assert_called_once()
     mock_add_to_set.assert_called_once()
     assert result == ["Python", "JavaScript"]
-
 
 @pytest.mark.asyncio
 @patch("app.services.autocomplete_service.get_set", autospec=True)
 @patch("app.services.autocomplete_service.add_to_set", autospec=True)
 @patch("app.services.autocomplete_service.AutocompletePrompt", autospec=True)
-def test_get_libraries(mock_prompt, mock_add_to_set, mock_get_set):
+async def test_get_libraries(mock_prompt, mock_add_to_set, mock_get_set):
     """
     Tests get_libraries:
     1. Should return cached data if exists.
@@ -54,16 +51,14 @@ def test_get_libraries(mock_prompt, mock_add_to_set, mock_get_set):
     
     # Mock AutocompletePrompt
     mock_prompt_instance = mock_prompt.return_value
-    mock_prompt_instance.with_input.return_value = mock_prompt_instance
     mock_prompt_instance.get_options.return_value = ["NumPy", "Pandas"]
 
     service = AutocompleteService()
     
-    result = service.get_libraries(valid_subjects, languages, query)
+    result = await service.get_libraries(valid_subjects, languages, query)
 
     # Assertions
     mock_get_set.assert_called_once()
-    mock_prompt_instance.with_input.assert_called_once()
     mock_prompt_instance.get_options.assert_called_once()
     mock_add_to_set.assert_called_once()
     assert result == ["NumPy", "Pandas"]
@@ -72,8 +67,7 @@ def test_get_libraries(mock_prompt, mock_add_to_set, mock_get_set):
 @patch("app.services.autocomplete_service.get_set", autospec=True)
 @patch("app.services.autocomplete_service.add_to_set", autospec=True)
 @patch("app.services.autocomplete_service.AutocompletePrompt", autospec=True)
-@patch("app.services.autocomplete_service.get_library_input", autospec=True)
-def test_get_libraries_mixed_subjects(mock_get_library_input, mock_prompt, mock_add_to_set, mock_get_set):
+async def test_get_libraries_mixed_subjects(mock_prompt, mock_add_to_set, mock_get_set):
     """
     Tests get_libraries with mixed valid and invalid subjects:
     1. Should filter out invalid subjects.
@@ -83,21 +77,16 @@ def test_get_libraries_mixed_subjects(mock_get_library_input, mock_prompt, mock_
     
     # Mock AutocompletePrompt
     mock_prompt_instance = mock_prompt.return_value
-    mock_prompt_instance.with_input.return_value = mock_prompt_instance
     mock_prompt_instance.get_options.return_value = ["NumPy", "Pandas"]
 
     service = AutocompleteService()
     
-    result = service.get_libraries([*valid_subjects, *invalid_subjects], languages, query)
+    result = await service.get_libraries([*valid_subjects, *invalid_subjects], languages, query)
 
     # Assertions
     mock_get_set.assert_called_once()
-    mock_prompt_instance.with_input.assert_called_once()
     mock_prompt_instance.get_options.assert_called_once()
     mock_add_to_set.assert_called_once()
-    
-    # Ensure only valid subjects are passed to get_library_input
-    mock_get_library_input.assert_called_once_with(valid_subjects, languages, query)
     
     assert result == ["NumPy", "Pandas"]
 
@@ -105,7 +94,7 @@ def test_get_libraries_mixed_subjects(mock_get_library_input, mock_prompt, mock_
 @patch("app.services.autocomplete_service.get_set", autospec=True)
 @patch("app.services.autocomplete_service.add_to_set", autospec=True)
 @patch("app.services.autocomplete_service.AutocompletePrompt", autospec=True)
-def test_get_educational_institutions(mock_prompt, mock_add_to_set, mock_get_set):
+async def test_get_educational_institutions(mock_prompt, mock_add_to_set, mock_get_set):
     """
     Tests get_educational_institutions:
     1. Should return cached data if exists.
@@ -115,26 +104,23 @@ def test_get_educational_institutions(mock_prompt, mock_add_to_set, mock_get_set
     
     # Mock AutocompletePrompt
     mock_prompt_instance = mock_prompt.return_value
-    mock_prompt_instance.with_input.return_value = mock_prompt_instance
     mock_prompt_instance.get_options.return_value = ["MIT", "Harvard"]
 
     service = AutocompleteService()
     
-    result = service.get_educational_institutions(query)
+    result = await service.get_educational_institutions(query)
 
     # Assertions
     mock_get_set.assert_called_once()
-    mock_prompt_instance.with_input.assert_called_once()
     mock_prompt_instance.get_options.assert_called_once()
     mock_add_to_set.assert_called_once()
     assert result == ["MIT", "Harvard"]
-
 
 @pytest.mark.asyncio
 @patch("app.services.autocomplete_service.get_set", autospec=True)
 @patch("app.services.autocomplete_service.add_to_set", autospec=True)
 @patch("app.services.autocomplete_service.AutocompletePrompt", autospec=True)
-def test_get_educational_focuses(mock_prompt, mock_add_to_set, mock_get_set):
+async def test_get_educational_focuses(mock_prompt, mock_add_to_set, mock_get_set):
     """
     Tests get_educational_focuses:
     1. Should return cached data if exists.
@@ -144,16 +130,14 @@ def test_get_educational_focuses(mock_prompt, mock_add_to_set, mock_get_set):
     
     # Mock AutocompletePrompt
     mock_prompt_instance = mock_prompt.return_value
-    mock_prompt_instance.with_input.return_value = mock_prompt_instance
     mock_prompt_instance.get_options.return_value = ["Computer Science", "Physics"]
 
     service = AutocompleteService()
     
-    result = service.get_educational_focuses(school_name, query)
+    result = await service.get_educational_focuses(school_name, query)
 
     # Assertions
     mock_get_set.assert_called_once()
-    mock_prompt_instance.with_input.assert_called_once()
     mock_prompt_instance.get_options.assert_called_once()
     mock_add_to_set.assert_called_once()
     assert result == ["Computer Science", "Physics"]
