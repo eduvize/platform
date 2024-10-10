@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, forwardRef } from "react";
+import {
+    useEffect,
+    useRef,
+    useState,
+    forwardRef,
+    useCallback,
+    useMemo,
+} from "react";
 import { ChatMessage, PendingTool } from "@molecules";
 import { useChat, usePendingTools, useToolResults } from "@context/chat/hooks";
 import {
@@ -8,6 +15,7 @@ import {
     Flex,
     Input,
     ScrollArea,
+    Space,
     Stack,
     Text,
 } from "@mantine/core";
@@ -39,28 +47,52 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
         },
         chatAreaRef
     ) => {
+        const inputRef = useRef<HTMLInputElement>(null);
         const viewport = useRef<HTMLDivElement>(null);
-        const isAtBottomRef = useRef(true);
         const pendingToolNames = usePendingTools();
         const toolResults = useToolResults();
         const { messages, sendMessage, processing } = useChat(greetingMessage);
         const [message, setMessage] = useState("");
+        const scrollRef = useRef<HTMLDivElement>(null);
+        const [isAtBottom, setIsAtBottom] = useState(true);
+        const [userHasScrolled, setUserHasScrolled] = useState(false);
 
-        const handleScrollToBottom = () => {
-            viewport.current?.scrollTo({
-                top: viewport.current.scrollHeight,
-                behavior: "smooth",
-            });
-        };
-
-        useEffect(() => {
-            handleScrollToBottom();
-        }, [pendingToolNames.length, messages.length]);
-
-        useEffect(() => {
-            if (isAtBottomRef.current) {
-                handleScrollToBottom();
+        const scrollToBottom = useCallback(() => {
+            if (viewport.current) {
+                viewport.current.scrollTop = viewport.current.scrollHeight;
             }
+        }, []);
+
+        const checkIfAtBottom = useCallback(() => {
+            if (viewport.current) {
+                const { scrollTop, scrollHeight, clientHeight } =
+                    viewport.current;
+                return Math.abs(scrollHeight - clientHeight - scrollTop) < 1;
+            }
+            return false;
+        }, []);
+
+        useEffect(() => {
+            if (isAtBottom && !userHasScrolled) {
+                scrollToBottom();
+            }
+        }, [
+            messages,
+            pendingToolNames,
+            isAtBottom,
+            userHasScrolled,
+            scrollToBottom,
+        ]);
+
+        // Effect to re-focus input when processing is complete
+        useEffect(() => {
+            if (!processing && inputRef.current) {
+                inputRef.current.focus();
+            }
+        }, [processing]);
+
+        useEffect(() => {
+            scrollToBottom();
 
             if (
                 (greetingMessage && messages.length > 1) ||
@@ -77,6 +109,25 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
                 onTool?.(name, data);
             }
         }, [toolResults]);
+
+        useEffect(() => {
+            if (isAtBottom) {
+                scrollToBottom();
+            }
+        }, [messages, pendingToolNames]);
+
+        // Split messages into multiple messages if newlines are encountered
+        const splitMessages = useMemo(() => {
+            return messages.flatMap((message) => {
+                const contentChunks = message.content.split("\n");
+                return contentChunks
+                    .filter((chunk) => chunk.trim() !== "") // Filter out blank messages
+                    .map((chunk) => ({
+                        ...message,
+                        content: chunk.trim(), // Trim any leading/trailing whitespace
+                    }));
+            });
+        }, [messages]);
 
         return (
             <Box pos="relative">
@@ -124,11 +175,12 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
                             pr={0}
                             pt="xl"
                             scrollbars="y"
-                            onScroll={() => {
-                                isAtBottomRef.current =
-                                    viewport.current!.scrollTop +
-                                        viewport.current!.clientHeight >=
-                                    viewport.current!.scrollHeight;
+                            onScrollPositionChange={() => {
+                                const atBottom = checkIfAtBottom();
+                                setIsAtBottom(atBottom);
+                                if (!atBottom && !userHasScrolled) {
+                                    setUserHasScrolled(true);
+                                }
                             }}
                             style={{
                                 transition: "height 0.2s",
@@ -139,8 +191,11 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
                                 pb={pendingToolNames.length ? "xl" : undefined}
                                 pr="sm"
                             >
-                                {messages.map((message) => (
-                                    <ChatMessage {...message} />
+                                {splitMessages.map((message, index) => (
+                                    <ChatMessage
+                                        key={`${message.create_at_utc}-${index}`}
+                                        {...message}
+                                    />
                                 ))}
                             </Stack>
 
@@ -148,6 +203,7 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
                                 <Box mt="md" pos="absolute" bottom="0" left="0">
                                     {pendingToolNames.map((toolName) => (
                                         <PendingTool
+                                            key={toolName}
                                             name={
                                                 toolDescriptionMap?.[
                                                     toolName
@@ -157,11 +213,15 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
                                     ))}
                                 </Box>
                             )}
+
+                            <Space h="xl" />
+                            <div ref={scrollRef} />
                         </ScrollArea.Autosize>
 
                         <Divider />
 
                         <Input
+                            ref={inputRef}
                             mt="md"
                             placeholder="Type a message..."
                             variant="filled"
@@ -172,6 +232,8 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
                                 if (e.key === "Enter") {
                                     sendMessage(message);
                                     setMessage("");
+                                    setUserHasScrolled(false);
+                                    setIsAtBottom(true);
                                 }
                             }}
                             disabled={processing}
