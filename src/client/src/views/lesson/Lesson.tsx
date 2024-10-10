@@ -1,4 +1,4 @@
-import { ChatProvider, useChat } from "@context/chat";
+import { ChatProvider } from "@context/chat";
 import { useCourse, useLesson } from "@context/course/hooks";
 import {
     Avatar,
@@ -116,7 +116,6 @@ export const Component = (props: LessonProps) => {
                 <Grid.Col span={panels.includes("instructor") ? 3 : 0.5}>
                     {panels.includes("instructor") && (
                         <InstructorPane
-                            avatar={avatar}
                             onHide={() => {
                                 setPanels(
                                     panels.filter((x) => x !== "instructor")

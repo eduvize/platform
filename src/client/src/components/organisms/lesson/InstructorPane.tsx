@@ -18,16 +18,11 @@ import { useEffect, useState } from "react";
 import { useExercise, useExerciseObjectives } from "@context/exercise/hooks";
 
 interface InstructorPaneProps {
-    avatar: string;
     view: "exercise" | "lesson";
     onHide: () => void;
 }
 
-export const InstructorPane = ({
-    avatar,
-    view,
-    onHide,
-}: InstructorPaneProps) => {
+export const InstructorPane = ({ view, onHide }: InstructorPaneProps) => {
     const exercise = useExercise();
     const objectives = useExerciseObjectives();
     const [chatAreaRef, chatAreaRect] = useResizeObserver();
@@ -41,7 +36,7 @@ export const InstructorPane = ({
                 viewportHeight -
                     chatAreaRect.top -
                     instructorPaneRect.height -
-                    200
+                    240
             );
         }
     }, [chatAreaRect, viewportHeight, instructorPaneRect]);
@@ -65,6 +60,7 @@ export const InstructorPane = ({
                         </Button>
                     </Group>
                     <Divider mb="xl" />
+                    <Space h="xl" />
 
                     {exercise && view === "exercise" && (
                         <Card withBorder mb="xl">
@@ -108,36 +104,11 @@ export const InstructorPane = ({
                     )}
                 </Flex>
 
-                <Flex pos="relative" flex="1 1 auto" mt="xl">
-                    <Avatar
-                        pos="absolute"
-                        top="-55px"
-                        left="50%"
-                        ml="-42px"
-                        src={avatar}
-                        size="xl"
-                        radius="99999"
-                        bg="black"
-                        p="sm"
-                        styles={{
-                            root: {
-                                zIndex: 9999,
-                            },
-                        }}
-                    />
-                    <Card
-                        withBorder
-                        ref={chatAreaRef}
-                        pos="relative"
-                        w="100%"
-                        pt="xl"
-                    >
-                        <Chat
-                            maxHeight={chatHeight}
-                            greetingMessage="Let me know if you have any questions!"
-                        />
-                    </Card>
-                </Flex>
+                <Chat
+                    ref={chatAreaRef}
+                    maxHeight={chatHeight}
+                    greetingMessage="Let me know if you have any questions!"
+                />
             </Flex>
         </Stack>
     );
