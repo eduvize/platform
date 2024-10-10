@@ -114,7 +114,7 @@ class CourseService:
         
         kafka_producer = KafkaProducer()
         
-        kafka_producer.produce_message(
+        await kafka_producer.produce_message(
             topic=Topic.GENERATE_NEW_COURSE,
             message=CourseGenerationTopic(
                 user_id=uuid.UUID(user_id),

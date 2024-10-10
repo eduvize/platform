@@ -58,7 +58,7 @@ async def listen_for_environment_build_failure_events():
                     previous_error=error_content
                 )
                 
-                producer.produce_message(
+                await producer.produce_message(
                     topic=Topic.BUILD_PLAYGROUND,
                     message=BuildPlaygroundTopic(
                         purpose="exercise",

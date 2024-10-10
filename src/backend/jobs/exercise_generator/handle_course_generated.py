@@ -38,7 +38,7 @@ async def create_exercise(
     
     # Send event to playground environment builder
     logging.info("Sending build playground event")
-    producer.produce_message(
+    await producer.produce_message(
         topic=Topic.BUILD_PLAYGROUND,
         message=BuildPlaygroundTopic(
             purpose="exercise",

@@ -127,7 +127,7 @@ async def main():
             logging.info("Producing course generated event...")
 
             # Notify the system that the course has been generated
-            producer.produce_message(
+            await producer.produce_message(
                 topic=Topic.COURSE_GENERATED,
                 message=CourseGeneratedTopic(
                     user_id=data.user_id,

@@ -86,7 +86,7 @@ async def trigger_course_generation(
     user_id: str = Depends(user_id_extractor)
 ):
     producer = KafkaProducer()
-    producer.produce_message(
+    await producer.produce_message(
         topic=Topic.COURSE_GENERATED,
         message=CourseGeneratedTopic(user_id=uuid.UUID(user_id), course_id=course_id)
     )
