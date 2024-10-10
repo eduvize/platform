@@ -8,7 +8,7 @@ import { useEffect } from "react";
 import { Box, Container } from "@mantine/core";
 import { Courses } from "@views/courses";
 import { Course } from "@views/course";
-import { Lesson } from "@organisms";
+import { Lesson } from "@views/course";
 
 const CallToActionOrView = ({ children }: { children: React.ReactNode }) => {
     const { is_verified } = useOnboarding();

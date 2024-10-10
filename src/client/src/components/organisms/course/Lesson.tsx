@@ -1,5 +1,5 @@
-import { ChatProvider, useChat } from "@context/chat";
-import { useCourse, useLesson } from "@context/course/hooks";
+import { useChat } from "@context/chat";
+import { useCourse } from "@context/course/hooks";
 import {
     Avatar,
     Box,
@@ -11,24 +11,25 @@ import {
 import { InstructorPane, LessonContent, NavigationPane } from "@molecules";
 import { IconList } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { ExerciseProvider } from "@context/exercise";
-import { CourseProvider } from "@context/course";
+import { useNavigate } from "react-router-dom";
+import { LessonDto } from "@models/dto";
 const apiEndpoint = import.meta.env.VITE_API_ENDPOINT;
-
-interface LessonProps {
-    courseId: string;
-    lessonId: string;
-}
 
 type Panel = "module" | "instructor";
 
-export const Component = (props: LessonProps) => {
-    const { courseId, lessonId } = props;
+interface ComponentProps extends LessonDto {
+    courseId?: string;
+}
+
+export const Lesson = ({
+    id: lessonId,
+    sections,
+    exercises,
+    courseId,
+}: ComponentProps) => {
     const navigate = useNavigate();
     const { instructorId } = useChat();
     const { markLessonComplete: markSectionCompleted } = useCourse();
-    const { sections, exercises } = useLesson(lessonId);
     const [section, setSection] = useState(0);
     const [showExercise, setShowExercise] = useState(false);
     const [panels, setPanels] = useState<Panel[]>(["instructor", "module"]);
@@ -146,33 +147,5 @@ export const Component = (props: LessonProps) => {
                 </Grid.Col>
             </Grid>
         </Container>
-    );
-};
-
-export const Lesson = () => {
-    const params = useParams();
-    const navigate = useNavigate();
-
-    useEffect(() => {
-        if (!params.course_id || !params.lesson_id) {
-            navigate("/dashboard/courses");
-        }
-    }, []);
-
-    if (!params.course_id || !params.lesson_id) {
-        return null;
-    }
-
-    return (
-        <CourseProvider courseId={params.course_id}>
-            <ExerciseProvider lessonId={params.lesson_id}>
-                <ChatProvider prompt="lesson" resourceId={params.lesson_id}>
-                    <Component
-                        courseId={params.course_id}
-                        lessonId={params.lesson_id}
-                    />
-                </ChatProvider>
-            </ExerciseProvider>
-        </CourseProvider>
     );
 };
