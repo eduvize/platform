@@ -207,10 +207,21 @@ class ChatService:
             if session.resource_id is None:
                 raise ValueError("Resource ID is required for lesson prompt")
             
+            # Get the user's instructor
+            instructor = await self.instructor_service.get_user_instructor(session.user_id)
+            
+            if not instructor:
+                # Get the first instructor
+                instructor = (await self.instructor_service.get_all_instructors())[0]
+                
+                if not instructor:
+                    raise ValueError("Instructor not found")
+
             lesson = await self.course_repository.get_lesson(session.resource_id)
             
             prompt = LessonDiscussionPrompt()
             async for chunk, _, is_final in await prompt.get_responses(
+                instructor=instructor,
                 history=model_messages,
                 new_message=input_msg,
                 lesson_content="\n\n".join(
