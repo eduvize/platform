@@ -1,4 +1,4 @@
-import { ChatProvider } from "@context/chat";
+import { ChatProvider, useChat } from "@context/chat";
 import { useCourse, useLesson } from "@context/course/hooks";
 import {
     Avatar,
@@ -12,9 +12,9 @@ import { InstructorPane, LessonContent, NavigationPane } from "@organisms";
 import { IconList } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import avatar from "./avatar.png";
 import { ExerciseProvider } from "@context/exercise";
 import { CourseProvider } from "@context/course";
+const apiEndpoint = import.meta.env.VITE_API_ENDPOINT;
 
 interface LessonProps {
     courseId: string;
@@ -26,6 +26,7 @@ type Panel = "module" | "instructor";
 export const Component = (props: LessonProps) => {
     const { courseId, lessonId } = props;
     const navigate = useNavigate();
+    const { instructorId } = useChat();
     const { markLessonComplete: markSectionCompleted } = useCourse();
     const { sections, exercises } = useLesson(lessonId);
     const [section, setSection] = useState(0);
@@ -135,11 +136,9 @@ export const Component = (props: LessonProps) => {
                                 }
                             >
                                 <Avatar
-                                    src={avatar}
+                                    src={`${apiEndpoint}/instructors/${instructorId}/profile-photo`}
                                     size="lg"
-                                    radius="99999"
-                                    p="xs"
-                                    bg="black"
+                                    radius="xl"
                                 />
                             </UnstyledButton>
                         </Group>
