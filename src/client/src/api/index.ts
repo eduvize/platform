@@ -6,6 +6,7 @@ import ValidationApi from "./ValidationApi";
 import ChatApi from "./ChatApi";
 import PlaygroundApi from "./PlaygroundApi";
 import CourseApi from "./CourseApi";
+import InstructorApi from "./InstructorApi";
 
 export {
     AuthApi,
@@ -16,4 +17,5 @@ export {
     ChatApi,
     PlaygroundApi,
     CourseApi,
+    InstructorApi,
 };

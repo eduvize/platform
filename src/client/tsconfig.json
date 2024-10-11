@@ -29,7 +29,8 @@
             "@molecules": ["./src/components/molecules"],
             "@organisms": ["./src/components/organisms"],
             "@views/*": ["./src/views/*/index.ts"],
-            "@util/*": ["./src/util/*/index.ts"]
+            "@util/*": ["./src/util/*/index.ts"],
+            "@hooks/*": ["./src/hooks/*/index.ts"]
         }
     },
     "include": ["src", "vite-env.d.ts"],

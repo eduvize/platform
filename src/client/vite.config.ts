@@ -27,6 +27,7 @@ export default defineConfig(() => {
                 ),
                 "@views": path.resolve(__dirname, "./src/views"),
                 "@util": path.resolve(__dirname, "./src/util"),
+                "@hooks": path.resolve(__dirname, "./src/hooks"),
             },
         },
     };

@@ -3,6 +3,7 @@ import { CourseDto } from "@models/dto";
 import { Lesson } from "@organisms";
 import { Overview } from "./Overview";
 import { useState } from "react";
+import { Instructors } from "./Instructors";
 
 const onboardingCourse: CourseDto = {
     id: "onboarding",
@@ -35,7 +36,7 @@ const onboardingCourse: CourseDto = {
                             description:
                                 "Your instructor sets the tone for your courses. Think about how you like to learn, who you like to speak with about complex subjects, and what type of approach you prefer when learning.",
                             order: 1,
-                            content: "Setup section 2",
+                            content: <Instructors />,
                         },
                         {
                             title: "Getting to Know You",
