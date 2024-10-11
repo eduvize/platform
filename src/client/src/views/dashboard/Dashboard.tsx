@@ -9,8 +9,11 @@ import { Box, Container } from "@mantine/core";
 import { Courses } from "@views/courses";
 import { Course } from "@views/course";
 import { Lesson } from "@views/course";
+import { Onboarding } from "@views/onboarding";
 
 const CallToActionOrView = ({ children }: { children: React.ReactNode }) => {
+    return <Onboarding />;
+
     const { is_verified } = useOnboarding();
 
     if (!is_verified) {

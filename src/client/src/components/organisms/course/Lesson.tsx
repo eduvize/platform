@@ -12,27 +12,24 @@ import { InstructorPane, LessonContent, NavigationPane } from "@molecules";
 import { IconList } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LessonDto } from "@models/dto";
+import { CourseDto, LessonDto } from "@models/dto";
 const apiEndpoint = import.meta.env.VITE_API_ENDPOINT;
 
 type Panel = "module" | "instructor";
 
 interface ComponentProps extends LessonDto {
-    courseId?: string;
+    course: CourseDto;
 }
 
-export const Lesson = ({
-    id: lessonId,
-    sections,
-    exercises,
-    courseId,
-}: ComponentProps) => {
+export const Lesson = (props: ComponentProps) => {
     const navigate = useNavigate();
     const { instructorId } = useChat();
     const { markLessonComplete: markSectionCompleted } = useCourse();
     const [section, setSection] = useState(0);
     const [showExercise, setShowExercise] = useState(false);
     const [panels, setPanels] = useState<Panel[]>(["instructor", "module"]);
+
+    const { id: lessonId, sections, exercises, course } = props;
 
     useEffect(() => {
         // TODO: Figure out what's wrong with useWindowScroll. Hack in the meantime!
@@ -49,10 +46,10 @@ export const Lesson = ({
                 if (!showExercise) {
                     setShowExercise(true);
                 } else {
-                    navigate(`/dashboard/course/${courseId}`);
+                    navigate(`/dashboard/course/${course.id}`);
                 }
             } else {
-                navigate(`/dashboard/course/${courseId}`);
+                navigate(`/dashboard/course/${course.id}`);
             }
         } else {
             setSection(section + 1);
@@ -66,6 +63,7 @@ export const Lesson = ({
                     {panels.includes("module") && (
                         <Box pos="absolute" w="23%">
                             <NavigationPane
+                                course={course}
                                 currentLessonId={lessonId}
                                 currentSection={section}
                                 exerciseVisible={showExercise}
@@ -108,7 +106,7 @@ export const Lesson = ({
                     }
                 >
                     <LessonContent
-                        lessonId={lessonId}
+                        lesson={props}
                         currentSection={section}
                         view={showExercise ? "exercise" : "lesson"}
                         onComplete={handleCompleteSection}

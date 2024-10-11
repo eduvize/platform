@@ -4,7 +4,7 @@ import { ExerciseProvider } from "@context/exercise";
 import { useEffect, memo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Lesson as LessonComponent } from "@organisms";
-import { useLesson } from "@context/course/hooks";
+import { useCourse, useLesson } from "@context/course/hooks";
 
 export const Lesson = () => {
     const params = useParams();
@@ -21,9 +21,10 @@ export const Lesson = () => {
     }
 
     const Wrapper = memo(() => {
+        const { course } = useCourse();
         const lesson = useLesson(params.lesson_id!);
 
-        return <LessonComponent {...lesson} courseId={params.course_id} />;
+        return <LessonComponent {...lesson} course={course} />;
     });
 
     return (

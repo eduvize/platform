@@ -2,22 +2,22 @@ import { Stack, Group, Button, Card, Box, Space, Text } from "@mantine/core";
 import { ReadingMaterial } from "@atoms";
 import { Playground } from "../../organisms/playground";
 import { useExercise, useExerciseObjectives } from "@context/exercise/hooks";
-import { useLesson } from "@context/course/hooks";
+import { LessonDto } from "@models/dto";
 
 interface LessonContentProps {
-    lessonId: string;
+    lesson: LessonDto;
     view: "lesson" | "exercise";
     currentSection: number;
     onComplete: () => void;
 }
 
 export const LessonContent = ({
-    lessonId,
+    lesson,
     currentSection,
     view,
     onComplete,
 }: LessonContentProps) => {
-    const { title, description, order, sections } = useLesson(lessonId);
+    const { title, description, order, sections } = lesson;
     const exercise = useExercise();
     const objectives = useExerciseObjectives();
 

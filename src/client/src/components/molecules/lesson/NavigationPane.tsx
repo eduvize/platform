@@ -1,11 +1,12 @@
-import { useCourse } from "@context/course/hooks";
 import { Group, UnstyledButton, Divider, Box, Text } from "@mantine/core";
 import { LessonNavItem } from "@atoms";
 import { IconSquareMinusFilled } from "@tabler/icons-react";
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
+import { CourseDto } from "@models/dto";
 
 interface NavigationPaneProps {
+    course: CourseDto;
     currentLessonId: string;
     currentSection: number;
     exerciseVisible?: boolean;
@@ -15,6 +16,7 @@ interface NavigationPaneProps {
 }
 
 export const NavigationPane = ({
+    course,
     currentLessonId,
     currentSection,
     exerciseVisible,
@@ -22,8 +24,6 @@ export const NavigationPane = ({
     onExerciseClick,
     onChangeSection,
 }: NavigationPaneProps) => {
-    const { course } = useCourse();
-
     const currentLesson = useMemo(() => {
         return course.modules
             .map((module) => module.lessons)
