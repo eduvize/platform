@@ -5,14 +5,18 @@ import { SelectableInstructor } from "@molecules";
 import { useEffect, useMemo, useState } from "react";
 
 interface InstructorsProps {
+    value?: string;
     onInstructorSelected: (instructorId: string) => void;
 }
 
-export const Instructors = ({ onInstructorSelected }: InstructorsProps) => {
+export const Instructors = ({
+    value,
+    onInstructorSelected,
+}: InstructorsProps) => {
     const instructors = useInstructors();
     const [selectedInstructorId, setSelectedInstructorId] = useState<
         string | null
-    >(null);
+    >(value ?? null);
     const selectedInstructor = useMemo(() => {
         return instructors.find(
             (instructor) => instructor.id === selectedInstructorId
@@ -25,7 +29,11 @@ export const Instructors = ({ onInstructorSelected }: InstructorsProps) => {
     }, [instructors, selectedInstructorId]);
 
     useEffect(() => {
-        if (!instructors.length) return;
+        setSelectedInstructorId(value ?? null);
+    }, [value]);
+
+    useEffect(() => {
+        if (!instructors.length || selectedInstructorId) return;
 
         setSelectedInstructorId(instructors[0].id);
     }, [instructors]);

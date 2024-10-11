@@ -3,7 +3,7 @@ import { useCurrentUser } from "@context/user/hooks";
 import { Center, Loader } from "@mantine/core";
 import { ChatMessageDto } from "@models/dto";
 import { ChatPromptType } from "@models/enums";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState, useCallback, useRef } from "react";
 import { createContext } from "use-context-selector";
 
 type Context = {
@@ -13,7 +13,9 @@ type Context = {
     pendingTools: string[];
     toolResults: Record<string, any | null>;
     isProcessing: boolean;
-    sendMessage: (message: string) => void;
+    sendMessage: (message: string, hideFromChat?: boolean) => void;
+    setInstructor: (instructorId: string) => void;
+    setPrompt: (prompt: ChatPromptType) => Promise<void>;
     reset: () => void;
 };
 
@@ -25,6 +27,8 @@ const defaultValue: Context = {
     toolResults: {},
     isProcessing: false,
     sendMessage: () => {},
+    setInstructor: () => {},
+    setPrompt: () => Promise.resolve(),
     reset: () => {},
 };
 
@@ -48,24 +52,29 @@ export const ChatProvider = ({
     const [toolResults, setToolResults] = useState<Record<string, any | null>>(
         {}
     );
-    const [instructorId, setInstructorId] = useState<string | null>(null);
+    const [instructorId, setInstructorId] = useState<string | null>(
+        resourceId ?? null
+    );
+    const [currentPrompt, setCurrentPrompt] = useState<ChatPromptType>(prompt);
     const [receiveBuffer, setReceiveBuffer] = useState<string>("");
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [messages, setMessages] = useState<ChatMessageDto[]>([]);
+    const incomingMessageCompleteRef = useRef(true);
 
-    const handleSetup = () => {
-        ChatApi.createSession(prompt, resourceId).then(
-            ({ id: session_id, instructor_id }) => {
-                setSessionId(session_id);
-                setInstructorId(instructor_id);
-                setMessages([]);
-            }
-        );
-    };
+    const handleSetup = useCallback(async () => {
+        return await ChatApi.createSession(
+            currentPrompt,
+            instructorId ?? undefined
+        ).then(({ id: session_id, instructor_id }) => {
+            setSessionId(session_id);
+            setInstructorId(instructor_id);
+            setMessages([]);
+        });
+    }, [currentPrompt, instructorId]);
 
     useEffect(() => {
         handleSetup();
-    }, [resourceId]);
+    }, [handleSetup]);
 
     useEffect(() => {
         if (messages.length === 0) {
@@ -99,7 +108,7 @@ export const ChatProvider = ({
                 },
             ]);
         }
-    }, [receiveBuffer]);
+    }, [receiveBuffer, messages]);
 
     useEffect(() => {
         // Set it on the last message received
@@ -118,11 +127,12 @@ export const ChatProvider = ({
     }, [toolResults]);
 
     const sendMessage = (message: string) => {
-        if (!sessionId) return;
+        if (!sessionId || !incomingMessageCompleteRef.current) return;
 
         let receivedText = "";
         let completedToolCalls: Record<string, any> = {};
 
+        incomingMessageCompleteRef.current = false;
         ChatApi.sendMessage(
             sessionId,
             { message },
@@ -154,6 +164,7 @@ export const ChatProvider = ({
             },
             () => {
                 // Complete
+                incomingMessageCompleteRef.current = true;
                 setPendingToolNames([]);
                 setToolResults(completedToolCalls);
                 setIsProcessing(false);
@@ -161,22 +172,36 @@ export const ChatProvider = ({
         );
     };
 
-    const handleSendMessage = (message: string) => {
+    const handleSendMessage = (message: string, hideFromChat?: boolean) => {
         if (isProcessing || !sessionId) return;
 
         setIsProcessing(true);
 
-        setMessages((prev) => [
-            ...prev,
-            {
-                is_user: true,
-                content: message,
-                create_at_utc: new Date().toISOString(),
-            },
-        ]);
+        if (!hideFromChat) {
+            setMessages((prev) => [
+                ...prev,
+                {
+                    is_user: true,
+                    content: message,
+                    create_at_utc: new Date().toISOString(),
+                },
+            ]);
+        }
 
         sendMessage(message);
     };
+
+    const handleSetPrompt = useCallback(
+        (newPrompt: ChatPromptType) => {
+            return new Promise<void>((resolve) => {
+                setCurrentPrompt(newPrompt);
+                handleSetup().then(() => {
+                    resolve();
+                });
+            });
+        },
+        [handleSetup]
+    );
 
     if (!sessionId || !localUser || !instructorId) {
         return (
@@ -196,6 +221,8 @@ export const ChatProvider = ({
                 toolResults,
                 isProcessing,
                 sendMessage: handleSendMessage,
+                setInstructor: setInstructorId,
+                setPrompt: handleSetPrompt,
                 reset: handleSetup,
             }}
         >

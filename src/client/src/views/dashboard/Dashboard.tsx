@@ -10,11 +10,17 @@ import { Courses } from "@views/courses";
 import { Course } from "@views/course";
 import { Lesson } from "@views/course";
 import { Onboarding } from "@views/onboarding";
+import { OnboardingProvider } from "@context/onboarding";
 
 const CallToActionOrView = ({ children }: { children: React.ReactNode }) => {
-    return <Onboarding />;
-
-    const { is_verified } = useOnboarding();
+    const { is_verified, is_profile_complete } = useOnboarding();
+    if (!is_profile_complete) {
+        return (
+            <OnboardingProvider>
+                <Onboarding />
+            </OnboardingProvider>
+        );
+    }
 
     if (!is_verified) {
         return (

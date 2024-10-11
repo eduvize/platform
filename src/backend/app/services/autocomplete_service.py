@@ -7,16 +7,15 @@ from domain.enums.autocomplete_enums import AutocompleteLibrarySubject
 class AutocompleteService:
     async def get_programming_languages(
         self, 
-        disciplines: List[str], 
         query: str
     ) -> List[str]:
-        cache_key = get_cache_key("programming-languages", f"{','.join(disciplines)}:{query}")
-        existing = await get_set(cache_key)  # Add await here
+        cache_key = get_cache_key("programming-languages", query)
+        existing = await get_set(cache_key)
         
         if existing:
             return existing
         
-        prompt_input = get_programming_languages_input(disciplines, query)
+        prompt_input = get_programming_languages_input(query)
         prompt = AutocompletePrompt()
         prompt.add_user_message(prompt_input)
         options = await prompt.get_options()
@@ -104,11 +103,10 @@ Query: {query}
 """
 
 def get_programming_languages_input(
-    disciplines: List[str], 
     query: str
 ) -> str:
     return f"""
-Programming languages used for {', or '.join(disciplines)} development.
+Programming languages:
 Query: {query}
 """
 

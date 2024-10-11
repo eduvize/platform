@@ -12,7 +12,7 @@ from domain.schema.instructors.instructor import Instructor
 from domain.dto.chat.chat_message import ChatMessageDto
 from domain.dto.ai import CompletionChunk
 from domain.enums.chat_enums import PromptType
-from ai.prompts import LessonDiscussionPrompt, OnboardingInstructorSelectionPrompt
+from ai.prompts import LessonDiscussionPrompt, OnboardingInstructorSelectionPrompt, OnboardingProfileBuilderPrompt
 
 logger = logging.getLogger("ChatService")
 
@@ -236,6 +236,15 @@ class ChatService:
                     yield chunk
         elif p_type == PromptType.ONBOARDING:
             prompt = OnboardingInstructorSelectionPrompt()
+            async for chunk, _, is_final in await prompt.get_responses(
+                instructor=instructor,
+                history=model_messages,
+                new_message=input_msg
+            ):
+                if not is_final:
+                    yield chunk
+        elif p_type == PromptType.PROFILE_BUILDER:
+            prompt = OnboardingProfileBuilderPrompt()
             async for chunk, _, is_final in await prompt.get_responses(
                 instructor=instructor,
                 history=model_messages,

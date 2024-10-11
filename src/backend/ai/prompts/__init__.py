@@ -7,3 +7,4 @@ from .course_generation import GenerateCourseOutlinePrompt, GenerateModuleConten
 from .lesson_discussion import LessonDiscussionPrompt
 from .playground_setup import PlaygroundSetupPrompt, PlaygroundSetupRevisionPrompt
 from .onboarding_instructor_selection import OnboardingInstructorSelectionPrompt
+from .onboarding_profile_builder import OnboardingProfileBuilderPrompt

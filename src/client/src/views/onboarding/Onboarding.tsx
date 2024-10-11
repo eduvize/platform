@@ -1,18 +1,18 @@
-import { ChatProvider } from "@context/chat";
 import { CourseDto } from "@models/dto";
 import { Lesson } from "@organisms";
 import { Overview } from "./Overview";
-import { useMemo, useState } from "react";
 import { Instructors } from "./Instructors";
+import { Profile } from "./Profile";
+import {
+    useInstructorVisibility,
+    useOnboardingFlow,
+    useOnboardingInstructor,
+} from "@context/onboarding/hooks";
 
 export const Onboarding = () => {
-    const [currentSection, setCurrentSection] = useState(0);
-    const [selectedInstructorId, setSelectedInstructorId] = useState<
-        string | null
-    >(null);
-
-    const isInstructorVisible =
-        currentSection > 0 && selectedInstructorId !== null;
+    const { setSection } = useOnboardingFlow();
+    const { setInstructor, instructor } = useOnboardingInstructor();
+    const isInstructorVisible = useInstructorVisibility();
 
     const onboardingCourse: CourseDto = {
         id: "onboarding",
@@ -47,9 +47,8 @@ export const Onboarding = () => {
                                 order: 1,
                                 content: (
                                     <Instructors
-                                        onInstructorSelected={
-                                            setSelectedInstructorId
-                                        }
+                                        value={instructor?.id}
+                                        onInstructorSelected={setInstructor}
                                     />
                                 ),
                             },
@@ -58,7 +57,7 @@ export const Onboarding = () => {
                                 description:
                                     "Walk through a series of exercises to completely customize your Eduvize experience. We want to learn about you, and how you best learn.",
                                 order: 2,
-                                content: "Setup section 3",
+                                content: <Profile />,
                             },
                             {
                                 title: "Your First Course",
@@ -77,19 +76,12 @@ export const Onboarding = () => {
     };
 
     return (
-        <ChatProvider
-            prompt="onboarding"
-            resourceId={selectedInstructorId || undefined}
-        >
-            <Lesson
-                hideNumberedLabels
-                hideInstructor={!isInstructorVisible}
-                {...onboardingCourse.modules[0].lessons[0]}
-                course={onboardingCourse}
-                onSectionChange={(section) => {
-                    setCurrentSection(section);
-                }}
-            />
-        </ChatProvider>
+        <Lesson
+            hideNumberedLabels
+            hideInstructor={!isInstructorVisible}
+            {...onboardingCourse.modules[0].lessons[0]}
+            course={onboardingCourse}
+            onSectionChange={setSection}
+        />
     );
 };
