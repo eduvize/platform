@@ -19,6 +19,9 @@ type Panel = "module" | "instructor";
 
 interface ComponentProps extends LessonDto {
     course: CourseDto;
+    hideNumberedLabels?: boolean;
+    hideInstructor?: boolean;
+    onSectionChange?: (section: number) => void;
 }
 
 export const Lesson = (props: ComponentProps) => {
@@ -29,7 +32,15 @@ export const Lesson = (props: ComponentProps) => {
     const [showExercise, setShowExercise] = useState(false);
     const [panels, setPanels] = useState<Panel[]>(["instructor", "module"]);
 
-    const { id: lessonId, sections, exercises, course } = props;
+    const {
+        id: lessonId,
+        sections,
+        exercises,
+        course,
+        hideNumberedLabels,
+        hideInstructor,
+        onSectionChange,
+    } = props;
 
     useEffect(() => {
         // TODO: Figure out what's wrong with useWindowScroll. Hack in the meantime!
@@ -67,6 +78,7 @@ export const Lesson = (props: ComponentProps) => {
                                 currentLessonId={lessonId}
                                 currentSection={section}
                                 exerciseVisible={showExercise}
+                                hideNumberedLabels={hideNumberedLabels}
                                 onHide={() => {
                                     setPanels(
                                         panels.filter((x) => x !== "module")
@@ -79,6 +91,8 @@ export const Lesson = (props: ComponentProps) => {
                                 onChangeSection={(section) => {
                                     setSection(section);
                                     setShowExercise(false);
+
+                                    onSectionChange?.(section);
                                 }}
                             />
                         </Box>
@@ -113,8 +127,14 @@ export const Lesson = (props: ComponentProps) => {
                     />
                 </Grid.Col>
 
-                <Grid.Col span={panels.includes("instructor") ? 3 : 0.5}>
-                    {panels.includes("instructor") && (
+                <Grid.Col
+                    span={
+                        panels.includes("instructor") && !!hideInstructor
+                            ? 3
+                            : 0.5
+                    }
+                >
+                    {panels.includes("instructor") && !hideInstructor && (
                         <InstructorPane
                             onHide={() => {
                                 setPanels(

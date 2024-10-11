@@ -10,6 +10,7 @@ interface NavigationPaneProps {
     currentLessonId: string;
     currentSection: number;
     exerciseVisible?: boolean;
+    hideNumberedLabels?: boolean;
     onHide: () => void;
     onExerciseClick: () => void;
     onChangeSection: (section: number) => void;
@@ -20,6 +21,7 @@ export const NavigationPane = ({
     currentLessonId,
     currentSection,
     exerciseVisible,
+    hideNumberedLabels,
     onHide,
     onExerciseClick,
     onChangeSection,
@@ -63,9 +65,17 @@ export const NavigationPane = ({
                 Back To Syllabus
             </Link>
 
-            <Text size="xl" mt="lg" mb="md" c="white" fw="200">
-                Module {currentModule!.order + 1}: {currentModule?.title}
-            </Text>
+            {!hideNumberedLabels && (
+                <Text size="xl" mt="lg" mb="md" c="white" fw="200">
+                    Module {currentModule!.order + 1}: {currentModule?.title}
+                </Text>
+            )}
+
+            {hideNumberedLabels && (
+                <Text size="xl" mt="lg" mb="md" c="white" fw="200">
+                    {currentModule?.title}
+                </Text>
+            )}
 
             {currentModule?.lessons.map((lesson) => (
                 <Box mb="xs">

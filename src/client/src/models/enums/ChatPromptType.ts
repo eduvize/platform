@@ -1,1 +1,1 @@
-export type ChatPromptType = "lesson";
+export type ChatPromptType = "lesson" | "onboarding";

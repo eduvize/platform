@@ -6,6 +6,7 @@ import { IconHammer } from "@tabler/icons-react";
 interface LessonItemProps extends LessonDto {
     active?: boolean;
     activeSection: number;
+    hideNumberedLabels?: boolean;
     onSectionChange: (section: number) => void;
 }
 
@@ -13,6 +14,7 @@ export const LessonNavItem = ({
     active,
     title,
     description,
+    hideNumberedLabels,
     sections,
     exercises,
     activeSection,
@@ -23,8 +25,8 @@ export const LessonNavItem = ({
 
     return (
         <Card withBorder>
-            <Text>
-                Lesson {order + 1}: {title}
+            <Text c="white">
+                {!hideNumberedLabels ? title : `Lesson ${order + 1}: ${title}`}
             </Text>
             {active && (
                 <>

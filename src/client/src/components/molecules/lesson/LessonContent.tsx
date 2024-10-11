@@ -17,7 +17,8 @@ export const LessonContent = ({
     view,
     onComplete,
 }: LessonContentProps) => {
-    const { title, description, order, sections } = lesson;
+    const { sections } = lesson;
+    const section = sections[currentSection];
     const exercise = useExercise();
     const objectives = useExerciseObjectives();
 
@@ -27,10 +28,10 @@ export const LessonContent = ({
                 {view === "lesson" && (
                     <Stack gap={0}>
                         <Text size="xl" c="white">
-                            Lesson {order + 1}: {title}
+                            {section.title}
                         </Text>
 
-                        <Text size="sm">{description}</Text>
+                        <Text size="sm">{section.description}</Text>
                     </Stack>
                 )}
 
@@ -71,9 +72,14 @@ export const LessonContent = ({
 
                 {view === "lesson" && (
                     <Box px="xl">
-                        <ReadingMaterial>
-                            {sections[currentSection]?.content}
-                        </ReadingMaterial>
+                        {typeof sections[currentSection]?.content ===
+                        "string" ? (
+                            <ReadingMaterial>
+                                {sections[currentSection]?.content}
+                            </ReadingMaterial>
+                        ) : (
+                            sections[currentSection]?.content
+                        )}
                     </Box>
                 )}
             </Card>

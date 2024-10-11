@@ -1,44 +1,79 @@
+import { ChatProvider } from "@context/chat";
 import { CourseDto } from "@models/dto";
 import { Lesson } from "@organisms";
+import { Overview } from "./Overview";
+import { useState } from "react";
+
+const onboardingCourse: CourseDto = {
+    id: "onboarding",
+    title: "Onboarding",
+    description: "Onboarding course description",
+    cover_image_url: "",
+    current_lesson_id: "",
+    created_at_utc: new Date().toISOString(),
+    modules: [
+        {
+            order: 0,
+            title: "Welcome to Eduvize",
+            description: "",
+            lessons: [
+                {
+                    id: "setup-1",
+                    title: "Get Ready for Your First Course",
+                    description:
+                        "Walk through a series of exercises to completely customize your Eduvize experience. We want to learn about you, and how you best learn.",
+                    sections: [
+                        {
+                            title: "Overview",
+                            description:
+                                "Get to know Eduvize and how to set up a course.",
+                            order: 0,
+                            content: <Overview />,
+                        },
+                        {
+                            title: "Meet your Instructor",
+                            description:
+                                "Your instructor sets the tone for your courses. Think about how you like to learn, who you like to speak with about complex subjects, and what type of approach you prefer when learning.",
+                            order: 1,
+                            content: "Setup section 2",
+                        },
+                        {
+                            title: "Getting to Know You",
+                            description:
+                                "Walk through a series of exercises to completely customize your Eduvize experience. We want to learn about you, and how you best learn.",
+                            order: 2,
+                            content: "Setup section 3",
+                        },
+                        {
+                            title: "Your First Course",
+                            description:
+                                "To build a Course, we'll start by talking to your instructor about what you want to learn.",
+                            order: 3,
+                            content: "Setup section 4",
+                        },
+                    ],
+                    order: 0,
+                    exercises: [],
+                },
+            ],
+        },
+    ],
+};
 
 export const Onboarding = () => {
-    const onboardingCourse: CourseDto = {
-        id: "onboarding",
-        title: "Onboarding",
-        description: "Onboarding course description",
-        cover_image_url: "",
-        current_lesson_id: "",
-        created_at_utc: new Date().toISOString(),
-        modules: [
-            {
-                order: 0,
-                title: "Setup",
-                description: "Setup module",
-                lessons: [
-                    {
-                        id: "setup-1",
-                        title: "Setup 1",
-                        description: "Setup lesson 1",
-                        sections: [
-                            {
-                                title: "Setup section 1",
-                                description: "Setup section 1",
-                                order: 0,
-                                content: "Setup section 1",
-                            },
-                        ],
-                        order: 0,
-                        exercises: [],
-                    },
-                ],
-            },
-        ],
-    };
+    const [instructorVisible, setInstructorVisible] = useState(false);
 
     return (
-        <Lesson
-            {...onboardingCourse.modules[0].lessons[0]}
-            course={onboardingCourse}
-        />
+        <ChatProvider prompt="onboarding">
+            <Lesson
+                hideNumberedLabels
+                hideInstructor={!instructorVisible}
+                {...onboardingCourse.modules[0].lessons[0]}
+                course={onboardingCourse}
+                onSectionChange={(section) => {
+                    setInstructorVisible(section > 1);
+                }}
+            />
+        </ChatProvider>
     );
 };
