@@ -1,5 +1,6 @@
+import { InstructorTrait } from "@atoms";
 import { useInstructors } from "@hooks/instructors";
-import { Group, Stack, Text, Title } from "@mantine/core";
+import { Group, Space, Stack, Text, Title } from "@mantine/core";
 import { SelectableInstructor } from "@molecules";
 import { useEffect, useMemo, useState } from "react";
 
@@ -59,6 +60,33 @@ export const Instructors = () => {
                 Instructor {selectedInstructorIndex + 1}:{" "}
                 {selectedInstructor?.name} - {selectedInstructor?.alias}
             </Title>
+
+            <Stack gap="lg">
+                <InstructorTrait
+                    name="Enthusiasm"
+                    value={selectedInstructor?.enthusiasm || 0}
+                />
+                <InstructorTrait
+                    name="Structure"
+                    value={selectedInstructor?.structure || 0}
+                />
+                <InstructorTrait
+                    name="Support"
+                    value={selectedInstructor?.support || 0}
+                />
+            </Stack>
+
+            <Stack gap={0}>
+                <Title order={4} fw={400} c="white">
+                    How does {selectedInstructor?.name} Make a PB & J?
+                </Title>
+
+                <Text fs="italic" c="dimmed">
+                    "{selectedInstructor?.sample_text}"
+                </Text>
+            </Stack>
+
+            <Space />
         </Stack>
     );
 };

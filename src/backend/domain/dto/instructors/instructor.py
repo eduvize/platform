@@ -5,3 +5,7 @@ class InstructorDto(BaseModel):
     id: uuid.UUID
     name: str
     alias: str
+    sample_text: str
+    enthusiasm: int
+    structure: int
+    support: int
