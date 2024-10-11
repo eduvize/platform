@@ -14,6 +14,8 @@ import "@mantine/notifications/styles.css";
 import "mantine-contextmenu/styles.layer.css";
 import "@mantine/carousel/styles.css";
 import "@fontsource/roboto";
+import "@fontsource/roboto/300.css";
+import "@fontsource/roboto/300-italic.css";
 import "@fontsource/roboto/900.css";
 import "@fontsource/roboto/500.css";
 import { PlaygroundTest } from "@views/playground-test";

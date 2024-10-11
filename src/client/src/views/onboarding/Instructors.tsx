@@ -81,7 +81,7 @@ export const Instructors = () => {
                     How does {selectedInstructor?.name} Make a PB & J?
                 </Title>
 
-                <Text fs="italic" c="dimmed">
+                <Text fs="italic" c="#C9C9C9" lh="sm" fw={300}>
                     "{selectedInstructor?.sample_text}"
                 </Text>
             </Stack>
