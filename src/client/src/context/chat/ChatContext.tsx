@@ -77,7 +77,7 @@ export const ChatProvider = ({
 
     useEffect(() => {
         handleSetup();
-    }, []);
+    }, [prompt, resourceId]);
 
     useEffect(() => {
         if (greeting) {

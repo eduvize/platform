@@ -4,7 +4,11 @@ import { Group, Space, Stack, Text, Title } from "@mantine/core";
 import { SelectableInstructor } from "@molecules";
 import { useEffect, useMemo, useState } from "react";
 
-export const Instructors = () => {
+interface InstructorsProps {
+    onInstructorSelected: (instructorId: string) => void;
+}
+
+export const Instructors = ({ onInstructorSelected }: InstructorsProps) => {
     const instructors = useInstructors();
     const [selectedInstructorId, setSelectedInstructorId] = useState<
         string | null
@@ -25,6 +29,12 @@ export const Instructors = () => {
 
         setSelectedInstructorId(instructors[0].id);
     }, [instructors]);
+
+    useEffect(() => {
+        if (!selectedInstructorId) return;
+
+        onInstructorSelected(selectedInstructorId);
+    }, [selectedInstructorId]);
 
     return (
         <Stack pt="xl" gap="lg">

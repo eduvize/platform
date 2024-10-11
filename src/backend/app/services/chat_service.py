@@ -61,8 +61,11 @@ class ChatService:
         if not user:
             raise ValueError("User not found")
         
-        # Get the instructor associated with the user
-        instructor = await self.instructor_service.get_user_instructor(user.id)
+        if prompt_type == PromptType.ONBOARDING and resource_id is not None:
+            instructor = await self.instructor_service.get_instructor_by_id(resource_id)
+        else:
+            # Get the instructor associated with the user
+            instructor = await self.instructor_service.get_user_instructor(user.id)
         
         # Ensure the instructor exists
         if not instructor:

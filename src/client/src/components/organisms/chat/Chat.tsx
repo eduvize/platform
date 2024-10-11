@@ -20,6 +20,7 @@ import {
     Text,
 } from "@mantine/core";
 import { InstructorAvatar } from "@atoms";
+import { useInstructors } from "@hooks/instructors";
 
 interface ChatProps {
     maxHeight?: number | string;
@@ -51,11 +52,17 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
         const viewport = useRef<HTMLDivElement>(null);
         const pendingToolNames = usePendingTools();
         const toolResults = useToolResults();
-        const { messages, sendMessage, processing } = useChat(greetingMessage);
+        const { messages, sendMessage, processing, instructorId } =
+            useChat(greetingMessage);
+        const instructors = useInstructors();
         const [message, setMessage] = useState("");
         const scrollRef = useRef<HTMLDivElement>(null);
         const [isAtBottom, setIsAtBottom] = useState(true);
         const [userHasScrolled, setUserHasScrolled] = useState(false);
+
+        const instructor = useMemo(() => {
+            return instructors.find((x) => x.id === instructorId);
+        }, [instructors, instructorId]);
 
         const scrollToBottom = useCallback(() => {
             if (viewport.current) {
@@ -138,7 +145,7 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
                     ml={-(AVATAR_SIZE / 2)}
                     style={{ zIndex: 2 }}
                 >
-                    <InstructorAvatar size={AVATAR_SIZE} />
+                    <InstructorAvatar id={instructorId} size={AVATAR_SIZE} />
                 </Box>
 
                 <Card
@@ -161,7 +168,7 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
                                 Chatting with:
                             </Text>
                             <Text size="md" c="white" lh={1}>
-                                Kyle
+                                {instructor?.name}
                             </Text>
                         </Stack>
                     </Flex>
