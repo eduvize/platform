@@ -13,7 +13,6 @@ type Context = {
     pendingTools: string[];
     toolResults: Record<string, any | null>;
     isProcessing: boolean;
-    setGreeting: (greeting: string) => void;
     sendMessage: (message: string) => void;
     reset: () => void;
 };
@@ -25,7 +24,6 @@ const defaultValue: Context = {
     pendingTools: [],
     toolResults: {},
     isProcessing: false,
-    setGreeting: () => {},
     sendMessage: () => {},
     reset: () => {},
 };
@@ -53,7 +51,6 @@ export const ChatProvider = ({
     const [instructorId, setInstructorId] = useState<string | null>(null);
     const [receiveBuffer, setReceiveBuffer] = useState<string>("");
     const [sessionId, setSessionId] = useState<string | null>(null);
-    const [greeting, setGreeting] = useState<string>("");
     const [messages, setMessages] = useState<ChatMessageDto[]>([]);
 
     const handleSetup = () => {
@@ -61,42 +58,27 @@ export const ChatProvider = ({
             ({ id: session_id, instructor_id }) => {
                 setSessionId(session_id);
                 setInstructorId(instructor_id);
-
-                if (greeting) {
-                    setMessages([
-                        {
-                            is_user: false,
-                            content: greeting,
-                            create_at_utc: new Date().toISOString(),
-                        },
-                    ]);
-                }
+                setMessages([]);
             }
         );
     };
 
     useEffect(() => {
         handleSetup();
-    }, [prompt, resourceId]);
+    }, [resourceId]);
 
     useEffect(() => {
-        if (greeting) {
-            setMessages([
-                {
-                    is_user: false,
-                    content: greeting,
-                    create_at_utc: new Date().toISOString(),
-                },
-            ]);
+        if (messages.length === 0) {
+            sendMessage("Hello!");
         }
-    }, [greeting]);
+    }, [messages]);
 
     useEffect(() => {
         if (receiveBuffer === "") return;
 
         const lastMessage = messages[messages.length - 1];
 
-        if (!lastMessage.is_user) {
+        if (lastMessage && !lastMessage.is_user) {
             // Update the most recent message
             setMessages((prev) => {
                 const newMessages = [...prev];
@@ -135,19 +117,8 @@ export const ChatProvider = ({
         });
     }, [toolResults]);
 
-    const handleSendMessage = (message: string) => {
-        if (isProcessing || !sessionId) return;
-
-        setIsProcessing(true);
-
-        setMessages((prev) => [
-            ...prev,
-            {
-                is_user: true,
-                content: message,
-                create_at_utc: new Date().toISOString(),
-            },
-        ]);
+    const sendMessage = (message: string) => {
+        if (!sessionId) return;
 
         let receivedText = "";
         let completedToolCalls: Record<string, any> = {};
@@ -190,6 +161,23 @@ export const ChatProvider = ({
         );
     };
 
+    const handleSendMessage = (message: string) => {
+        if (isProcessing || !sessionId) return;
+
+        setIsProcessing(true);
+
+        setMessages((prev) => [
+            ...prev,
+            {
+                is_user: true,
+                content: message,
+                create_at_utc: new Date().toISOString(),
+            },
+        ]);
+
+        sendMessage(message);
+    };
+
     if (!sessionId || !localUser || !instructorId) {
         return (
             <Center>
@@ -207,7 +195,6 @@ export const ChatProvider = ({
                 pendingTools: pendingToolNames,
                 toolResults,
                 isProcessing,
-                setGreeting: setGreeting,
                 sendMessage: handleSendMessage,
                 reset: handleSetup,
             }}

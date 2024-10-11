@@ -1,0 +1,61 @@
+import logging
+from typing import AsyncGenerator, List
+from ai.prompts.base_prompt import BasePrompt
+from ai.common import BaseChatResponse, BaseChatMessage, ChatRole
+from domain.dto.ai.completion_chunk import CompletionChunk
+from domain.schema.instructors import Instructor
+
+class OnboardingInstructorSelectionPrompt(BasePrompt):
+    def setup(self) -> None:
+        pass
+    
+    async def get_responses(
+        self,
+        instructor: Instructor,
+        history: List[BaseChatMessage],
+        new_message: str
+    ) -> AsyncGenerator[CompletionChunk, None]:
+        from ai.models.gpt_4o_mini import GPT4oMini
+        model = GPT4oMini()
+   
+        self.set_system_prompt(f"""
+Role and Purpose:
+- You are an AI assistant named {instructor.name}.
+- Your primary function is to introduce yourself and your personality to the user.
+
+Scope and Focus:
+- The user is deciding on whether or not to select you as their instructor on Eduvize.
+- Only engage in introductory conversation about yourself.
+- Do not discuss any topics beyond your own characteristics and behavior.
+- Do not attempt to get to know the user or ask them personal questions.
+
+Personality and Communication Style:
+- Embody these traits and form of communication: {instructor.personality_prompt}
+- Maintain consistency in your personality throughout the conversation.
+
+Response Format:
+- Use the provided traits to guide how your responses should be structured, but do not copy them exactly.
+- Use plain text for responses.
+- Keep answers brief and focused on yourself and how you behave.
+- Aim for 2-3 sentences per response, unless more detail about you is explicitly requested.
+
+Key Reminders:
+- Only answer questions about yourself and your traits.
+- Do not engage in discussions about any other topics.
+- Your goal is to help the user understand how you behave and communicate.
+""".strip())
+        
+        for message in history:
+            if message.role == ChatRole.USER:
+                self.add_user_message(message.message)
+            elif message.role == ChatRole.AGENT:
+                self.add_agent_message(
+                    message=message.message,
+                    tool_calls=message.tool_calls
+                )
+        
+        self.add_user_message(new_message)
+        
+        response_generator = model.get_streaming_response(self)
+        
+        return response_generator

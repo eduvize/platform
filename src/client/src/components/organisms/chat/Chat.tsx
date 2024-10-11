@@ -24,7 +24,6 @@ import { useInstructors } from "@hooks/instructors";
 
 interface ChatProps {
     maxHeight?: number | string;
-    greetingMessage?: string;
     toolDescriptionMap?: Record<string, string>;
     onTool?: (name: string, data: any) => void;
     onMessageData?: () => void;
@@ -38,22 +37,12 @@ const AVATAR_SIZE = 84;
  * a user-friendly description of the tool being processed, and onTool is used to handle the results of tools.
  */
 export const Chat = forwardRef<HTMLDivElement, ChatProps>(
-    (
-        {
-            maxHeight,
-            greetingMessage,
-            toolDescriptionMap,
-            onTool,
-            onMessageData,
-        },
-        chatAreaRef
-    ) => {
+    ({ maxHeight, toolDescriptionMap, onTool, onMessageData }, chatAreaRef) => {
         const inputRef = useRef<HTMLInputElement>(null);
         const viewport = useRef<HTMLDivElement>(null);
         const pendingToolNames = usePendingTools();
         const toolResults = useToolResults();
-        const { messages, sendMessage, processing, instructorId } =
-            useChat(greetingMessage);
+        const { messages, sendMessage, processing, instructorId } = useChat();
         const instructors = useInstructors();
         const [message, setMessage] = useState("");
         const scrollRef = useRef<HTMLDivElement>(null);
@@ -101,10 +90,7 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
         useEffect(() => {
             scrollToBottom();
 
-            if (
-                (greetingMessage && messages.length > 1) ||
-                messages.length > 2
-            ) {
+            if (messages.length > 1 || messages.length > 2) {
                 onMessageData?.();
             }
         }, [messages.map((x) => x.content)]);
