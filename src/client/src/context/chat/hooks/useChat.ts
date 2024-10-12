@@ -2,18 +2,24 @@ import { useContextSelector } from "use-context-selector";
 import { ChatContext } from "@context/chat";
 import { ChatMessageDto } from "@models/dto";
 import { ChatPromptType } from "@models/enums";
+import { useEffect } from "react";
 
 interface UseChatReturn {
     instructorId: string;
     messages: ChatMessageDto[];
     processing: boolean;
     sendMessage: (msg: string, hideFromChat?: boolean) => void;
-    setInstructor: (id: string) => void;
+    setInstructor: (id: string) => Promise<void>;
     setPrompt: (prompt: ChatPromptType) => Promise<void>;
     purge: () => void;
 }
 
-export const useChat = (): UseChatReturn => {
+interface UseChatProps {
+    prompt?: ChatPromptType;
+    overrideInstructorId?: string;
+}
+
+export const useChat = (props?: UseChatProps): UseChatReturn => {
     const instructorId = useContextSelector(ChatContext, (v) => v.instructorId);
     const sendMessage = useContextSelector(ChatContext, (v) => v.sendMessage);
     const setInstructor = useContextSelector(
@@ -25,8 +31,20 @@ export const useChat = (): UseChatReturn => {
     const processing = useContextSelector(ChatContext, (v) => v.isProcessing);
     const reset = useContextSelector(ChatContext, (v) => v.reset);
 
+    useEffect(() => {
+        if (props?.overrideInstructorId) {
+            setInstructor(props.overrideInstructorId);
+        }
+    }, [props?.overrideInstructorId]);
+
+    useEffect(() => {
+        if (!props?.prompt) return;
+
+        setPrompt(props.prompt);
+    }, [props?.prompt]);
+
     return {
-        instructorId: instructorId || "",
+        instructorId: instructorId ?? "",
         messages: messages.filter((x) => x.content),
         sendMessage,
         setInstructor,

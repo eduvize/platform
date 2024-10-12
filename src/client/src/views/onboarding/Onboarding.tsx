@@ -8,10 +8,12 @@ import {
     useOnboardingFlow,
     useOnboardingInstructor,
 } from "@context/onboarding/hooks";
+import { useChat } from "@context/chat";
 
 export const Onboarding = () => {
     const { setSection } = useOnboardingFlow();
     const { setInstructor, instructor } = useOnboardingInstructor();
+    const { sendMessage, purge, setPrompt } = useChat();
     const isInstructorVisible = useInstructorVisibility();
 
     const onboardingCourse: CourseDto = {
@@ -48,7 +50,19 @@ export const Onboarding = () => {
                                 content: (
                                     <Instructors
                                         value={instructor?.id}
-                                        onInstructorSelected={setInstructor}
+                                        onInstructorSelected={(
+                                            instructorId
+                                        ) => {
+                                            console.log(
+                                                "Instructor selected",
+                                                instructorId
+                                            );
+                                            setInstructor(instructorId).then(
+                                                () => {
+                                                    sendMessage("Hello!", true);
+                                                }
+                                            );
+                                        }}
                                     />
                                 ),
                             },
@@ -81,7 +95,18 @@ export const Onboarding = () => {
             hideInstructor={!isInstructorVisible}
             {...onboardingCourse.modules[0].lessons[0]}
             course={onboardingCourse}
-            onSectionChange={setSection}
+            onSectionChange={(section) => {
+                if (section === 2) {
+                    setPrompt("profile-builder").then(() => {
+                        sendMessage(
+                            "Event: The user has selected you as their instructor",
+                            true
+                        );
+                    });
+                }
+
+                setSection(section);
+            }}
         />
     );
 };

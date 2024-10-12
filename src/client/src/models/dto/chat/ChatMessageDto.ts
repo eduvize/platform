@@ -4,6 +4,7 @@ export interface ToolCall {
 }
 
 export interface ChatMessageDto {
+    id: string;
     is_user: boolean;
     content: string;
     user_id?: string;

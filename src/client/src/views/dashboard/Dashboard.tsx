@@ -11,6 +11,7 @@ import { Course } from "@views/course";
 import { Lesson } from "@views/course";
 import { Onboarding } from "@views/onboarding";
 import { OnboardingProvider } from "@context/onboarding";
+import { ChatProvider } from "@context/chat";
 
 const CallToActionOrView = ({ children }: { children: React.ReactNode }) => {
     const { is_verified, is_profile_complete } = useOnboarding();
@@ -45,48 +46,50 @@ export const Dashboard = () => {
 
     return (
         <UserProvider>
-            <Header />
+            <ChatProvider>
+                <Header />
 
-            <Box pt="56px">
-                <Routes>
-                    <Route
-                        path="course/:course_id/lesson/:lesson_id"
-                        handle="lesson"
-                        element={
-                            <CallToActionOrView>
-                                <Lesson />
-                            </CallToActionOrView>
-                        }
-                    />
-                    <Route
-                        path="course/:course_id"
-                        handle="course"
-                        element={
-                            <CallToActionOrView>
-                                <Course />
-                            </CallToActionOrView>
-                        }
-                    />
-                    <Route
-                        path="courses/*"
-                        handle="courses"
-                        element={
-                            <CallToActionOrView>
-                                <Courses />
-                            </CallToActionOrView>
-                        }
-                    />
-                    <Route
-                        path="profile"
-                        handle="profile"
-                        element={
-                            <CallToActionOrView>
-                                <Profile />
-                            </CallToActionOrView>
-                        }
-                    />
-                </Routes>
-            </Box>
+                <Box pt="56px">
+                    <Routes>
+                        <Route
+                            path="course/:course_id/lesson/:lesson_id"
+                            handle="lesson"
+                            element={
+                                <CallToActionOrView>
+                                    <Lesson />
+                                </CallToActionOrView>
+                            }
+                        />
+                        <Route
+                            path="course/:course_id"
+                            handle="course"
+                            element={
+                                <CallToActionOrView>
+                                    <Course />
+                                </CallToActionOrView>
+                            }
+                        />
+                        <Route
+                            path="courses/*"
+                            handle="courses"
+                            element={
+                                <CallToActionOrView>
+                                    <Courses />
+                                </CallToActionOrView>
+                            }
+                        />
+                        <Route
+                            path="profile"
+                            handle="profile"
+                            element={
+                                <CallToActionOrView>
+                                    <Profile />
+                                </CallToActionOrView>
+                            }
+                        />
+                    </Routes>
+                </Box>
+            </ChatProvider>
         </UserProvider>
     );
 };

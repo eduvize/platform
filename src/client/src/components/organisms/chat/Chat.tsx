@@ -38,14 +38,14 @@ const AVATAR_SIZE = 84;
  */
 export const Chat = forwardRef<HTMLDivElement, ChatProps>(
     ({ maxHeight, toolDescriptionMap, onTool, onMessageData }, chatAreaRef) => {
-        const inputRef = useRef<HTMLInputElement>(null);
-        const viewport = useRef<HTMLDivElement>(null);
+        const instructors = useInstructors();
         const pendingToolNames = usePendingTools();
         const toolResults = useToolResults();
         const { messages, sendMessage, processing, instructorId } = useChat();
-        const instructors = useInstructors();
-        const [message, setMessage] = useState("");
+        const inputRef = useRef<HTMLInputElement>(null);
         const scrollRef = useRef<HTMLDivElement>(null);
+        const viewport = useRef<HTMLDivElement>(null);
+        const [message, setMessage] = useState("");
         const [isAtBottom, setIsAtBottom] = useState(true);
         const [userHasScrolled, setUserHasScrolled] = useState(false);
 

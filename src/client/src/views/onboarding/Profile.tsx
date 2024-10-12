@@ -13,10 +13,9 @@ import {
     Title,
 } from "@mantine/core";
 import { AdvancedPillInput } from "@molecules";
-import { LearningCapacity } from "@models/enums"; // Assuming this enum exists
-import { useChat } from "@context/chat";
+import { LearningCapacity } from "@models/enums";
 import { useOnboardingEvents } from "@context/onboarding/hooks";
-// Define types for our state
+
 interface Skill {
     skill_type: number;
     skill: string;

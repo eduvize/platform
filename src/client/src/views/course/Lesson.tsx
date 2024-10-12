@@ -30,9 +30,7 @@ export const Lesson = () => {
     return (
         <CourseProvider courseId={params.course_id}>
             <ExerciseProvider lessonId={params.lesson_id}>
-                <ChatProvider prompt="lesson" resourceId={params.lesson_id}>
-                    <Wrapper />
-                </ChatProvider>
+                <Wrapper />
             </ExerciseProvider>
         </CourseProvider>
     );
