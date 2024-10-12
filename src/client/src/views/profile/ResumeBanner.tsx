@@ -30,7 +30,7 @@ export function ResumeBanner({
 
         setUploading(true);
         onParsing();
-        FileApi.getProfileFromResume(file)
+        FileApi.getResumeInsights(file)
             .then((profile) => {
                 form.setValues(mapInboundProfileData(profile));
                 setWasUploaded(true);

@@ -1,153 +1,53 @@
-from typing import List, Optional
+from typing import List
 from ai.prompts import BasePrompt
-from domain.dto.profile import UserProfileDisciplineDto, UserProfileDto, UserSkillDto
-from domain.dto.profile.hobby import HobbyProjectDto, UserProfileHobbyDto
-from domain.dto.profile.professional import UserProfileEmploymentDto, UserProfileProfessionalDto
-from domain.dto.profile.student import UserProfileSchoolDto, UserProfileStudentDto
-from domain.enums.user_enums import UserDiscipline, UserLearningCapacity, UserSkillType
-from .models import Discipline, ProfileScan
-from .provide_profile_tool import ProvideProfileTool
 
 class ResumeScannerPrompt(BasePrompt):
     def setup(self) -> None:
         self.set_system_prompt("""
-You will look through images of a resume and extract information from it.
-The information you will look for is denoted in the schema of the provide_profile tool.
-You will use the provide_profile tool to send your results back to the user. You will not be able to ask questions.
+You are an AI assistant tasked with extracting detailed information from resume images. Analyze the provided resume images and extract as much relevant information as possible. Present your findings in a structured markdown format, covering the following areas:
 
-When filling out the bio and descriptions, you will make it less formal (as in a resume format) and more casual (as in a bio format, first person).
-You will keep programming languages and libraries/frameworks granular, only one item each.
-You will keep programming languages only to their names and not include frameworks, libraries, or other suffixes.
-You will not include development tools in the programming languages or libraries/frameworks lists. These will be ignored.
+1. Key Skills:
+   - List all key skills mentioned in the resume.
 
-The following criteria represent when to include a learning capacity:
-- Hobby: Any indication of a personal or side project or stated interested in development outside of work or school somewhere in the resume.
-- Student: Any education or certifications from an institution in programming or computer science mentioned.
-- Professional: Any indication of a job or work experience related to software development or programming.
+2. Employment History:
+   - For each position, provide:
+     - Company name
+     - Job title
+     - Employment date range (or "Currently employed" if applicable)
+     - A summary of accomplishments and responsibilities derived from the information provided
 
-When filling out start or end dates, if the day is not provided, you will use the first day of the month or end of the month respectively.
-Ex: If the resume says "May 2020", you will use "2020-05-01" or "2020-05-31" respectively.
+3. Education:
+   - For each educational entry, include:
+     - School name
+     - Dates (or "Currently attending" if applicable)
+     - Focus area or major
+     - Any other relevant metadata (e.g., GPA, honors, relevant coursework)
+
+4. Accomplishments:
+   - List any notable accomplishments mentioned in the resume
+   - Include the nature of the accomplishment and the organization that presented it (if applicable)
+
+5. Projects:
+   - For any non-job projects listed, provide:
+     - Project name
+     - A summary of what the project entailed
+     - The candidate's role or involvement in the project
+
+Guidelines:
+- Extract as much detailed information as possible from the resume images.
+- Present the information in a clear, structured markdown format.
+- Do not ask questions; work solely with the information provided in the images.
+- If certain information is not available or unclear, you may note this in your response.
+
+Remember to adhere strictly to these guidelines while processing the resume images.
 """)
         
-        self.use_tool(ProvideProfileTool, force=True)
-        
-    async def get_profile_data(self, resume_images: List[bytes]) -> ProfileScan:
+    async def get_profile_data(self, resume_images: List[bytes]) -> str:
         from ...models.gpt_4o import GPT4o
         
         self.add_user_message("Process this resume", resume_images)
         
         model = GPT4o()
-        await model.get_responses(self)
-        call = self.get_tool_call(ProvideProfileTool)
+        responses = await model.get_responses(self)
         
-        if not call.result:
-            raise Exception("No profile data provided")
-        
-        learning_capacities = []
-        student: Optional[UserProfileStudentDto] = None
-        hobby: Optional[UserProfileHobbyDto] = None
-        professional: Optional[UserProfileProfessionalDto] = None
-
-        scan = call.result
-        
-        if scan.schools:
-            learning_capacities.append(UserLearningCapacity.STUDENT)
-            
-            student = UserProfileStudentDto.model_construct(
-                schools=[
-                    UserProfileSchoolDto.model_construct(
-                        school_name=school.school_name,
-                        focus=school.focus,
-                        start_date=school.start_month,
-                        end_date=school.end_month,
-                        is_current=school.is_current,
-                        did_finish=school.did_finish
-                    )    
-                    for school in scan.schools
-                ]
-            )
-            
-        if scan.hobby_projects:
-            learning_capacities.append(UserLearningCapacity.HOBBY)
-            
-            hobby = UserProfileHobbyDto.model_construct(
-                projects=[
-                    HobbyProjectDto.model_construct(
-                        project_name=project.project_name,
-                        description=project.description,
-                        purpose=project.purpose
-                    )
-                    for project in scan.hobby_projects
-                ]
-            )
-            
-        if scan.employers:
-            learning_capacities.append(UserLearningCapacity.PROFESSIONAL)
-            
-            professional = UserProfileProfessionalDto.model_construct(
-                employers=[
-                    UserProfileEmploymentDto.model_construct(
-                        company_name=employer.company_name,
-                        position=employer.position,
-                        start_date=employer.start_month,
-                        end_date=employer.end_month,
-                        is_current=employer.is_current,
-                        description=employer.description
-                    )
-                    for employer in scan.employers
-                ]
-            )
-        
-        user_profile_dto = UserProfileDto.model_construct(
-            first_name=scan.first_name,
-            last_name=scan.last_name,
-            bio=scan.bio,
-            github_username=scan.github_username,
-            learning_capacities=learning_capacities,
-            hobby=hobby,
-            student=student,
-            professional=professional,
-            disciplines=[
-                UserProfileDisciplineDto.model_construct(
-                    discipline_type=get_discipline_translation(discipline),
-                    proficiency=None
-                )
-                for discipline in scan.disciplines
-            ],
-            skills=[
-                *[
-                    UserSkillDto.model_construct(
-                        skill_type=UserSkillType.PROGRAMMING_LANGUAGE,
-                        skill=skill,
-                        proficiency=None
-                    )
-                    for skill in scan.programming_languages
-                ],
-                *[
-                    UserSkillDto.model_construct(
-                        skill_type=UserSkillType.LIBRARY,
-                        skill=skill,
-                        proficiency=None
-                    )
-                    for skill in scan.frameworks
-                ],
-                *[
-                    UserSkillDto.model_construct(
-                        skill_type=UserSkillType.LIBRARY,
-                        skill=skill,
-                        proficiency=None
-                    )
-                    for skill in scan.libraries
-                ]
-            ]
-        )
-        
-        return user_profile_dto
-    
-def get_discipline_translation(discipline: Discipline) -> UserDiscipline:
-    return {
-        Discipline.FRONTEND: UserDiscipline.FRONTEND,
-        Discipline.BACKEND: UserDiscipline.BACKEND,
-        Discipline.DATABASE: UserDiscipline.DATABASE,
-        Discipline.DEVOPS: UserDiscipline.DEVOPS
-    }[discipline]
+        return "\n".join([response.message for response in responses])

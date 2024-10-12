@@ -85,7 +85,8 @@ export const Profile = () => {
             setIsUploadingResume(true);
             sendEvent("User is uploading their resume to be processed");
             try {
-                await FileApi.getProfileFromResume(file);
+                const result = await FileApi.getResumeInsights(file);
+                sendEvent(`User's resume insights: ${result.resume_insights}`);
             } catch (error) {
                 console.error("Error uploading resume:", error);
             } finally {

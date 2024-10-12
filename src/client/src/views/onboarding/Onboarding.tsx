@@ -59,6 +59,7 @@ export const Onboarding = () => {
                                             );
                                             setInstructor(instructorId).then(
                                                 () => {
+                                                    purge();
                                                     sendMessage("Hello!", true);
                                                 }
                                             );
@@ -103,6 +104,8 @@ export const Onboarding = () => {
                             true
                         );
                     });
+                } else if (section === 1) {
+                    setPrompt("onboarding");
                 }
 
                 setSection(section);
