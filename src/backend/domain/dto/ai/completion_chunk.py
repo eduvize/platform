@@ -9,4 +9,5 @@ class Tool(BaseModel):
 class CompletionChunk(BaseModel):
     message_id: str
     text: Optional[str] = None
+    audio: Optional[str] = None
     tools: Optional[list[Tool]] = None

@@ -1,10 +1,13 @@
 import uuid
 import logging
-from typing import AsyncGenerator, List, Optional
+import asyncio
+from collections import deque
+from typing import AsyncGenerator, AsyncIterator, List, Optional
 from fastapi import Depends
 from ai.common import BaseChatMessage, BaseToolCallWithResult, ChatRole
 from .user_service import UserService
 from .instructor_service import InstructorService
+from .voice_service import VoiceService
 from app.repositories import ChatRepository, CourseRepository
 from domain.schema.chat.chat_message import ChatMessage
 from domain.schema.chat.chat_session import ChatSession
@@ -21,18 +24,21 @@ class ChatService:
     instructor_service: InstructorService
     chat_repository: ChatRepository
     course_repository: CourseRepository
+    voice_service: VoiceService
     
     def __init__(
         self, 
         user_service: UserService = Depends(UserService),
         instructor_service: InstructorService = Depends(InstructorService),
         chat_repository: ChatRepository = Depends(ChatRepository),
-        course_repository: CourseRepository = Depends(CourseRepository)
+        course_repository: CourseRepository = Depends(CourseRepository),
+        voice_service: VoiceService = Depends(VoiceService)
     ):
         self.user_service = user_service
         self.instructor_service = instructor_service
         self.chat_repository = chat_repository
         self.course_repository = course_repository
+        self.voice_service = voice_service
 
     async def create_session(
         self,
@@ -121,31 +127,55 @@ class ChatService:
             input_msg=message
         )
         
+        speech_queue = asyncio.Queue()
+        audio_queue = asyncio.Queue()
+        
+        # Start background task for audio generation
+        asyncio.create_task(self._generate_audio(speech_queue, audio_queue, instructor.voice_id))
+        
+        speech_buffer = ""
         try:
             async for chunk in response_generator:
-                yield chunk
+                yield CompletionChunk.model_construct(message_id=chunk.message_id, text=chunk.text)
+                
+                speech_buffer += chunk.text
+                if chunk.text.strip().endswith(('.', '?', '!')):
+                    await speech_queue.put(speech_buffer)
+                    speech_buffer = ""
+            
+            # Handle any remaining text in the buffer
+            if speech_buffer:
+                await speech_queue.put(speech_buffer)
+            
+            # Signal that no more text is coming
+            await speech_queue.put(None)
+            
+            # Yield any remaining audio chunks
+            while True:
+                audio_chunk = await audio_queue.get()
+                if audio_chunk is None:
+                    break
+                yield CompletionChunk.model_construct(audio=audio_chunk)
+        
         except StopAsyncIteration:
             # The generator has been exhausted, which is expected behavior
             pass
-        
-        messages: List[BaseChatMessage] = response_generator.aclose()
-        
-        await self._add_message(
-            session_id=session_id, 
-            is_user=True, 
-            message=message,
-            sender_id=user.id
-        )
-        
-        for new_message in messages:
-            await self._add_message(
-                session_id=session_id, 
-                is_user=new_message.role == ChatRole.USER, 
-                message=new_message.message, 
-                tool_calls=new_message.tool_calls,
-                sender_id=instructor.id
-            )
-    
+
+    async def _generate_audio(self, speech_queue: asyncio.Queue, audio_queue: asyncio.Queue, voice_id: str):
+        """Background task to generate audio from text chunks."""
+        try:
+            while True:
+                text_chunk = await speech_queue.get()
+                if text_chunk is None:
+                    await audio_queue.put(None)
+                    break
+                
+                base64_audio = await self.voice_service.get_base64_chunk(text_chunk, voice_id)
+                await audio_queue.put(base64_audio)
+        except Exception as e:
+            logger.error(f"Error in audio generation: {str(e)}")
+            await audio_queue.put(None)
+
     def _get_chat_messages(
         self,
         records: List[ChatMessage]

@@ -7,3 +7,4 @@ from .chat_service import ChatService
 from .playground_service import PlaygroundService
 from .course_service import CourseService
 from .instructor_service import InstructorService
+from .voice_service import VoiceService

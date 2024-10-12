@@ -60,6 +60,11 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     const isUpdatingLastMessageRef = useRef<boolean>(false);
     const streamingMessageIdRef = useRef<string | null>(null);
 
+    // New audio-related refs
+    const audioContextRef = useRef<AudioContext | null>(null);
+    const audioQueueRef = useRef<Uint8Array[]>([]);
+    const isPlayingAudioRef = useRef<boolean>(false);
+
     // Effects
     useEffect(() => {
         if (receiveBuffer === "") return;
@@ -69,6 +74,15 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     useEffect(() => {
         updateToolResults();
     }, [toolResults]);
+
+    // New effect to initialize AudioContext
+    useEffect(() => {
+        audioContextRef.current = new (window.AudioContext ||
+            (window as any).webkitAudioContext)();
+        return () => {
+            audioContextRef.current?.close();
+        };
+    }, []);
 
     // Callbacks
     const handleSetup = async () => {
@@ -90,8 +104,12 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     }, []);
 
     const sendMessage = (message: string) => {
-        if (!sessionIdRef.current || !incomingMessageCompleteRef.current)
+        if (!sessionIdRef.current || !incomingMessageCompleteRef.current) {
+            console.error(
+                "Session ID or incoming message complete flag not set"
+            );
             return;
+        }
 
         let receivedText = "";
         let completedToolCalls: Record<string, any> = {};
@@ -214,6 +232,17 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             if (chunk.tools) {
                 handleToolCalls(chunk.tools, completedToolCalls);
             }
+
+            // Handle audio data
+            if (chunk.audio) {
+                const audioData = base64ToUint8Array(chunk.audio);
+                audioQueueRef.current.push(audioData);
+
+                if (!isPlayingAudioRef.current) {
+                    isPlayingAudioRef.current = true;
+                    playNextAudioChunk();
+                }
+            }
         };
 
     const handleToolCalls = (
@@ -262,6 +291,23 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         ]);
     };
 
+    // New function to handle audio playback
+    const playNextAudioChunk = useCallback(() => {
+        if (!audioContextRef.current || audioQueueRef.current.length === 0) {
+            isPlayingAudioRef.current = false;
+            return;
+        }
+
+        const audioData = audioQueueRef.current.shift()!;
+        audioContextRef.current.decodeAudioData(audioData.buffer, (buffer) => {
+            const source = audioContextRef.current!.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioContextRef.current!.destination);
+            source.onended = playNextAudioChunk;
+            source.start();
+        });
+    }, []);
+
     // Context value
     const contextValue: Context = {
         instructorId,
@@ -281,3 +327,14 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         </ChatContext.Provider>
     );
 };
+
+// Utility function to convert base64 to Uint8Array
+function base64ToUint8Array(base64: string): Uint8Array {
+    const binaryString = atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
+}

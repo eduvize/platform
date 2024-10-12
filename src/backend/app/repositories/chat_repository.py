@@ -77,6 +77,15 @@ class ChatRepository:
             
             return chat_message
         
+    async def get_chat_message(
+        self,
+        message_id: uuid.UUID
+    ) -> Optional[ChatMessage]:
+        async with AsyncSession(async_engine) as session:
+            query = select(ChatMessage).where(ChatMessage.id == message_id)
+            result = await session.exec(query)
+            return result.one_or_none()
+        
     async def add_tool_message(
         self,
         message_id: uuid.UUID,

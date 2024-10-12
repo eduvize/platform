@@ -6,5 +6,6 @@ interface Tool {
 export interface CompletionChunkDto {
     message_id: string;
     text: string | null;
+    audio?: string | null;
     tools: Tool[] | null;
 }
