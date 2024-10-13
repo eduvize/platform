@@ -186,8 +186,7 @@ export const AudioInputProvider: React.FC<AudioInputProviderProps> = ({
                     bufferRef.current = newBuffer;
 
                     // Process the chunk to determine if it's speech or silence
-                    const amplitudeThreshold = 0.06; // Adjust as needed
-
+                    const amplitudeThreshold = 0.25; // Adjust as needed
                     let maxAmplitude = 0;
                     for (let i = 0; i < input.length; i++) {
                         const absSample = Math.abs(input[i]);

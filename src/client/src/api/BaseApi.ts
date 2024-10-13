@@ -28,50 +28,77 @@ abstract class BaseApi {
         ).then((r) => r.json());
     }
 
-    protected async postEventStream<T>(
+    protected postEventStream<T>(
         url: string,
         data: any,
         onData: (data: T) => void,
-        onComplete?: () => void
-    ) {
-        const response = await fetch(`${apiEndpoint}/${this.prefix}/${url}`, {
-            method: "POST",
-            headers: this.get_headers(),
-            body: JSON.stringify(data),
-        });
+        onComplete?: () => void,
+        onError?: (error: Error) => void
+    ): { cancel: () => void } {
+        const abortController = new AbortController();
+        const { signal } = abortController;
 
-        const reader = response.body!.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
+        let isCanceled = false;
 
-        while (true) {
-            const { done, value } = await reader.read();
+        const processStream = async () => {
+            try {
+                const response = await fetch(
+                    `${apiEndpoint}/${this.prefix}/${url}`,
+                    {
+                        method: "POST",
+                        headers: this.get_headers(),
+                        body: JSON.stringify(data),
+                        signal,
+                    }
+                );
 
-            if (done) {
-                onComplete?.();
-                break;
-            }
+                const reader = response.body!.getReader();
+                const decoder = new TextDecoder();
+                let buffer = "";
 
-            buffer += decoder.decode(value, { stream: true });
+                while (!isCanceled) {
+                    const { done, value } = await reader.read();
 
-            let boundary = buffer.indexOf("\n");
+                    if (done) {
+                        onComplete?.();
+                        break;
+                    }
 
-            while (boundary !== -1) {
-                const completeChunk = buffer.slice(0, boundary);
-                buffer = buffer.slice(boundary + 1);
+                    buffer += decoder.decode(value, { stream: true });
 
-                if (completeChunk.trim()) {
-                    try {
-                        const json = JSON.parse(completeChunk);
-                        onData(json);
-                    } catch (e) {
-                        onData(completeChunk as any);
+                    let boundary = buffer.indexOf("\n");
+
+                    while (boundary !== -1) {
+                        const completeChunk = buffer.slice(0, boundary);
+                        buffer = buffer.slice(boundary + 1);
+
+                        if (completeChunk.trim()) {
+                            try {
+                                const json = JSON.parse(completeChunk);
+                                onData(json);
+                            } catch (e) {
+                                onData(completeChunk as any);
+                            }
+                        }
+
+                        boundary = buffer.indexOf("\n");
                     }
                 }
-
-                boundary = buffer.indexOf("\n");
+            } catch (error) {
+                if (!isCanceled) {
+                    onError?.(error as Error);
+                }
             }
-        }
+        };
+
+        processStream();
+
+        return {
+            cancel: () => {
+                isCanceled = true;
+                abortController.abort();
+            },
+        };
     }
 
     protected postForm<T>(url: string, data: FormData): Promise<T> {

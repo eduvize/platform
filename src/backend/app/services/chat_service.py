@@ -3,7 +3,7 @@ import logging
 import asyncio
 from collections import deque
 from typing import AsyncGenerator, AsyncIterator, List, Optional, Tuple
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 from ai.common import BaseChatMessage, BaseToolCallWithResult, ChatRole
 from .user_service import UserService
 from .instructor_service import InstructorService
@@ -142,7 +142,7 @@ class ChatService:
         audio_queue = asyncio.Queue()
         
         # Start background task for audio generation
-        asyncio.create_task(self._generate_audio(speech_queue, audio_queue, instructor.voice_id))
+        audio_task = asyncio.create_task(self._generate_audio(speech_queue, audio_queue, instructor.voice_id))
         
         speech_buffer = ""
         try:
@@ -168,29 +168,38 @@ class ChatService:
                     break
                 yield CompletionChunk.model_construct(audio=audio_chunk)
         
-        except StopAsyncIteration as e:
-            # The generator has been exhausted, which is expected behavior
-            pass
-        
-        final_messages = await final_messages_future
-        logger.info(f"Messages: {final_messages}")
-        
-        await self._add_message(
-            session_id=session.id,
-            is_user=True,
-            message=message,
-            sender_id=user.id
-        )
-        
-        if final_messages:
-            for new_message in final_messages:
-                await self._add_message(
-                    session_id=session.id,
-                    is_user=new_message.role == ChatRole.USER,
-                    message=new_message.message,
-                    sender_id=instructor.id,
-                    tool_calls=new_message.tool_calls
-                )
+        except asyncio.CancelledError:
+            # Handle cancellation
+            logger.info(f"Stream cancelled for user {user_id}, session {session_id}")
+            audio_task.cancel()
+            try:
+                await audio_task
+            except asyncio.CancelledError:
+                pass
+        finally:
+            # Ensure we always add messages to the database
+            await self._add_message(
+                session_id=session.id,
+                is_user=True,
+                message=message,
+                sender_id=user.id
+            )
+            
+            try:
+                final_messages = await asyncio.wait_for(final_messages_future, timeout=1.0)
+                if final_messages:
+                    for new_message in final_messages:
+                        await self._add_message(
+                            session_id=session.id,
+                            is_user=new_message.role == ChatRole.USER,
+                            message=new_message.message,
+                            sender_id=instructor.id,
+                            tool_calls=new_message.tool_calls
+                        )
+            except asyncio.TimeoutError:
+                logger.warning(f"Timeout waiting for final messages in session {session_id}")
+            except Exception as e:
+                logger.error(f"Error processing final messages: {str(e)}")
 
     async def _generate_audio(self, speech_queue: asyncio.Queue, audio_queue: asyncio.Queue, voice_id: str):
         """Background task to generate audio from text chunks."""

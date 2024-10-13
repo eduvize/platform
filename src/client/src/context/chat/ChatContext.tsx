@@ -63,9 +63,11 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     const incomingMessageCompleteRef = useRef(true);
     const cachedInstructorIdRef = useRef<string | null>(null);
     const cachedPromptRef = useRef<ChatPromptType | null>(null);
-    const isUpdatingLastMessageRef = useRef<boolean>(false);
     const streamingMessageIdRef = useRef<string | null>(null);
     const shouldDiscardIncomingDataRef = useRef<boolean>(false);
+    const sseCancellationHandlerRef = useRef<{ cancel: () => void }>({
+        cancel: () => {},
+    });
 
     // Get the playAudio function from AudioOutputContext
     const { playAudio, stopPlayback } = useContext(AudioOutputContext);
@@ -86,6 +88,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         if (!instructorIdRef.current || !promptRef.current) return;
 
         stopPlayback();
+        sseCancellationHandlerRef.current.cancel?.();
 
         const { id: session_id, instructor_id } = await ChatApi.createSession(
             promptRef.current,
@@ -114,12 +117,14 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         let receivedText = "";
         let completedToolCalls: Record<string, any> = {};
 
-        ChatApi.sendMessage(
+        const { cancel } = ChatApi.sendMessage(
             sessionIdRef.current,
             { message, expect_audio_response: isListening },
             handleChunk(receivedText, completedToolCalls),
             handleComplete(completedToolCalls)
         );
+
+        sseCancellationHandlerRef.current.cancel = cancel;
     };
 
     const sendAudio = (audio: string) => {
@@ -130,12 +135,14 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         let receivedText = "";
         let completedToolCalls: Record<string, any> = {};
 
-        ChatApi.sendMessage(
+        const { cancel } = ChatApi.sendMessage(
             sessionIdRef.current,
             { audio, expect_audio_response: isListening },
             handleChunk(receivedText, completedToolCalls),
             handleComplete(completedToolCalls)
         );
+
+        sseCancellationHandlerRef.current.cancel = cancel;
     };
 
     const handleSendMessage = useCallback(
@@ -353,6 +360,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             console.log("Stopping playback");
             incomingMessageCompleteRef.current = true;
             stopPlayback();
+            sseCancellationHandlerRef.current.cancel?.();
         }
     }, [isSpeaking]);
 
