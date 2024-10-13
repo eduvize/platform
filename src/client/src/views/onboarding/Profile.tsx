@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { FileApi } from "@api";
 import {
     Avatar,
@@ -7,6 +7,8 @@ import {
     Divider,
     Group,
     Input,
+    Pill,
+    PillsInput,
     Space,
     Stack,
     Text,
@@ -15,6 +17,7 @@ import {
 import { AdvancedPillInput } from "@molecules";
 import { LearningCapacity } from "@models/enums";
 import { useOnboardingEvents } from "@context/onboarding/hooks";
+import { useDebouncedCallback } from "@mantine/hooks";
 
 interface Skill {
     skill_type: number;
@@ -33,9 +36,20 @@ export const Profile = () => {
     const [isUploadingResume, setIsUploadingResume] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const resumeInputRef = useRef<HTMLInputElement>(null);
+    const hasSentNameEventRef = useRef(false);
+    const [languageInputValue, setLanguageInputValue] = useState("");
+    const [frameworkInputValue, setFrameworkInputValue] = useState("");
+
+    const handleSendLearningCapacityEvent = useDebouncedCallback(() => {
+        sendEvent(
+            `User has selected their learning disciplines: ${disciplines.join(
+                ", "
+            )}`
+        );
+    }, 1500);
 
     // Handler for discipline selection
-    const handleDisciplineChange = useCallback(
+    const handleLearningCapacityChange = useCallback(
         (discipline: LearningCapacity) => {
             setDisciplines((prev) => {
                 const exists = prev.some((d) => d === discipline);
@@ -45,6 +59,7 @@ export const Profile = () => {
                     return [...prev, discipline];
                 }
             });
+            handleSendLearningCapacityEvent();
         },
         []
     );
@@ -94,6 +109,33 @@ export const Profile = () => {
             }
         }
     };
+
+    const handleProgrammingLanguagesBlur = () => {
+        sendEvent(
+            `User has updated their programming languages: ${skills
+                .map((s) => s.skill)
+                .join(", ")}`
+        );
+    };
+
+    const handleFrameworksBlur = () => {
+        sendEvent(
+            `User has updated their frameworks or libraries: ${skills
+                .map((s) => s.skill)
+                .join(", ")}`
+        );
+    };
+
+    const handleNameChange = useDebouncedCallback(() => {
+        sendEvent(`User has entered their name: ${firstName} ${lastName}`);
+        hasSentNameEventRef.current = true;
+    }, 1500);
+
+    useEffect(() => {
+        if (firstName && lastName && !hasSentNameEventRef.current) {
+            handleNameChange();
+        }
+    }, [firstName, lastName, handleNameChange]);
 
     return (
         <Stack pt="lg" gap="lg">
@@ -198,21 +240,23 @@ export const Profile = () => {
                 <Group>
                     <Chip
                         onClick={() =>
-                            handleDisciplineChange(LearningCapacity.Hobby)
+                            handleLearningCapacityChange(LearningCapacity.Hobby)
                         }
                     >
                         I'm a hobbyist
                     </Chip>
                     <Chip
                         onClick={() =>
-                            handleDisciplineChange(LearningCapacity.Student)
+                            handleLearningCapacityChange(
+                                LearningCapacity.Student
+                            )
                         }
                     >
                         I am or have been a student
                     </Chip>
                     <Chip
                         onClick={() =>
-                            handleDisciplineChange(
+                            handleLearningCapacityChange(
                                 LearningCapacity.Professional
                             )
                         }
@@ -231,22 +275,40 @@ export const Profile = () => {
                     What programming languages do you know?
                 </Text>
 
-                <AdvancedPillInput
-                    value={skills.map((s) => s.skill)}
-                    onChange={(value) =>
-                        setSkills(
-                            value.map(
-                                (v) =>
-                                    ({
-                                        skill: v,
-                                        skill_type: 1,
-                                        proficiency: null,
-                                    } as Skill)
-                            )
-                        )
-                    }
-                    placeholder="Type to search for a language"
-                />
+                <PillsInput>
+                    <Pill.Group>
+                        {skills
+                            .filter((v) => v.skill_type === 1)
+                            .map((skill) => (
+                                <Pill>{skill.skill}</Pill>
+                            ))}
+
+                        <PillsInput.Field
+                            placeholder="Enter a programming language"
+                            value={languageInputValue}
+                            onChange={(evt) =>
+                                setLanguageInputValue(evt.currentTarget.value)
+                            }
+                            onKeyDown={(evt) => {
+                                if (evt.key === "Enter") {
+                                    evt.preventDefault();
+
+                                    setSkills((prev) => [
+                                        ...prev,
+                                        {
+                                            skill: languageInputValue,
+                                            skill_type: 1,
+                                            proficiency: null,
+                                        },
+                                    ]);
+
+                                    setLanguageInputValue("");
+                                }
+                            }}
+                            onBlur={handleProgrammingLanguagesBlur}
+                        />
+                    </Pill.Group>
+                </PillsInput>
             </Stack>
 
             <Stack gap="xs">
@@ -257,6 +319,41 @@ export const Profile = () => {
                 <Text c="#C9C9C9" size="sm">
                     What libraries or frameworks do you know?
                 </Text>
+
+                <PillsInput>
+                    <Pill.Group>
+                        {skills
+                            .filter((v) => v.skill_type === 2)
+                            .map((skill) => (
+                                <Pill>{skill.skill}</Pill>
+                            ))}
+
+                        <PillsInput.Field
+                            placeholder="Enter a framework or library"
+                            value={frameworkInputValue}
+                            onChange={(evt) =>
+                                setFrameworkInputValue(evt.currentTarget.value)
+                            }
+                            onKeyDown={(evt) => {
+                                if (evt.key === "Enter") {
+                                    evt.preventDefault();
+
+                                    setSkills((prev) => [
+                                        ...prev,
+                                        {
+                                            skill: frameworkInputValue,
+                                            skill_type: 2,
+                                            proficiency: null,
+                                        },
+                                    ]);
+
+                                    setFrameworkInputValue("");
+                                }
+                            }}
+                            onBlur={handleFrameworksBlur}
+                        />
+                    </Pill.Group>
+                </PillsInput>
             </Stack>
 
             <Divider />

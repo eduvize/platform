@@ -10,9 +10,11 @@ import { ChatMessage, PendingTool } from "@molecules";
 import { useChat, usePendingTools, useToolResults } from "@context/chat/hooks";
 import {
     Box,
+    Button,
     Card,
     Divider,
     Flex,
+    Group,
     Input,
     ScrollArea,
     Space,
@@ -21,6 +23,8 @@ import {
 } from "@mantine/core";
 import { InstructorAvatar } from "@atoms";
 import { useInstructors } from "@hooks/instructors";
+import { useAudioInput } from "@context/audio/hooks";
+import { IconCircuitResistor } from "@tabler/icons-react";
 
 interface ChatProps {
     maxHeight?: number | string;
@@ -41,7 +45,10 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
         const instructors = useInstructors();
         const pendingToolNames = usePendingTools();
         const toolResults = useToolResults();
-        const { messages, sendMessage, processing, instructorId } = useChat();
+        const { startListening, stopListening, audioBuffer, isListening } =
+            useAudioInput();
+        const { messages, sendMessage, sendAudio, processing, instructorId } =
+            useChat();
         const inputRef = useRef<HTMLInputElement>(null);
         const scrollRef = useRef<HTMLDivElement>(null);
         const viewport = useRef<HTMLDivElement>(null);
@@ -68,6 +75,14 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
             return false;
         }, []);
 
+        const toggleListening = useCallback(() => {
+            if (isListening) {
+                stopListening();
+            } else {
+                startListening(1000);
+            }
+        }, [isListening, startListening, stopListening]);
+
         useEffect(() => {
             if (isAtBottom && !userHasScrolled) {
                 scrollToBottom();
@@ -86,6 +101,13 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
                 inputRef.current.focus();
             }
         }, [processing]);
+
+        useEffect(() => {
+            if (audioBuffer) {
+                console.log("Sending audio buffer");
+                sendAudio(audioBuffer);
+            }
+        }, [audioBuffer]);
 
         useEffect(() => {
             scrollToBottom();
@@ -143,6 +165,7 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
                     bg="#2D262B"
                 >
                     <Flex
+                        pos="relative"
                         bg="#242424"
                         justify="center"
                         py="xs"
@@ -157,9 +180,33 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
                                 {instructor?.name}
                             </Text>
                         </Stack>
+
+                        <Box
+                            pos="absolute"
+                            right={0}
+                            top="100%"
+                            style={{ zIndex: 2 }}
+                        >
+                            <Button
+                                c="gray"
+                                mt="md"
+                                mr="md"
+                                radius="xl"
+                                bg={isListening ? "blue" : "gray"}
+                                onClick={toggleListening}
+                                size="compact-sm"
+                            >
+                                <Group>
+                                    <IconCircuitResistor color="white" />
+                                    <Text size="xs">Use voice</Text>
+                                </Group>
+                            </Button>
+                        </Box>
                     </Flex>
 
                     <Flex pos="relative" direction="column" w="100%" p="md">
+                        <Space h="xs" />
+
                         <ScrollArea.Autosize
                             display="flex"
                             flex="1 0 auto"

@@ -2,7 +2,7 @@ import uuid
 import logging
 import asyncio
 from collections import deque
-from typing import AsyncGenerator, AsyncIterator, List, Optional
+from typing import AsyncGenerator, AsyncIterator, List, Optional, Tuple
 from fastapi import Depends
 from ai.common import BaseChatMessage, BaseToolCallWithResult, ChatRole
 from .user_service import UserService
@@ -109,7 +109,9 @@ class ChatService:
         self, 
         user_id: str,
         session_id: uuid.UUID,
-        message: str
+        message: Optional[str] = None,
+        audio: Optional[str] = None,
+        expect_audio_response: bool = False
     ) -> AsyncGenerator[CompletionChunk, None]:
         user = await self.user_service.get_user("id", user_id, ["profile.*"])
         
@@ -121,7 +123,16 @@ class ChatService:
         
         logger.info(f"Preparing to generate chat response for user {user.id}, session {session.id}")
 
-        response_generator = self.get_prompt_generator(
+        if audio:
+            message = await self.voice_service.speech_to_text(audio)
+            
+            # If the message is empty, close out of this function
+            if not message:
+                return
+            
+            yield CompletionChunk.model_construct(received_text=message)
+
+        response_generator, final_messages_future = await self.get_prompt_generator(
             session=session,
             instructor=instructor,
             input_msg=message
@@ -139,12 +150,12 @@ class ChatService:
                 yield CompletionChunk.model_construct(message_id=chunk.message_id, text=chunk.text)
                 
                 speech_buffer += chunk.text
-                if chunk.text.strip().endswith(('.', '?', '!')):
+                if chunk.text.strip().endswith(('.', '?', '!')) and expect_audio_response:
                     await speech_queue.put(speech_buffer)
                     speech_buffer = ""
             
             # Handle any remaining text in the buffer
-            if speech_buffer:
+            if speech_buffer and expect_audio_response:
                 await speech_queue.put(speech_buffer)
             
             # Signal that no more text is coming
@@ -157,9 +168,29 @@ class ChatService:
                     break
                 yield CompletionChunk.model_construct(audio=audio_chunk)
         
-        except StopAsyncIteration:
+        except StopAsyncIteration as e:
             # The generator has been exhausted, which is expected behavior
             pass
+        
+        final_messages = await final_messages_future
+        logger.info(f"Messages: {final_messages}")
+        
+        await self._add_message(
+            session_id=session.id,
+            is_user=True,
+            message=message,
+            sender_id=user.id
+        )
+        
+        if final_messages:
+            for new_message in final_messages:
+                await self._add_message(
+                    session_id=session.id,
+                    is_user=new_message.role == ChatRole.USER,
+                    message=new_message.message,
+                    sender_id=instructor.id,
+                    tool_calls=new_message.tool_calls
+                )
 
     async def _generate_audio(self, speech_queue: asyncio.Queue, audio_queue: asyncio.Queue, voice_id: str):
         """Background task to generate audio from text chunks."""
@@ -238,49 +269,67 @@ class ChatService:
         session: ChatSession,
         instructor: Instructor,
         input_msg: str
-    ) -> AsyncGenerator[CompletionChunk, None]:
+    ) -> Tuple[AsyncGenerator[CompletionChunk, None], asyncio.Future]:
         p_type = PromptType(session.prompt_type)
         
         messages = await self.chat_repository.get_chat_messages(session.id)
         model_messages = self._get_chat_messages(messages)
         
-        if p_type == PromptType.LESSON:
-            if session.resource_id is None:
-                raise ValueError("Resource ID is required for lesson prompt")
+        final_messages_future = asyncio.Future()
 
-            lesson = await self.course_repository.get_lesson(session.resource_id)
-            
-            prompt = LessonDiscussionPrompt()
-            async for chunk, _, is_final in await prompt.get_responses(
-                instructor=instructor,
-                history=model_messages,
-                new_message=input_msg,
-                lesson_content="\n\n".join(
-                    [
-                        f"{section.title}\n{section.content}" 
-                        for section in lesson.sections
-                    ]
-                )
-            ):
-                if not is_final:
-                    yield chunk
-        elif p_type == PromptType.ONBOARDING:
-            prompt = OnboardingInstructorSelectionPrompt()
-            async for chunk, _, is_final in await prompt.get_responses(
-                instructor=instructor,
-                history=model_messages,
-                new_message=input_msg
-            ):
-                if not is_final:
-                    yield chunk
-        elif p_type == PromptType.PROFILE_BUILDER:
-            prompt = OnboardingProfileBuilderPrompt()
-            async for chunk, _, is_final in await prompt.get_responses(
-                instructor=instructor,
-                history=model_messages,
-                new_message=input_msg
-            ):
-                if not is_final:
-                    yield chunk
-        else:
-            raise ValueError("Invalid prompt type")
+        async def response_wrapper():
+            final_messages = []
+            try:
+                if p_type == PromptType.LESSON:
+                    if session.resource_id is None:
+                        raise ValueError("Resource ID is required for lesson prompt")
+
+                    lesson = await self.course_repository.get_lesson(session.resource_id)
+                    
+                    prompt = LessonDiscussionPrompt()
+                    async for chunk, responses, is_final in await prompt.get_responses(
+                        instructor=instructor,
+                        history=model_messages,
+                        new_message=input_msg,
+                        lesson_content="\n\n".join(
+                            [
+                                f"{section.title}\n{section.content}" 
+                                for section in lesson.sections
+                            ]
+                        )
+                    ):
+                        if not is_final:
+                            yield chunk
+                        else:
+                            final_messages = responses
+                            break
+                elif p_type == PromptType.ONBOARDING:
+                    prompt = OnboardingInstructorSelectionPrompt()
+                    async for chunk, responses, is_final in await prompt.get_responses(
+                        instructor=instructor,
+                        history=model_messages,
+                        new_message=input_msg
+                    ):
+                        if not is_final:
+                            yield chunk
+                        else:
+                            final_messages = responses
+                            break
+                elif p_type == PromptType.PROFILE_BUILDER:
+                    prompt = OnboardingProfileBuilderPrompt()
+                    async for chunk, responses, is_final in await prompt.get_responses(
+                        instructor=instructor,
+                        history=model_messages,
+                        new_message=input_msg
+                    ):
+                        if not is_final:
+                            yield chunk
+                        else:
+                            final_messages = responses
+                            break
+                else:
+                    raise ValueError("Invalid prompt type")
+            finally:
+                final_messages_future.set_result(final_messages)
+
+        return response_wrapper(), final_messages_future

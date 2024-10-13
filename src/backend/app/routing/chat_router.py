@@ -42,7 +42,9 @@ async def send_message(
         async for message in chat_service.get_response(
             user_id=user_id, 
             session_id=session_id, 
-            message=payload.message
+            message=payload.message,
+            audio=payload.audio,
+            expect_audio_response=payload.expect_audio_response
         ):
             yield f"{message.model_dump_json()}\n\n"
             await asyncio.sleep(0.01)

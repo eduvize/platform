@@ -3,6 +3,10 @@ import { ChatMessageDto, CompletionChunkDto } from "@models/dto";
 import { ChatPromptType } from "@models/enums";
 import { ReactNode, useEffect, useState, useCallback, useRef } from "react";
 import { createContext } from "use-context-selector";
+import { useContext } from "react";
+import { AudioOutputContext } from "../audio/AudioOutputContext";
+import { useAudioInput } from "@context/audio/hooks";
+import * as WavEncoder from "wav-encoder";
 
 // Types and Interfaces
 type Context = {
@@ -12,6 +16,7 @@ type Context = {
     toolResults: Record<string, any | null>;
     isProcessing: boolean;
     sendMessage: (message: string, hideFromChat?: boolean) => void;
+    sendAudio: (audio: ArrayBuffer) => void;
     setInstructor: (instructorId: string) => Promise<void>;
     setPrompt: (prompt: ChatPromptType) => Promise<void>;
     reset: () => void;
@@ -29,6 +34,7 @@ const defaultValue: Context = {
     toolResults: {},
     isProcessing: false,
     sendMessage: () => {},
+    sendAudio: () => {},
     setInstructor: () => Promise.resolve(),
     setPrompt: () => Promise.resolve(),
     reset: () => {},
@@ -59,11 +65,11 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     const cachedPromptRef = useRef<ChatPromptType | null>(null);
     const isUpdatingLastMessageRef = useRef<boolean>(false);
     const streamingMessageIdRef = useRef<string | null>(null);
+    const shouldDiscardIncomingDataRef = useRef<boolean>(false);
 
-    // New audio-related refs
-    const audioContextRef = useRef<AudioContext | null>(null);
-    const audioQueueRef = useRef<Uint8Array[]>([]);
-    const isPlayingAudioRef = useRef<boolean>(false);
+    // Get the playAudio function from AudioOutputContext
+    const { playAudio, stopPlayback } = useContext(AudioOutputContext);
+    const { isListening, sampleRate, isSpeaking } = useAudioInput();
 
     // Effects
     useEffect(() => {
@@ -75,24 +81,18 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         updateToolResults();
     }, [toolResults]);
 
-    // New effect to initialize AudioContext
-    useEffect(() => {
-        audioContextRef.current = new (window.AudioContext ||
-            (window as any).webkitAudioContext)();
-        return () => {
-            audioContextRef.current?.close();
-        };
-    }, []);
-
     // Callbacks
     const handleSetup = async () => {
         if (!instructorIdRef.current || !promptRef.current) return;
+
+        stopPlayback();
 
         const { id: session_id, instructor_id } = await ChatApi.createSession(
             promptRef.current,
             instructorIdRef.current ?? undefined
         );
         sessionIdRef.current = session_id;
+        incomingMessageCompleteRef.current = true;
         setInstructorId(instructor_id);
         setMessages([]);
         cachedPromptRef.current = currentPrompt;
@@ -116,7 +116,23 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
         ChatApi.sendMessage(
             sessionIdRef.current,
-            { message },
+            { message, expect_audio_response: isListening },
+            handleChunk(receivedText, completedToolCalls),
+            handleComplete(completedToolCalls)
+        );
+    };
+
+    const sendAudio = (audio: string) => {
+        if (!sessionIdRef.current) {
+            return;
+        }
+
+        let receivedText = "";
+        let completedToolCalls: Record<string, any> = {};
+
+        ChatApi.sendMessage(
+            sessionIdRef.current,
+            { audio, expect_audio_response: isListening },
             handleChunk(receivedText, completedToolCalls),
             handleComplete(completedToolCalls)
         );
@@ -136,6 +152,26 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             incomingMessageCompleteRef.current = false;
         },
         [isProcessing, sendMessage]
+    );
+
+    const handleSendAudio = useCallback(
+        (audio: ArrayBuffer) => {
+            WavEncoder.encode({
+                sampleRate,
+                channelData: [new Float32Array(audio)],
+            }).then((wavBuffer) => {
+                // Convert ArrayBuffer to Base64 properly
+                const uint8Array = new Uint8Array(wavBuffer);
+                const base64 = btoa(
+                    uint8Array.reduce(
+                        (data, byte) => data + String.fromCharCode(byte),
+                        ""
+                    )
+                );
+                sendAudio(base64);
+            });
+        },
+        [sendAudio, sampleRate]
     );
 
     const handleSetPrompt = useCallback(
@@ -166,7 +202,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     // Helper functions
     /**
      * Updates the messages state by either appending a new AI message or updating the last AI message.
-     * Ensures that messages are not overwritten unintentionally.
+     * Ensures that messages are not overwritten unintentionally and prevents duplicate messages.
      */
     const updateMessages = () => {
         setMessages((prevMessages) => {
@@ -175,29 +211,32 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             // Determine if the last message is an AI message that is still being updated
             if (
                 lastMessage &&
-                lastMessage.id === streamingMessageIdRef.current
+                lastMessage.id === streamingMessageIdRef.current &&
+                !lastMessage.is_user
             ) {
-                isUpdatingLastMessageRef.current = true;
+                // Update the existing AI message
                 const updatedLastMessage: ChatMessageDto = {
                     ...lastMessage,
                     content: receiveBuffer,
                 };
                 return [...prevMessages.slice(0, -1), updatedLastMessage];
-            } else {
-                // Append a new AI message
+            } else if (streamingMessageIdRef.current) {
+                // Append a new AI message only if we have a valid message ID
                 const newMessage: ChatMessageDto = {
-                    id: streamingMessageIdRef.current ?? "",
+                    id: streamingMessageIdRef.current,
                     is_user: false,
                     content: receiveBuffer,
                     create_at_utc: new Date().toISOString(),
                 };
                 return [...prevMessages, newMessage];
             }
+
+            // If no conditions are met, return the previous messages unchanged
+            return prevMessages;
         });
 
         // Reset the receive buffer after updating
         setReceiveBuffer("");
-        isUpdatingLastMessageRef.current = false;
     };
 
     /**
@@ -222,6 +261,11 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     const handleChunk =
         (receivedText: string, completedToolCalls: Record<string, any>) =>
         (chunk: CompletionChunkDto) => {
+            // Check if we should discard incoming data
+            if (shouldDiscardIncomingDataRef.current) {
+                return; // Discard this chunk
+            }
+
             streamingMessageIdRef.current = chunk.message_id;
 
             if (chunk.text) {
@@ -233,15 +277,25 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                 handleToolCalls(chunk.tools, completedToolCalls);
             }
 
-            // Handle audio data
-            if (chunk.audio) {
-                const audioData = base64ToUint8Array(chunk.audio);
-                audioQueueRef.current.push(audioData);
+            // Handle audio data using AudioOutputContext, but only if not discarding
+            if (
+                chunk.audio &&
+                isListening &&
+                !shouldDiscardIncomingDataRef.current
+            ) {
+                playAudio(chunk.audio);
+            }
 
-                if (!isPlayingAudioRef.current) {
-                    isPlayingAudioRef.current = true;
-                    playNextAudioChunk();
-                }
+            if (chunk.received_text) {
+                setMessages((prev) => [
+                    ...prev,
+                    {
+                        id: `${Date.now()}`,
+                        is_user: true,
+                        content: chunk.received_text as string,
+                        create_at_utc: new Date().toISOString(),
+                    },
+                ]);
             }
         };
 
@@ -291,22 +345,16 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         ]);
     };
 
-    // New function to handle audio playback
-    const playNextAudioChunk = useCallback(() => {
-        if (!audioContextRef.current || audioQueueRef.current.length === 0) {
-            isPlayingAudioRef.current = false;
-            return;
-        }
+    // Add an effect to watch for changes in isSpeaking
+    useEffect(() => {
+        shouldDiscardIncomingDataRef.current = isSpeaking;
 
-        const audioData = audioQueueRef.current.shift()!;
-        audioContextRef.current.decodeAudioData(audioData.buffer, (buffer) => {
-            const source = audioContextRef.current!.createBufferSource();
-            source.buffer = buffer;
-            source.connect(audioContextRef.current!.destination);
-            source.onended = playNextAudioChunk;
-            source.start();
-        });
-    }, []);
+        if (isSpeaking) {
+            console.log("Stopping playback");
+            incomingMessageCompleteRef.current = true;
+            stopPlayback();
+        }
+    }, [isSpeaking]);
 
     // Context value
     const contextValue: Context = {
@@ -316,6 +364,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         toolResults,
         isProcessing,
         sendMessage: handleSendMessage,
+        sendAudio: handleSendAudio,
         setInstructor: handleSetInstructor,
         setPrompt: handleSetPrompt,
         reset: handleSetup,
@@ -327,14 +376,3 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         </ChatContext.Provider>
     );
 };
-
-// Utility function to convert base64 to Uint8Array
-function base64ToUint8Array(base64: string): Uint8Array {
-    const binaryString = atob(base64);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes;
-}

@@ -9,6 +9,7 @@ interface UseChatReturn {
     messages: ChatMessageDto[];
     processing: boolean;
     sendMessage: (msg: string, hideFromChat?: boolean) => void;
+    sendAudio: (audio: ArrayBuffer) => void;
     setInstructor: (id: string) => Promise<void>;
     setPrompt: (prompt: ChatPromptType) => Promise<void>;
     purge: () => void;
@@ -22,6 +23,7 @@ interface UseChatProps {
 export const useChat = (props?: UseChatProps): UseChatReturn => {
     const instructorId = useContextSelector(ChatContext, (v) => v.instructorId);
     const sendMessage = useContextSelector(ChatContext, (v) => v.sendMessage);
+    const sendAudio = useContextSelector(ChatContext, (v) => v.sendAudio);
     const setInstructor = useContextSelector(
         ChatContext,
         (v) => v.setInstructor
@@ -47,6 +49,7 @@ export const useChat = (props?: UseChatProps): UseChatReturn => {
         instructorId: instructorId ?? "",
         messages: messages.filter((x) => x.content),
         sendMessage,
+        sendAudio,
         setInstructor,
         setPrompt,
         processing,

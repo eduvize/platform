@@ -14,6 +14,7 @@ interface AdvancedPillInputProps {
     defaultValue?: string[];
     value?: string[];
     onChange?: (value: string[]) => void;
+    onBlur?: () => void;
     placeholder?: string;
     disabled?: boolean;
     valueSelector?: (value: any) => string;
@@ -26,6 +27,7 @@ export const AdvancedPillInput = ({
     defaultValue,
     value,
     onChange,
+    onBlur,
     placeholder,
     valueSelector,
     valueFilter,
@@ -176,7 +178,10 @@ export const AdvancedPillInput = ({
                             <Combobox.EventsTarget>
                                 <PillsInput.Field
                                     onFocus={() => combobox.openDropdown()}
-                                    onBlur={() => combobox.closeDropdown()}
+                                    onBlur={() => {
+                                        combobox.closeDropdown();
+                                        onBlur?.();
+                                    }}
                                     placeholder={placeholder}
                                     value={query}
                                     onChange={(event) => {
@@ -243,6 +248,9 @@ export const AdvancedPillInput = ({
 
                     <PillsInput.Field
                         placeholder={placeholder}
+                        onBlur={() => {
+                            onBlur?.();
+                        }}
                         onKeyDown={(event) => {
                             if (event.key === "Enter") {
                                 event.preventDefault();
