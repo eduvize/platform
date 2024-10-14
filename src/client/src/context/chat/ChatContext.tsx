@@ -64,7 +64,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     });
 
     // Get the playAudio function from AudioOutputContext
-    const { playAudio, stopPlayback } = useContext(AudioOutputContext);
+    const { playAudio, stopPlayback, enablePlayback, disablePlayback } =
+        useContext(AudioOutputContext);
     const { isListening, sampleRate, isSpeaking } = useAudioInput();
 
     // Effects
@@ -149,6 +150,13 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         socketRef.current?.emit("use_voice", {
             enabled: isListening,
         });
+
+        if (isListening) {
+            enablePlayback();
+        } else {
+            disablePlayback();
+            stopPlayback();
+        }
     }, [isListening]);
 
     useEffect(() => {

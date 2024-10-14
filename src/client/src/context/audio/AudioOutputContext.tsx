@@ -1,12 +1,16 @@
 import React, { createContext, useRef, useCallback, useEffect } from "react";
 
 type Context = {
+    enablePlayback: () => void;
+    disablePlayback: () => void;
     playAudio: (audioData: string) => void;
     setVolume: (volume: number) => void;
     stopPlayback: () => void;
 };
 
 const defaultValue: Context = {
+    enablePlayback: () => {},
+    disablePlayback: () => {},
     playAudio: () => {},
     setVolume: () => {},
     stopPlayback: () => {},
@@ -26,6 +30,7 @@ export const AudioOutputProvider: React.FC<AudioOutputProviderProps> = ({
     const isPlayingAudioRef = useRef<boolean>(false);
     const gainNodeRef = useRef<GainNode | null>(null);
     const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
+    const isEnabledRef = useRef<boolean>(false);
 
     useEffect(() => {
         // Initialize AudioContext and GainNode
@@ -85,6 +90,10 @@ export const AudioOutputProvider: React.FC<AudioOutputProviderProps> = ({
 
     const playAudio = useCallback(
         (audioData: string) => {
+            if (!isEnabledRef.current) {
+                return;
+            }
+
             if (!audioContextRef.current || !gainNodeRef.current) {
                 console.error("AudioContext or GainNode not initialized");
                 return;
@@ -112,9 +121,23 @@ export const AudioOutputProvider: React.FC<AudioOutputProviderProps> = ({
         }
     }, []);
 
+    const enablePlayback = useCallback(() => {
+        isEnabledRef.current = true;
+    }, []);
+
+    const disablePlayback = useCallback(() => {
+        isEnabledRef.current = false;
+    }, []);
+
     return (
         <AudioOutputContext.Provider
-            value={{ playAudio, setVolume, stopPlayback }}
+            value={{
+                playAudio,
+                setVolume,
+                stopPlayback,
+                enablePlayback,
+                disablePlayback,
+            }}
         >
             {children}
         </AudioOutputContext.Provider>

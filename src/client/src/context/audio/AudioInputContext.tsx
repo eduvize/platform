@@ -1,6 +1,12 @@
 import { useDebouncedState } from "@mantine/hooks";
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { createContext } from "use-context-selector";
+
+// Import the worker
+import AudioWorkerScript from "./AudioWorker?worker";
+
+// Define AudioWorker type
+type AudioWorker = Worker;
 
 interface AudioInputContextType {
     isListening: boolean;
@@ -31,7 +37,7 @@ export const AudioInputProvider: React.FC<AudioInputProviderProps> = ({
     children,
 }) => {
     const [isListening, setIsListening] = useState(false);
-    const [isSpeaking, setIsSpeaking] = useDebouncedState(false, 500);
+    const [isSpeaking, setIsSpeaking] = useDebouncedState(false, 100);
     const [audioBuffer, setAudioBuffer] = useState<Float32Array | null>(null);
     const [sampleRate, setSampleRate] = useState(44100);
 
@@ -40,36 +46,46 @@ export const AudioInputProvider: React.FC<AudioInputProviderProps> = ({
     const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
     const processorNodeRef = useRef<AudioWorkletNode | null>(null);
     const gainNodeRef = useRef<GainNode | null>(null);
+    const workerRef = useRef<AudioWorker | null>(null);
 
-    const bufferRef = useRef<Float32Array>(new Float32Array());
+    useEffect(() => {
+        // Create the Web Worker
+        workerRef.current = new AudioWorkerScript();
 
-    const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-    const isBufferSilent = useCallback(
-        (buffer: Float32Array, threshold: number = 0.01) => {
-            for (let i = 0; i < buffer.length; i++) {
-                if (Math.abs(buffer[i]) > threshold) {
-                    return false;
-                }
+        // Set up message handler for the worker
+        workerRef.current.onmessage = (event) => {
+            if (event.data.isSpeaking !== undefined) {
+                setIsSpeaking(event.data.isSpeaking);
             }
-            return true;
-        },
-        []
-    );
+            if (event.data.type === "silentBuffer") {
+                console.log("Audio buffer contains only silence, discarding.");
+                setAudioBuffer(null);
+            }
+            if (
+                event.data.type === "speechBuffer" ||
+                event.data.type === "finalBuffer"
+            ) {
+                console.log("Received non-silent audio buffer, setting.");
+                setAudioBuffer(event.data.buffer);
+            }
+        };
+
+        // Clean up the worker when the component unmounts
+        return () => {
+            if (workerRef.current) {
+                workerRef.current.terminate();
+            }
+        };
+    }, []);
 
     const stopListening = useCallback(
         (finalize = false) => {
             if (!isListening) return;
 
-            if (silenceTimeoutRef.current) {
-                clearTimeout(silenceTimeoutRef.current);
-                silenceTimeoutRef.current = null;
-            }
-
             if (processorNodeRef.current && sourceNodeRef.current) {
                 sourceNodeRef.current.disconnect(processorNodeRef.current);
                 processorNodeRef.current.disconnect();
-                processorNodeRef.current.port.onmessage = null; // Clean up the message handler
+                processorNodeRef.current.port.onmessage = null;
             }
 
             if (gainNodeRef.current) {
@@ -86,15 +102,9 @@ export const AudioInputProvider: React.FC<AudioInputProviderProps> = ({
             setIsListening(false);
             setIsSpeaking(false);
 
-            // If finalize is true, check if the buffer is not silent before setting it
-            if (finalize) {
-                if (!isBufferSilent(bufferRef.current)) {
-                    setAudioBuffer(bufferRef.current);
-                } else {
-                    console.log(
-                        "Audio buffer contains only silence, discarding."
-                    );
-                }
+            // If finalize is true, ask the worker to finalize the buffer
+            if (finalize && workerRef.current) {
+                workerRef.current.postMessage({ type: "finalizeBuffer" });
             }
 
             // Close the AudioContext
@@ -103,56 +113,7 @@ export const AudioInputProvider: React.FC<AudioInputProviderProps> = ({
                 audioContextRef.current = null;
             }
         },
-        [isListening, isBufferSilent]
-    );
-
-    const processAudioChunk = useCallback(
-        (input: Float32Array) => {
-            // Append input to bufferRef
-            const newBuffer = new Float32Array(
-                bufferRef.current.length + input.length
-            );
-            newBuffer.set(bufferRef.current);
-            newBuffer.set(input, bufferRef.current.length);
-            bufferRef.current = newBuffer;
-
-            // Process the chunk to determine if it's speech or silence
-            const amplitudeThreshold = 0.25; // Adjust as needed
-            let maxAmplitude = 0;
-            for (let i = 0; i < input.length; i++) {
-                const absSample = Math.abs(input[i]);
-                if (absSample > maxAmplitude) {
-                    maxAmplitude = absSample;
-                }
-            }
-
-            const isSpeech = maxAmplitude > amplitudeThreshold;
-
-            if (isSpeech) {
-                // Speech detected
-                if (silenceTimeoutRef.current) {
-                    clearTimeout(silenceTimeoutRef.current);
-                    silenceTimeoutRef.current = null;
-                }
-                setIsSpeaking(true);
-            } else {
-                // Silence detected
-                if (!silenceTimeoutRef.current) {
-                    silenceTimeoutRef.current = setTimeout(() => {
-                        if (!isBufferSilent(bufferRef.current)) {
-                            setAudioBuffer(bufferRef.current);
-                        } else {
-                            console.log(
-                                "Audio buffer contains only silence, discarding."
-                            );
-                        }
-                        bufferRef.current = new Float32Array();
-                    }, 1000);
-                    setIsSpeaking(false);
-                }
-            }
-        },
-        [isBufferSilent, setIsSpeaking]
+        [isListening, setIsSpeaking]
     );
 
     const startListening = useCallback(
@@ -199,13 +160,6 @@ export const AudioInputProvider: React.FC<AudioInputProviderProps> = ({
                 });
                 mediaStreamRef.current = stream;
 
-                // Clear any previous buffer and timers
-                bufferRef.current = new Float32Array();
-                if (silenceTimeoutRef.current) {
-                    clearTimeout(silenceTimeoutRef.current);
-                    silenceTimeoutRef.current = null;
-                }
-
                 sourceNodeRef.current =
                     audioContext.createMediaStreamSource(stream);
 
@@ -224,7 +178,12 @@ export const AudioInputProvider: React.FC<AudioInputProviderProps> = ({
 
                 // Set up the message handler to receive audio data
                 processorNodeRef.current.port.onmessage = (event) => {
-                    processAudioChunk(event.data as Float32Array);
+                    if (workerRef.current) {
+                        workerRef.current.postMessage({
+                            type: "processAudio",
+                            data: event.data,
+                        });
+                    }
                 };
 
                 // Connect nodes
@@ -237,7 +196,7 @@ export const AudioInputProvider: React.FC<AudioInputProviderProps> = ({
                 console.error("Error starting audio input:", error);
             }
         },
-        [isListening, stopListening, isBufferSilent, processAudioChunk]
+        [isListening]
     );
 
     return (
