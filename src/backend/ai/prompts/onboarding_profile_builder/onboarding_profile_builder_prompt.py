@@ -1,22 +1,28 @@
-import logging
 from typing import AsyncGenerator, List
 from ai.prompts.base_prompt import BasePrompt
-from ai.common import BaseChatResponse, BaseChatMessage, ChatRole
+from ai.common import BaseChatMessage, ChatRole
+from .add_programming_languages_tool import AddProgrammingLanguagesTool
+from .add_libraries_tool import AddLibrariesTool
+from .set_name_tool import SetNameTool
+from .set_disciplines_tool import SetDisciplinesTool
 from domain.dto.ai.completion_chunk import CompletionChunk
 from domain.schema.instructors import Instructor
 
 class OnboardingProfileBuilderPrompt(BasePrompt):
     def setup(self) -> None:
-        pass
-    
+        self.use_tool(AddProgrammingLanguagesTool)
+        self.use_tool(AddLibrariesTool)
+        self.use_tool(SetNameTool)
+        self.use_tool(SetDisciplinesTool)
+        
     async def get_responses(
         self,
         instructor: Instructor,
         history: List[BaseChatMessage],
         new_message: str
     ) -> AsyncGenerator[CompletionChunk, None]:
-        from ai.models.gpt_4o_mini import GPT4oMini
-        model = GPT4oMini()
+        from ai.models.gpt_4o import GPT4o
+        model = GPT4o()
    
         self.set_system_prompt(f"""
 Role and Purpose:
@@ -47,6 +53,7 @@ Interaction Guidelines:
 
 Response Format:
 - Use plain text for responses.
+- Only refer to the user by their first name, if you have it.
 - DO NOT use markdown formatting.
 - Keep answers focused on the user's software engineering profile and journey.
 - Adjust the level of detail based on the context and completeness of the information received.
@@ -56,6 +63,15 @@ Key Reminders:
 - Your goal is to help create a comprehensive software engineering profile following the outlined steps.
 - Always stay on topic and redirect any unrelated discussions back to the profile building process.
 - For profile-building events, provide a brief acknowledgment (1-2 sentences max) without asking additional questions, then continue with the profile building process.
+- Whenever the user mentions a programming language, library, their name, or other details, you should use the appropriate tool to add the information to the profile.
+- If the user uploads a resume, you should use all of the tools in your arsenal to fill in portions of the profile based on the resume.
+
+Tool Usage:
+- Proactively use the available tools as new information comes in from the user.
+- When adding a programming language or library, ensure you use the full name of the language or library.
+- Before using the set_name tool, ensure you have both the first and last name of the user.
+- After using a tool, briefly acknowledge the action without breaking the conversation flow.
+
 """.strip())
         
         for message in history:

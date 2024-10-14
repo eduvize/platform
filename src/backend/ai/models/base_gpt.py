@@ -174,25 +174,23 @@ class BaseGPT(BaseModel):
             # Execute any tools that were called
             if len(tool_call_dict) > 0:
                 for record in tool_call_dict:
-                    logging.info(f"Processing tool: {record.name}")
-                    logging.info(record.arguments)
 
                     # Try to load the JSON - if it fails, return an error to the model for correction
                     try:
                         json_dict = json.loads(record.arguments)
                         record.result = prompt.process_tool(tool_name=record.name, arguments=json_dict)
                     except json.JSONDecodeError:
-                        logging.error(f"Error decoding JSON: {record.arguments}")
+                        logger.error(f"Error decoding JSON: {record.arguments}")
                         record.result = "Invalid JSON provided to tool"
                         record.errors = True
                     except ValueError as e:
-                        logging.error(f"Error processing tool, invalid argument schema: {record.name}: {e}")
+                        logger.error(f"Error processing tool, invalid argument schema: {record.name}: {e}")
                         record.result = f"""{e}
 Correct the errors in tool arguments and try again.
 """
                         record.errors = True
                     except Exception as e:
-                        logging.error(f"Error processing tool, unhandled error: {record.name}: {e}")
+                        logger.error(f"Error processing tool, unhandled error: {record.name}: {e}")
                         record.result = f"Error: {e}"
                         record.errors = True
             

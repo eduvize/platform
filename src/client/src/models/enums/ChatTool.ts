@@ -1,3 +1,6 @@
 export enum ChatTool {
-    ProvideCourseOutline = "provide_course_outline",
+    ProfileBuilderAddProgrammingLanguages = "add_programming_languages",
+    ProfileBuilderAddLibraries = "add_libraries",
+    ProfileBuilderSetDisciplines = "set_disciplines",
+    ProfileBuilderSetName = "set_name",
 }

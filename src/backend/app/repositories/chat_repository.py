@@ -142,8 +142,6 @@ class ChatRepository:
             List[ChatMessage]: The messages in the chat session
         """
         
-        logger.info(f"Getting chat messages for session {session_id}")
-        
         async with AsyncSession(async_engine) as session:
             query = select(ChatMessage).where(
                 ChatMessage.session_id == session_id

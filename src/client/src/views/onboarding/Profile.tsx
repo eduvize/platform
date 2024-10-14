@@ -14,10 +14,10 @@ import {
     Text,
     Title,
 } from "@mantine/core";
-import { AdvancedPillInput } from "@molecules";
-import { LearningCapacity } from "@models/enums";
+import { ChatTool, LearningCapacity } from "@models/enums";
 import { useOnboardingEvents } from "@context/onboarding/hooks";
 import { useDebouncedCallback } from "@mantine/hooks";
+import { useToolResult } from "@context/chat";
 
 interface Skill {
     skill_type: number;
@@ -27,6 +27,14 @@ interface Skill {
 
 export const Profile = () => {
     const { sendEvent } = useOnboardingEvents();
+    const addProgrammingLanguagesTool = useToolResult(
+        ChatTool.ProfileBuilderAddProgrammingLanguages
+    );
+    const addLibrariesTool = useToolResult(ChatTool.ProfileBuilderAddLibraries);
+    const setDisciplinesTool = useToolResult(
+        ChatTool.ProfileBuilderSetDisciplines
+    );
+    const setNameTool = useToolResult(ChatTool.ProfileBuilderSetName);
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [skills, setSkills] = useState<Skill[]>([]);
@@ -101,7 +109,9 @@ export const Profile = () => {
             sendEvent("User is uploading their resume to be processed");
             try {
                 const result = await FileApi.getResumeInsights(file);
-                sendEvent(`User's resume insights: ${result.resume_insights}`);
+                sendEvent(
+                    `User's resume:\n${result.resume_insights}\n\nUse your tools to incorporate this information in their profile. Ensure you capture all of the information!`
+                );
             } catch (error) {
                 console.error("Error uploading resume:", error);
             } finally {
@@ -136,6 +146,63 @@ export const Profile = () => {
             handleNameChange();
         }
     }, [firstName, lastName, handleNameChange]);
+
+    useEffect(() => {
+        if (addProgrammingLanguagesTool) {
+            setSkills((prev) => [
+                ...prev,
+                ...addProgrammingLanguagesTool.languages.map(
+                    (language: string) => ({
+                        skill: language,
+                        skill_type: 1,
+                        proficiency: null,
+                    })
+                ),
+            ]);
+        }
+    }, [addProgrammingLanguagesTool]);
+
+    useEffect(() => {
+        if (addLibrariesTool) {
+            setSkills((prev) => [
+                ...prev,
+                ...addLibrariesTool.libraries.map((library: string) => ({
+                    skill: library,
+                    skill_type: 2,
+                    proficiency: null,
+                })),
+            ]);
+        }
+    }, [addLibrariesTool]);
+
+    useEffect(() => {
+        if (setDisciplinesTool) {
+            const normalizedDisciplines = setDisciplinesTool.disciplines.map(
+                (discipline: string) => {
+                    switch (discipline) {
+                        case "hobbyist":
+                            return LearningCapacity.Hobby;
+                        case "student":
+                            return LearningCapacity.Student;
+                        case "professional":
+                            return LearningCapacity.Professional;
+                        default:
+                            return null;
+                    }
+                }
+            );
+            setDisciplines(
+                normalizedDisciplines.filter((v: any) => v !== null)
+            );
+        }
+    }, [setDisciplinesTool]);
+
+    useEffect(() => {
+        if (setNameTool) {
+            setFirstName(setNameTool.first_name);
+            setLastName(setNameTool.last_name);
+        }
+    }, [setNameTool]);
 
     return (
         <Stack pt="lg" gap="lg">
@@ -239,6 +306,7 @@ export const Profile = () => {
 
                 <Group>
                     <Chip
+                        checked={disciplines.includes(LearningCapacity.Hobby)}
                         onClick={() =>
                             handleLearningCapacityChange(LearningCapacity.Hobby)
                         }
@@ -246,6 +314,7 @@ export const Profile = () => {
                         I'm a hobbyist
                     </Chip>
                     <Chip
+                        checked={disciplines.includes(LearningCapacity.Student)}
                         onClick={() =>
                             handleLearningCapacityChange(
                                 LearningCapacity.Student
@@ -255,6 +324,9 @@ export const Profile = () => {
                         I am or have been a student
                     </Chip>
                     <Chip
+                        checked={disciplines.includes(
+                            LearningCapacity.Professional
+                        )}
                         onClick={() =>
                             handleLearningCapacityChange(
                                 LearningCapacity.Professional

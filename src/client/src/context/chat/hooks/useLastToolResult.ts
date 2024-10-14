@@ -1,17 +1,26 @@
 import { useContextSelector } from "use-context-selector";
 import { ChatContext } from "@context/chat";
 import { ChatTool } from "@models/enums";
+import { useMemo } from "react";
 
-export const useLastToolResult = <T>(tool: ChatTool): T | null => {
-    const results = useContextSelector(ChatContext, (v) => v.messages);
-    const instances = results.reduce((acc, message) => {
-        return [
-            ...acc,
-            ...(message.tool_calls || [])
-                .filter((t) => t.tool_name === tool)
-                .map((t) => t.arguments),
-        ];
-    }, [] as any[]);
+/**
+ * A hook to get and cache the result of a specific chat tool.
+ * @param tool - The ChatTool to get the result for.
+ * @returns The cached result of the specified tool, or null if not available.
+ */
+export const useToolResult = (tool: ChatTool): any | null => {
+    const results = useContextSelector(ChatContext, (v) => v.toolResults);
 
-    return instances.length > 0 ? instances[instances.length - 1] : null;
+    return useMemo(() => {
+        if (results[tool]) {
+            const result =
+                typeof results[tool] === "string"
+                    ? JSON.parse(results[tool])
+                    : results[tool];
+
+            // Use JSON.stringify for deep comparison
+            return JSON.parse(JSON.stringify(result));
+        }
+        return null;
+    }, [results[tool]]); // Only depend on the specific tool result
 };

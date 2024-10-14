@@ -131,61 +131,59 @@ class ChatService:
         audio_task = asyncio.create_task(self._generate_audio(speech_queue, audio_queue, instructor.voice_id))
         
         speech_buffer = ""
-        try:
-            async for chunk in response_generator:
-                yield CompletionChunk.model_construct(message_id=chunk.message_id, text=chunk.text)
-                
+        word_count = 0
+        async for chunk in response_generator:
+            if chunk.text or chunk.tools:
+                yield CompletionChunk.model_construct(message_id=chunk.message_id, text=chunk.text, tools=chunk.tools)
+            
+            if chunk.text:
                 speech_buffer += chunk.text
-                if chunk.text.strip().endswith(('.', '?', '!')) and expect_audio_response:
+                current_words = speech_buffer.split()
+                word_count = len(current_words)
+            
+                if chunk.text.strip().endswith(('.', '?', '!')) and expect_audio_response and word_count > 1:
                     await speech_queue.put(speech_buffer)
                     speech_buffer = ""
-            
-            # Handle any remaining text in the buffer
-            if speech_buffer and expect_audio_response:
-                await speech_queue.put(speech_buffer)
-            
-            # Signal that no more text is coming
-            await speech_queue.put(None)
-            
-            # Yield any remaining audio chunks
-            while True:
-                audio_chunk = await audio_queue.get()
-                if audio_chunk is None:
-                    break
-                yield CompletionChunk.model_construct(audio=audio_chunk)
+                    word_count = 0
         
-        except asyncio.CancelledError:
-            # Handle cancellation
-            logger.info(f"Stream cancelled for user {user_id}, session {session_id}")
-            audio_task.cancel()
-            try:
-                await audio_task
-            except asyncio.CancelledError:
-                pass
-        finally:
-            # Ensure we always add messages to the database
-            await self._add_message(
-                session_id=session.id,
-                is_user=True,
-                message=message,
-                sender_id=user.id
-            )
-            
-            try:
-                final_messages = await asyncio.wait_for(final_messages_future, timeout=1.0)
-                if final_messages:
-                    for new_message in final_messages:
-                        await self._add_message(
-                            session_id=session.id,
-                            is_user=new_message.role == ChatRole.USER,
-                            message=new_message.message,
-                            sender_id=instructor.id,
-                            tool_calls=new_message.tool_calls
-                        )
-            except asyncio.TimeoutError:
-                logger.warning(f"Timeout waiting for final messages in session {session_id}")
-            except Exception as e:
-                logger.error(f"Error processing final messages: {str(e)}")
+        # Handle any remaining text in the buffer
+        if speech_buffer and expect_audio_response and word_count > 1:
+            await speech_queue.put(speech_buffer)
+        elif speech_buffer:
+            # If there's remaining text but not enough words, add it to the next chunk
+            await speech_queue.put(speech_buffer)
+        
+        # Signal that no more text is coming
+        await speech_queue.put(None)
+        
+        # Yield any remaining audio chunks
+        while True and expect_audio_response:
+            audio_chunk = await audio_queue.get()
+            if audio_chunk is None:
+                break
+            yield CompletionChunk.model_construct(audio=audio_chunk)
+        
+        # Ensure we always add messages to the database
+        await self._add_message(
+            session_id=session.id,
+            is_user=True,
+            message=message,
+            sender_id=user.id
+        )
+        
+        try:
+            final_messages = await final_messages_future
+            if final_messages:
+                for new_message in final_messages:
+                    await self._add_message(
+                        session_id=session.id,
+                        is_user=new_message.role == ChatRole.USER,
+                        message=new_message.message,
+                        sender_id=instructor.id,
+                        tool_calls=new_message.tool_calls
+                    )
+        except Exception as e:
+            logger.error(f"Error processing final messages: {str(e)}")
 
     async def _generate_audio(self, speech_queue: asyncio.Queue, audio_queue: asyncio.Queue, voice_id: str):
         """Background task to generate audio from text chunks."""
@@ -223,7 +221,7 @@ class ChatService:
                 png_images=[],
                 tool_calls=[
                     BaseToolCallWithResult(
-                        id=tool_call.id,
+                        id=tool_call.tool_call_id,
                         name=tool_call.tool_name,
                         arguments=tool_call.json_arguments,
                         result=tool_call.result
@@ -251,7 +249,7 @@ class ChatService:
         
         if tool_calls:
             for tool_call in tool_calls:
-                self.chat_repository.add_tool_message(
+                await self.chat_repository.add_tool_message(
                     message_id=added_msg.id,
                     call_id=tool_call.id,
                     tool_name=tool_call.name,
@@ -321,8 +319,6 @@ class ChatService:
                         else:
                             final_messages = responses
                             break
-                else:
-                    raise ValueError("Invalid prompt type")
             finally:
                 final_messages_future.set_result(final_messages)
 

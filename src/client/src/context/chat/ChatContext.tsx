@@ -48,14 +48,15 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     const [isConnected, setIsConnected] = useState(false);
     const [pendingToolNames, setPendingToolNames] = useState<string[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [toolResults, setToolResults] = useState<Record<string, any | null>>(
-        {}
-    );
+    const [finalToolResults, setFinalToolResults] = useState<
+        Record<string, any | null>
+    >({});
     const [currentPrompt, setCurrentPrompt] = useState<ChatPromptType | null>(
         null
     );
     const [instructorId, setInstructorId] = useState<string | null>(null);
     const [messages, setMessages] = useState<ChatMessageDto[]>([]);
+    const messageCompleteRef = useRef(false);
 
     // Refs
     const socketRef = useRef<Socket | null>(null);
@@ -108,7 +109,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
                         if (
                             lastMessage &&
-                            lastMessage.id === message.message_id
+                            !lastMessage.is_user &&
+                            !messageCompleteRef.current
                         ) {
                             return [
                                 ...prev.slice(0, -1),
@@ -122,6 +124,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                         }
 
                         stopPlayback();
+                        messageCompleteRef.current = false;
 
                         return [
                             ...prev,
@@ -134,11 +137,36 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                         ];
                     });
                 }
+
+                if (message.tools && message.tools.length > 0) {
+                    const jsonCompleteTools = message.tools.filter((t) => {
+                        try {
+                            JSON.parse(t.data);
+                            return true;
+                        } catch (e) {
+                            return false;
+                        }
+                    });
+
+                    messageCompleteRef.current = true;
+
+                    setFinalToolResults((prev) => ({
+                        ...prev,
+                        ...jsonCompleteTools.reduce(
+                            (acc, tool) => ({
+                                ...acc,
+                                [tool.name]: tool.data,
+                            }),
+                            {}
+                        ),
+                    }));
+                }
             }
         );
 
         socketRef.current.on("message_complete", () => {
             setIsProcessing(false);
+            messageCompleteRef.current = true;
         });
 
         socketRef.current.on("disconnect", () => {
@@ -160,8 +188,10 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     }, [isListening]);
 
     useEffect(() => {
-        updateToolResults();
-    }, [toolResults]);
+        if (!isProcessing && Object.keys(finalToolResults).length > 0) {
+            setFinalToolResults({});
+        }
+    }, [isProcessing]);
 
     const sendMessage = (message: string) => {
         socketRef.current?.emit("send_message", {
@@ -240,47 +270,6 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     };
 
     // Helper functions
-    /**
-     * Updates the tool results in the last message.
-     */
-    const updateToolResults = () => {
-        setMessages((prev) => {
-            if (prev.length === 0) return prev;
-
-            const newMessages = [...prev];
-            newMessages[newMessages.length - 1] = {
-                ...newMessages[newMessages.length - 1],
-                tool_calls: Object.keys(toolResults).map((name) => ({
-                    tool_name: name,
-                    arguments: toolResults[name],
-                })),
-            };
-            return newMessages;
-        });
-    };
-
-    const handleToolCalls = (
-        tools: any[],
-        completedToolCalls: Record<string, any>
-    ) => {
-        setPendingToolNames((prev) => [
-            ...prev,
-            ...tools
-                .map((tool) => tool.name)
-                .filter((name) => !prev.includes(name)),
-        ]);
-
-        for (const tool of tools) {
-            if (!completedToolCalls[tool.name]) {
-                toolResults[tool.name] = null;
-            }
-
-            try {
-                const data = JSON.parse(tool.data);
-                completedToolCalls[tool.name] = data;
-            } catch (e) {}
-        }
-    };
 
     /**
      * Adds a user message to the messages state.
@@ -312,7 +301,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         instructorId,
         messages,
         pendingTools: pendingToolNames,
-        toolResults,
+        toolResults: finalToolResults,
         isProcessing,
         sendMessage: handleSendMessage,
         sendAudio: handleSendAudio,
