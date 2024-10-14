@@ -28,12 +28,19 @@ export const AudioOutputProvider: React.FC<AudioOutputProviderProps> = ({
     const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
 
     useEffect(() => {
+        // Initialize AudioContext and GainNode
         audioContextRef.current = new (window.AudioContext ||
             (window as any).webkitAudioContext)();
         gainNodeRef.current = audioContextRef.current.createGain();
         gainNodeRef.current.connect(audioContextRef.current.destination);
+
         return () => {
-            audioContextRef.current?.close();
+            // Clean up AudioContext and GainNode
+            if (audioContextRef.current) {
+                audioContextRef.current.close();
+                audioContextRef.current = null;
+            }
+            gainNodeRef.current = null;
         };
     }, []);
 
@@ -61,9 +68,12 @@ export const AudioOutputProvider: React.FC<AudioOutputProviderProps> = ({
                 const source = audioContextRef.current!.createBufferSource();
                 source.buffer = buffer;
                 source.connect(gainNodeRef.current!);
-                source.onended = playNextAudioChunk;
+                source.onended = () => {
+                    source.disconnect();
+                    playNextAudioChunk();
+                };
                 source.start();
-                currentSourceRef.current = source; // Store the current source
+                currentSourceRef.current = source;
                 console.log("Started playing audio chunk");
             },
             (error) => {
@@ -75,6 +85,11 @@ export const AudioOutputProvider: React.FC<AudioOutputProviderProps> = ({
 
     const playAudio = useCallback(
         (audioData: string) => {
+            if (!audioContextRef.current || !gainNodeRef.current) {
+                console.error("AudioContext or GainNode not initialized");
+                return;
+            }
+
             console.log("Received audio data, length:", audioData.length);
             const uint8Array = base64ToUint8Array(audioData);
             audioQueueRef.current.push(uint8Array);

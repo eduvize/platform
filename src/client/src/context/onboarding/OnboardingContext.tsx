@@ -27,14 +27,13 @@ interface OnboardingProviderProps {
 export const OnboardingProvider = ({ children }: OnboardingProviderProps) => {
     const instructors = useInstructors();
     const [currentSection, setCurrentSection] = useState(0);
-    const { setInstructor, sendMessage, setPrompt, instructorId } = useChat({
-        prompt:
-            currentSection === 1
-                ? "onboarding"
-                : currentSection === 2
-                ? "profile-builder"
-                : undefined,
-    });
+    const { setInstructor, sendMessage, setPrompt, instructorId } = useChat(
+        currentSection === 1
+            ? "onboarding"
+            : currentSection === 2
+            ? "profile-builder"
+            : undefined
+    );
 
     const instructor = useMemo(() => {
         return instructors.find((i) => i.id === instructorId);

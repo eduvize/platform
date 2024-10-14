@@ -15,12 +15,7 @@ interface UseChatReturn {
     purge: () => void;
 }
 
-interface UseChatProps {
-    prompt?: ChatPromptType;
-    overrideInstructorId?: string;
-}
-
-export const useChat = (props?: UseChatProps): UseChatReturn => {
+export const useChat = (prompt?: ChatPromptType): UseChatReturn => {
     const instructorId = useContextSelector(ChatContext, (v) => v.instructorId);
     const sendMessage = useContextSelector(ChatContext, (v) => v.sendMessage);
     const sendAudio = useContextSelector(ChatContext, (v) => v.sendAudio);
@@ -34,16 +29,10 @@ export const useChat = (props?: UseChatProps): UseChatReturn => {
     const reset = useContextSelector(ChatContext, (v) => v.reset);
 
     useEffect(() => {
-        if (props?.overrideInstructorId) {
-            setInstructor(props.overrideInstructorId);
-        }
-    }, [props?.overrideInstructorId]);
+        if (!prompt) return;
 
-    useEffect(() => {
-        if (!props?.prompt) return;
-
-        setPrompt(props.prompt);
-    }, [props?.prompt]);
+        setPrompt(prompt);
+    }, [prompt]);
 
     return {
         instructorId: instructorId ?? "",

@@ -28,7 +28,7 @@ async def create_session(
     return await chat_service.create_session(
         user_id=user_id,
         prompt_type=type,
-        resource_id=id
+        instructor_id=id
     )
 
 @router.post("/{session_id}")

@@ -42,17 +42,14 @@ class ChatService:
 
     async def create_session(
         self,
-        user_id: str,
-        prompt_type: PromptType,
-        resource_id: Optional[uuid.UUID] = None
+        user_id: str
     ) -> ChatSession:
         """
         Creates a new chat session for a user.
 
         Args:
             user_id (str): The ID of the user creating the session.
-            prompt_type (PromptType): The type of prompt for this chat session.
-            resource_id (Optional[uuid.UUID], optional): The ID of the associated resource, if any. Defaults to None.
+            instructor_id (Optional[uuid.UUID], optional): The ID of the instructor for this chat session. Defaults to None.
 
         Returns:
             uuid.UUID: The ID of the newly created chat session.
@@ -67,25 +64,11 @@ class ChatService:
         if not user:
             raise ValueError("User not found")
         
-        if prompt_type in [PromptType.ONBOARDING, PromptType.PROFILE_BUILDER] and resource_id is not None:
-            instructor = await self.instructor_service.get_instructor_by_id(resource_id)
-        else:
-            # Get the instructor associated with the user
-            instructor = await self.instructor_service.get_user_instructor(user.id)
-        
-        # Ensure the instructor exists
-        if not instructor:
-            raise ValueError("Instructor not found")
-        
         # Create a new chat session in the repository
         session = await self.chat_repository.create_chat_session(
             user_id=user.id,
-            prompt_type=prompt_type.value,
-            resource_id=resource_id,
-            instructor_id=instructor.id
         )
         
-        # Return the ID of the newly created session
         return session
 
     async def get_history(
@@ -109,6 +92,8 @@ class ChatService:
         self, 
         user_id: str,
         session_id: uuid.UUID,
+        instructor_id: uuid.UUID,
+        prompt_type: PromptType,
         message: Optional[str] = None,
         audio: Optional[str] = None,
         expect_audio_response: bool = False
@@ -119,7 +104,7 @@ class ChatService:
             raise ValueError("User not found")
         
         session = await self.chat_repository.get_session(session_id)
-        instructor = await self.instructor_service.get_instructor_by_id(session.instructor_id)
+        instructor = await self.instructor_service.get_instructor_by_id(instructor_id)
         
         logger.info(f"Preparing to generate chat response for user {user.id}, session {session.id}")
 
@@ -135,6 +120,7 @@ class ChatService:
         response_generator, final_messages_future = await self.get_prompt_generator(
             session=session,
             instructor=instructor,
+            prompt_type=prompt_type,
             input_msg=message
         )
         
@@ -277,10 +263,9 @@ class ChatService:
         self,
         session: ChatSession,
         instructor: Instructor,
+        prompt_type: PromptType,
         input_msg: str
     ) -> Tuple[AsyncGenerator[CompletionChunk, None], asyncio.Future]:
-        p_type = PromptType(session.prompt_type)
-        
         messages = await self.chat_repository.get_chat_messages(session.id)
         model_messages = self._get_chat_messages(messages)
         
@@ -289,7 +274,7 @@ class ChatService:
         async def response_wrapper():
             final_messages = []
             try:
-                if p_type == PromptType.LESSON:
+                if prompt_type == PromptType.LESSON:
                     if session.resource_id is None:
                         raise ValueError("Resource ID is required for lesson prompt")
 
@@ -312,7 +297,7 @@ class ChatService:
                         else:
                             final_messages = responses
                             break
-                elif p_type == PromptType.ONBOARDING:
+                elif prompt_type == PromptType.ONBOARDING:
                     prompt = OnboardingInstructorSelectionPrompt()
                     async for chunk, responses, is_final in await prompt.get_responses(
                         instructor=instructor,
@@ -324,7 +309,7 @@ class ChatService:
                         else:
                             final_messages = responses
                             break
-                elif p_type == PromptType.PROFILE_BUILDER:
+                elif prompt_type == PromptType.PROFILE_BUILDER:
                     prompt = OnboardingProfileBuilderPrompt()
                     async for chunk, responses, is_final in await prompt.get_responses(
                         instructor=instructor,

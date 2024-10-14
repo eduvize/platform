@@ -14,10 +14,7 @@ logger = logging.getLogger("ChatRepository")
 class ChatRepository:
     async def create_chat_session(
         self,
-        user_id: uuid.UUID,
-        instructor_id: uuid.UUID,
-        prompt_type: str,
-        resource_id: Optional[uuid.UUID] = None
+        user_id: uuid.UUID
     ) -> ChatSession:
         """
         Creates a new chat session
@@ -33,10 +30,7 @@ class ChatRepository:
         
         async with AsyncSession(async_engine) as session:
             chat_session = ChatSession(
-                user_id=user_id,
-                instructor_id=instructor_id,
-                prompt_type=prompt_type,
-                resource_id=resource_id
+                user_id=user_id
             )
             session.add(chat_session)
             await session.commit()
