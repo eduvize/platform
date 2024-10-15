@@ -1,7 +1,6 @@
-import logging
 from typing import AsyncGenerator, List
 from ai.prompts.base_prompt import BasePrompt
-from ai.common import BaseChatResponse, BaseChatMessage, ChatRole
+from ai.common import BaseChatMessage, ChatRole
 from domain.dto.ai.completion_chunk import CompletionChunk
 from domain.schema.instructors import Instructor
 

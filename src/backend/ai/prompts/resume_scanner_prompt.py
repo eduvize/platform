@@ -43,7 +43,7 @@ Remember to adhere strictly to these guidelines while processing the resume imag
 """)
         
     async def get_profile_data(self, resume_images: List[bytes]) -> str:
-        from ...models.gpt_4o import GPT4o
+        from ..models.gpt_4o import GPT4o
         
         self.add_user_message("Process this resume", resume_images)
         

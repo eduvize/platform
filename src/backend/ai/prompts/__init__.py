@@ -1,7 +1,10 @@
 from .base_prompt import BasePrompt, BaseChatMessage, BaseTool
-from .resume_scan import ResumeScannerPrompt
-from .course_planning import GetAdditionalInputsPrompt
-from .course_generation import GenerateCourseOutlinePrompt, GenerateModuleContentPrompt, GenerateExercisesPrompt, SelectExerciseLessonsPrompt
-from .lesson_discussion import LessonDiscussionPrompt
-from .onboarding_instructor_selection import OnboardingInstructorSelectionPrompt
-from .onboarding_profile_builder import OnboardingProfileBuilderPrompt
+from .resume_scanner_prompt import ResumeScannerPrompt
+from .get_additional_inputs_prompt import GetAdditionalInputsPrompt
+from .generate_course_outline_prompt import GenerateCourseOutlinePrompt
+from .generate_module_content_prompt import GenerateModuleContentPrompt
+from .generate_exercises_prompt import GenerateExercisesPrompt
+from .select_exercise_lessons_prompt import SelectExerciseLessonsPrompt
+from .lesson_discussion_prompt import LessonDiscussionPrompt
+from .onboarding_instructor_selection_prompt import OnboardingInstructorSelectionPrompt
+from .onboarding_profile_builder_prompt import OnboardingProfileBuilderPrompt
