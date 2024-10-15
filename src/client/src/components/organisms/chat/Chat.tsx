@@ -16,6 +16,7 @@ import {
     Flex,
     Group,
     Input,
+    Loader,
     ScrollArea,
     Space,
     Stack,
@@ -45,8 +46,13 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
         const instructors = useInstructors();
         const pendingToolNames = usePendingTools();
         const toolResults = useToolResults();
-        const { startListening, stopListening, audioBuffer, isListening } =
-            useAudioInput();
+        const {
+            startListening,
+            stopListening,
+            audioBuffer,
+            isListening,
+            isSpeaking,
+        } = useAudioInput();
         const { messages, sendMessage, sendAudio, processing, instructorId } =
             useChat();
         const inputRef = useRef<HTMLInputElement>(null);
@@ -260,30 +266,40 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
 
                         <Divider />
 
-                        <Input
-                            ref={inputRef}
-                            mt="md"
-                            placeholder="Type a message..."
-                            variant="filled"
-                            radius="xl"
-                            value={message}
-                            onChange={(e) => setMessage(e.currentTarget.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                    sendMessage(message);
-                                    setMessage("");
-                                    setUserHasScrolled(false);
-                                    setIsAtBottom(true);
+                        {!isSpeaking && (
+                            <Input
+                                ref={inputRef}
+                                mt="md"
+                                placeholder="Type a message..."
+                                variant="filled"
+                                radius="xl"
+                                value={message}
+                                onChange={(e) =>
+                                    setMessage(e.currentTarget.value)
                                 }
-                            }}
-                            disabled={processing}
-                            styles={{
-                                input: {
-                                    backgroundColor: "#424242",
-                                    color: "#828282",
-                                },
-                            }}
-                        />
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        sendMessage(message);
+                                        setMessage("");
+                                        setUserHasScrolled(false);
+                                        setIsAtBottom(true);
+                                    }
+                                }}
+                                disabled={processing}
+                                styles={{
+                                    input: {
+                                        backgroundColor: "#424242",
+                                        color: "#828282",
+                                    },
+                                }}
+                            />
+                        )}
+
+                        {isSpeaking && (
+                            <Group justify="center" pt="md">
+                                <Loader type="dots" color="blue" />
+                            </Group>
+                        )}
                     </Flex>
                 </Card>
             </Box>

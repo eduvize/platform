@@ -1,12 +1,13 @@
 import logging
 import json
 import base64
+import asyncio
+from typing import AsyncGenerator, List, Literal, Tuple, Any
 
 from . import BaseModel
 from domain.dto.ai.completion_chunk import CompletionChunk, Tool
 from typing import AsyncGenerator, List, Literal, Tuple
 from openai import AsyncOpenAI
-from openai.types.chat.chat_completion_assistant_message_param import FunctionCall
 from openai.types.chat import (
     ChatCompletionSystemMessageParam,
     ChatCompletionAssistantMessageParam, 
@@ -16,7 +17,7 @@ from openai.types.chat import (
     ChatCompletionContentPartTextParam,
     ChatCompletionContentPartImageParam,
     ChatCompletionMessageToolCall, 
-    ChatCompletionMessageParam
+    ChatCompletionMessageParam,
 )
 from openai.types.chat.chat_completion_named_tool_choice_param import Function as NamedToolFunction, ChatCompletionNamedToolChoiceParam
 from openai.types.chat.chat_completion_content_part_image_param import ImageURL
@@ -24,6 +25,7 @@ from openai.types.shared import FunctionDefinition
 from config import get_openai_key
 from ai.prompts import BasePrompt
 from ai.common import BaseChatMessage, BaseChatResponse, BaseTool, BaseToolCallWithResult, ChatRole
+from ai.util.tool_decorator import TOOL_REGISTRY, ToolWrapper
 
 logger = logging.getLogger("BaseGPT")
 
@@ -46,12 +48,14 @@ class ToolCallRecord:
 class BaseGPT(BaseModel):
     client: AsyncOpenAI
     model_name: str
+    available_tools: List[BaseTool]
     
     def __init__(self, model_name: str) -> None:
         api_key = get_openai_key()
         
         self.client = AsyncOpenAI(api_key=api_key)
-        self.model_name = model_name 
+        self.model_name = model_name
+        self.available_tools = list(TOOL_REGISTRY.values())  # All tools are available
     
     async def get_streaming_response(
         self, 
@@ -73,11 +77,11 @@ class BaseGPT(BaseModel):
         if prompt.tool_choice_filter:
             available_tools = [
                 self.get_tool(tool)
-                for tool in prompt.tools
+                for tool in self.available_tools
                 if tool.name in prompt.tool_choice_filter
             ]
         else:    
-            available_tools = [self.get_tool(tool) for tool in prompt.tools]
+            available_tools = [self.get_tool(tool) for tool in self.available_tools]
         
         # Loops until there are no more tool calls to process
         while True:
@@ -162,7 +166,7 @@ class BaseGPT(BaseModel):
                                 data=record.arguments
                             )
                             for record in tool_call_dict
-                            if prompt.is_tool_public(record.name)
+                            if TOOL_REGISTRY[record.name].is_public  # Only include public tools in the chunk
                         ]
                     ), [], False
                             
@@ -173,27 +177,35 @@ class BaseGPT(BaseModel):
             
             # Execute any tools that were called
             if len(tool_call_dict) > 0:
+                tool_tasks = []
                 for record in tool_call_dict:
-
                     # Try to load the JSON - if it fails, return an error to the model for correction
                     try:
                         json_dict = json.loads(record.arguments)
-                        record.result = prompt.process_tool(tool_name=record.name, arguments=json_dict)
+                        tool_tasks.append(self.execute_tool(prompt, record.name, json_dict))
                     except json.JSONDecodeError:
                         logger.error(f"Error decoding JSON: {record.arguments}")
                         record.result = "Invalid JSON provided to tool"
                         record.errors = True
                     except ValueError as e:
                         logger.error(f"Error processing tool, invalid argument schema: {record.name}: {e}")
-                        record.result = f"""{e}
-Correct the errors in tool arguments and try again.
-"""
+                        record.result = f"{e}\nCorrect the errors in tool arguments and try again."
                         record.errors = True
                     except Exception as e:
                         logger.error(f"Error processing tool, unhandled error: {record.name}: {e}")
                         record.result = f"Error: {e}"
                         record.errors = True
-            
+
+                # Wait for all tool executions to complete
+                tool_results = await asyncio.gather(*tool_tasks, return_exceptions=True)
+                
+                for record, result in zip(tool_call_dict, tool_results):
+                    if isinstance(result, Exception):
+                        record.result = f"Error: {result}"
+                        record.errors = True
+                    else:
+                        record.result = result
+
             responses.append(
                 BaseChatResponse(
                     message=response_content, 
@@ -218,7 +230,7 @@ Correct the errors in tool arguments and try again.
                         ChatCompletionMessageToolCall(
                             id=record.id,
                             type="function",
-                            function=FunctionCall(
+                            function=NamedToolFunction(
                                 name=record.name,
                                 arguments=record.arguments
                             )
@@ -292,7 +304,7 @@ Correct the errors in tool arguments and try again.
                         ChatCompletionMessageToolCall(
                             type="function",
                             id=tool_call.id,
-                            function=FunctionCall(
+                            function=NamedToolFunction(
                                 name=tool_call.name,
                                 arguments=json.dumps(tool_call.arguments)
                             )
@@ -328,3 +340,9 @@ Correct the errors in tool arguments and try again.
                 parameters=tool.schema
             )
         )
+
+    async def execute_tool(self, prompt: BasePrompt, tool_name: str, arguments: dict) -> Any:
+        if tool_name not in TOOL_REGISTRY:
+            raise ValueError(f"Unknown tool: {tool_name}")
+        tool = TOOL_REGISTRY[tool_name]
+        return await tool.process(prompt, arguments)

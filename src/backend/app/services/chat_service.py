@@ -319,6 +319,9 @@ class ChatService:
                         else:
                             final_messages = responses
                             break
+            except Exception as e:
+                logging.error(f"Error in get_prompt_generator: {e}")
+                raise e
             finally:
                 final_messages_future.set_result(final_messages)
 

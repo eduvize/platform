@@ -1,19 +1,29 @@
 from typing import AsyncGenerator, List
 from ai.prompts.base_prompt import BasePrompt
 from ai.common import BaseChatMessage, ChatRole
-from .add_programming_languages_tool import AddProgrammingLanguagesTool
-from .add_libraries_tool import AddLibrariesTool
-from .set_name_tool import SetNameTool
-from .set_disciplines_tool import SetDisciplinesTool
 from domain.dto.ai.completion_chunk import CompletionChunk
 from domain.schema.instructors import Instructor
+from ai.util.tool_decorator import tool
 
 class OnboardingProfileBuilderPrompt(BasePrompt):
     def setup(self) -> None:
-        self.use_tool(AddProgrammingLanguagesTool)
-        self.use_tool(AddLibrariesTool)
-        self.use_tool(SetNameTool)
-        self.use_tool(SetDisciplinesTool)
+        pass
+        
+    @tool("Adds programming languages to the user's profile", is_public=True)
+    async def add_programming_languages(self, languages: List[str]) -> None:
+        return "Programming languages added"
+        
+    @tool("Adds libraries to the user's profile", is_public=True)
+    async def add_libraries(self, libraries: List[str]) -> None:
+        return "Libraries added"
+        
+    @tool("Sets the name of the user's profile", is_public=True)    
+    async def set_name(self, first_name: str, last_name: str) -> None:
+        return "Name set"
+
+    @tool("Sets the disciplines of the user's profile", is_public=True)
+    async def set_disciplines(self, disciplines: List[str]) -> None:
+        return "Disciplines set"
         
     async def get_responses(
         self,
