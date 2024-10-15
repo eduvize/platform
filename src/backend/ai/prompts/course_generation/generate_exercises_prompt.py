@@ -77,7 +77,7 @@ Using the lesson provided, come up with a creative exercise that will help the u
             self.add_agent_message(response.message)
             
         # Step 2. Generate which Docker image to use, and initialization commands
-        self.add_user_message("""
+        await self.think(gpt_4o, """
 **Task:**
 Determine the appropriate **Docker image** (from Docker Hub) to use for the exercise and any **setup commands** that need to be run in the terminal prior to writing any files.
 
@@ -114,26 +114,16 @@ Determine the appropriate **Docker image** (from Docker Hub) to use for the exer
 - Commands **cannot be interactive** in any way, as this will be a headless installation and **no user input can be provided.**
 - **Remember to include `cd` commands if you create new directories during setup.**
 """.strip())
-        responses = await gpt_4o.get_responses(self)
-
-        for response in responses:
-            logging.info(response.message)
-            self.add_agent_message(response.message)
             
         # Step 3. Allow the model to correct any mistakes in the setup commands
         # This step proves to be useful in reducing the amount of interactivity in the setup commands
-        self.add_user_message("""
+        await self.think(gpt_4o, """
 Are you positive that the commands you've listed are not interactive in any way and do not require ANY user intervention? This includes prompting users to select options, specifying yes or no, and any other terminal entry.
 If you see that any of them do, please come up with workarounds before proceeding. Interactivity **is unsupported** and will **cause the build process to hang.**                    
 """.strip())
-        responses = await gpt_4o.get_responses(self)
-        
-        for response in responses:
-            logging.info(response.message)
-            self.add_agent_message(response.message)
             
         # Step 4. Generate the objectives for the exercise
-        self.add_user_message("""
+        await self.think(gpt_4o_mini, """
 **Task:**
 Come up with **one to three objectives** that the user should complete by the end of the exercise.
 
@@ -152,14 +142,9 @@ Come up with **one to three objectives** that the user should complete by the en
 - List the objectives in a numbered format.
 - **Keep object titles short and concise**, with a more **detailed description** following.
 """.strip())
-        responses = await gpt_4o_mini.get_responses(self)
-
-        for response in responses:
-            logging.info(response.message)
-            self.add_agent_message(response.message)
            
         # Step 5. Generate the initial files for the exercise 
-        self.add_user_message("""
+        await self.think(gpt_4o, """
 **Task:**
 Create a list of **files** that should be present in the initial project state for the user to work with.
 The path specified should be relative to the **base directory**. For example, if you scaffolded a project with `npx create-react-app my-app`, a path might be `my-app/src/index.js`.
@@ -173,14 +158,9 @@ The path specified should be relative to the **base directory**. For example, if
 **Instructions:**
 - List the files with their paths, **including any base directories you've created**.
 """.strip())
-        responses = await gpt_4o.get_responses(self)
-
-        for response in responses:
-            logging.info(response.message)
-            self.add_agent_message(response.message)
             
         # Step 6. Generate the post-setup commands
-        self.add_user_message("""
+        await self.think(gpt_4o, """
 **Task:**
 Identify any **commands** that should be run **after** these files are written to complete the setup.
 Do not focus on running a development server or other long-running processes, as we are only worried about **getting the environment image set up**.
@@ -197,14 +177,9 @@ Remember, each command **MUST** be **non-interactive** and **not require user in
 - **DO NOT** include any commands that run a development server or other long-running processes, as this will **cause the Docker image build to hang**.
 - Include any necessary `cd` commands if the working directory needs to change before running the commands.                        
 """)
-        responses = await gpt_4o.get_responses(self)
-
-        for response in responses:
-            logging.info(response.message)
-            self.add_agent_message(response.message)
             
         # Step 7. Generate the test plans for the objectives
-        self.add_user_message("""
+        await self.think(gpt_4o, """
 **Task:**
 Using the objectives and files you've provided, come up with a **test plan** for each objective.
 
@@ -226,26 +201,16 @@ Using the objectives and files you've provided, come up with a **test plan** for
 - For each objective, write a test plan following the above requirements.
 - Ensure clarity and conciseness in your instructions.
 """.strip())
-        responses = await gpt_4o.get_responses(self)
-
-        for response in responses:
-            logging.info(response.message)
-            self.add_agent_message(response.message)
 
         # Conditional step: if we're attempting a rebuild, we need to provide the previous error to the model in hopes it avoids the same issue
         if previous_error:
-          self.add_user_message(f"""
+          await self.think(gpt_4o, f"""
 When we last tried to generate this exercise, we ran into the following problem:
 {previous_error}
 
 Can you please review everything we've talked about here and make sure the same issue doesn't happen again?
 You should be looking at **setup commands** and the **docker image** specifically. Please let me know if any of these should be changed.
 """.strip())
-          responses = await gpt_4o.get_responses(self)
-
-          for response in responses:
-              logging.info(response.message)
-              self.add_agent_message(response.message)
               
         self.planning_complete = True
         

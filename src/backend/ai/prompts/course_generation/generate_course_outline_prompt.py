@@ -37,7 +37,7 @@ You are an AI designed to create structured course syllabi based on user informa
         logging.info(f"Profile Text: {profile_text}")
         logging.info(f"Plan Text: {plan_text}")
         
-        self.add_user_message(f"""## User Information:
+        await self.think(model, f"""## User Information:
 {profile_text}
 
 ## Syllabus Request:
@@ -47,35 +47,17 @@ Please brainstorm a high-level plan for the course syllabus. Let's start with de
 Each module should have a clear objective and be separated by a logical progression of topics.
 """.strip())
         
-        # Allow the model to brainstorm modules
-        responses = await model.get_responses(self)
-        for response in responses:
-            if response.message:
-                self.add_agent_message(response.message)
-        
-        self.add_user_message(f"""
+        await self.think(model, f"""
 Great! Now that we have the modules, let's focus on each module's content.
 Next, I would like you to generate the overall objectives for each module and create lessons that facilitate the learning process in order
 to achieve those objectives. Include lesson titles and a brief overview of the content covered in each lesson.                   
 """.strip())
         
-        # Allow the model to come up with lessons
-        responses = await model.get_responses(self)
-        for response in responses:
-            if response.message:
-                self.add_agent_message(response.message)
-        
-        self.add_user_message(f"""
+        await self.think(model, f"""
 Now that we have lessons figured out, let's move on to the sections of each lesson. These can be thought of as groupings of content
 that will help the student parse the information in a structured way. Each section should have a clear purpose and contribute to the overall
 lesson objective. Include the title of each section and what content it will cover.                   
 """.strip())
-        
-        # Allow the model to come up with sections
-        responses = await model.get_responses(self)
-        for response in responses:
-            if response.message:
-                self.add_agent_message(response.message)
         
         self.planning_complete = True
         

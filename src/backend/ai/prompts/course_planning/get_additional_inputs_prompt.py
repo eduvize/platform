@@ -43,7 +43,7 @@ You are an AI assistant tasked with reviewing student applications for an online
         
         plan_description = get_course_plan_description(plan)
         
-        self.add_user_message(f"""### User Profile:
+        await self.think(model, f"""### User Profile:
 {profile_text}
 
 ### Initial Request Form:
@@ -53,19 +53,7 @@ Given the information provided, can you think up some follow-up questions that w
 It might be a good idea to review their profile to cross compare with the course plan. Make sure you don't ask any redundant questions.
 """.strip())
                     
-        # Let the model think
-        responses = await model.get_responses(self)
-        for response in responses:
-            if response.message:
-                self.add_agent_message(response.message)
-        
-        self.add_user_message("Do you think these questions will help the instructor understand the student's needs better and are conducive to creating a tailored course syllabus?")
-        
-        # Let the model think again
-        responses = await model.get_responses(self)
-        for response in responses:
-            if response.message:
-                self.add_agent_message(response.message)
+        await self.think(model, "Do you think these questions will help the instructor understand the student's needs better and are conducive to creating a tailored course syllabus?")
         
         self.add_user_message("""
 Good, now generate follow-up questions to gather more specific details. Ensure no repetition of previous questions, limit to 8 questions only if necessary, and utilize text, select, and multiselect inputs where appropriate.                   

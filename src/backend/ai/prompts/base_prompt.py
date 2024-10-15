@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional, Type, TypeVar
-
 from ai.common import BaseChatMessage, BaseTool, ChatRole, BaseToolCallWithResult
+import ai
 
 T = TypeVar('T', bound='BaseTool')
 
@@ -25,6 +25,13 @@ class BasePrompt:
     
     def setup(self) -> None:
         pass
+    
+    async def think(self, model: 'ai.models.BaseModel', user_input: str):
+        self.add_user_message(user_input)
+        responses = await model.get_responses(self)
+        for response in responses:
+            if response.message:
+                self.add_agent_message(response.message)
     
     def set_system_prompt(self, system_prompt: str) -> None:
         self.system_prompt = system_prompt
