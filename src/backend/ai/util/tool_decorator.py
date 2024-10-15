@@ -1,30 +1,33 @@
 import inspect
 import logging
-from typing import Callable, Any, get_type_hints, List, Union, get_origin, get_args, Dict, Awaitable
+from typing import Callable, Any, get_type_hints, List, Union, get_origin, get_args, Dict, Awaitable, Optional
 from enum import Enum
 from pydantic import BaseModel
 from ai.common import BaseTool
 from .pydantic_inline_refs import pydantic_inline_ref_schema
+import ai.prompts as prompts
 
 logging.basicConfig(level=logging.INFO)
 
 # Global registry to store all decorated tools
 TOOL_REGISTRY: Dict[str, 'ToolWrapper'] = {}
 
-def tool(description: str, is_public: bool = False):
+def tool(description: str, is_public: bool = False, force_if: Optional[Callable[['prompts.base_prompt.BasePrompt'], bool]] = None):
     """
     A decorator to create an async tool from a class method.
     
     Args:
         description (str): The description of the tool.
+        is_public (bool): Whether the tool is public.
+        force_if (Optional[Callable[['BasePrompt'], bool]]): A callable that determines if the tool should be forced.
     
     Returns:
         Callable: A decorator function.
     """
     def decorator(func: Callable[..., Awaitable[Any]]) -> 'ToolWrapper':
         tool_wrapper = ToolWrapper(func, description)
-        if is_public:
-            tool_wrapper.is_public = True
+        tool_wrapper.is_public = is_public
+        tool_wrapper.force_if = force_if
         TOOL_REGISTRY[func.__name__] = tool_wrapper
         return tool_wrapper
 
@@ -35,7 +38,8 @@ class ToolWrapper(BaseTool):
         super().__init__(func.__name__, description)
         self.func = func
         self.use_schema(self._generate_schema())
-        self.is_public = getattr(func, 'is_public', False)
+        self.is_public = False
+        self.force_if: Optional[Callable[['prompts.base_prompt.BasePrompt'], bool]] = None
 
     async def process(self, instance: Any, arguments: dict) -> Any:
         return await self.func(instance, **arguments)

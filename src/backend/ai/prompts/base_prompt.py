@@ -18,6 +18,7 @@ class BasePrompt:
     tool_instances: Dict[str, List[BaseTool]]
     forced_tool_name: Optional[str] = None
     tool_choice_filter: Optional[list[str]] = None
+    forced_tools: List[str] = []
      
     def __init__(self, system_prompt: Optional[str] = None, tools: List[str] = None) -> None:
         self.messages = []
@@ -26,6 +27,7 @@ class BasePrompt:
         self.tool_types = {}
         self.tool_result_types = {}
         self.tool_instances = {}
+        self.forced_tools = []
         
         self.setup()
     
@@ -42,8 +44,17 @@ class BasePrompt:
         pass
         
     def force_tool(self, tool_type: Type[BaseTool]) -> None:
-        pass
-        
+        tool_name = tool_type.__name__
+        if tool_name not in self.tools:
+            self.tools.append(tool_name)
+        if tool_name not in self.forced_tools:
+            self.forced_tools.append(tool_name)
+
+    def unforce_tool(self, tool_type: Type[BaseTool]) -> None:
+        tool_name = tool_type.__name__
+        if tool_name in self.forced_tools:
+            self.forced_tools.remove(tool_name)
+
     def is_tool_public(self, tool_name: str) -> bool:
         return tool_name in self.tools
     

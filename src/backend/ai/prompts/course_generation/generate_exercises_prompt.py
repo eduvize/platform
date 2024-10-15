@@ -2,9 +2,12 @@ import logging
 from typing import Optional
 from ai.prompts.base_prompt import BasePrompt
 from domain.dto.courses import ExercisePlan
-from .provide_exercise_tool import ProvideExerciseTool
+from ai.util.tool_decorator import tool
 
 class GenerateExercisesPrompt(BasePrompt):
+    planning_complete: bool = False
+    exercise: Optional[ExercisePlan] = None
+  
     def setup(self) -> None:
         self.set_system_prompt("""
 You are a creative software engineer tasked with creating a new coding exercise for an online software development course. Your goal is to design an exercise that allows students to apply the concepts they have learned in a lesson to a real-world scenario.
@@ -25,6 +28,10 @@ You are a creative software engineer tasked with creating a new coding exercise 
   - All file paths should be **relative to the base directory**. This means **if you make a subfolder for a project, you will need to include that folder name (e.g my-app)**.
   - Pre and post-commands **do not share state** with each other or with the file-writing commands, so make sure the paths are correct for each stage.
 """.strip())
+        
+    @tool("Provide a structured plan for the course syllabus", force_if=lambda self: self.planning_complete)
+    async def provide_exercise(self, exercise: ExercisePlan) -> ExercisePlan:
+        self.exercise = exercise
         
     async def get_exercise(self, lesson_content: str, previous_error: Optional[str] = None) -> Optional[ExercisePlan]:
         from ai.models.gpt_4o import GPT4o
@@ -239,6 +246,8 @@ You should be looking at **setup commands** and the **docker image** specificall
           for response in responses:
               logging.info(response.message)
               self.add_agent_message(response.message)
+              
+        self.planning_complete = True
         
         # Step 8. Provide the final exercise model
         self.add_user_message("""
@@ -251,15 +260,9 @@ Provide the final **exercise model** using the `provide_exercise` tool.
 """.strip())
         
         
-        self.use_tool(ProvideExerciseTool, force=True)
-        
-        logging.info("Getting exercise responses")
-        
         await gpt_4o.get_responses(self)
         
-        exercise_call = self.get_tool_call(ProvideExerciseTool)
-        
-        if not exercise_call:
+        if not self.exercise:
             return None
         
-        return exercise_call.result
+        return self.exercise

@@ -73,49 +73,31 @@ class BaseGPT(BaseModel):
         if prompt.system_prompt:
             messages.insert(0, ChatCompletionSystemMessageParam(role="system", content=prompt.system_prompt))
         
-        # Create the list of tools
-        if prompt.tool_choice_filter:
-            available_tools = [
-                self.get_tool(tool)
-                for tool in self.available_tools
-                if tool.name in prompt.tool_choice_filter
-            ]
-        else:    
-            available_tools = [self.get_tool(tool) for tool in self.available_tools]
-        
         # Loops until there are no more tool calls to process
         while True:
-            if available_tools:
-                if prompt.forced_tool_name:
-                    tool_choice = ChatCompletionNamedToolChoiceParam(
-                        type="function",
-                        function=NamedToolFunction(
-                            name=prompt.forced_tool_name
-                        )
-                    )
-                    
-                    response = await self.client.chat.completions.create(
-                        model=self.model_name,
-                        messages=messages,
-                        tools=available_tools,
-                        tool_choice=tool_choice,
-                        stream=True
-                    )
-                elif prompt.tool_choice_filter:
-                    response = await self.client.chat.completions.create(
-                        model=self.model_name,
-                        messages=messages,
-                        tools=available_tools,
-                        tool_choice="required",
-                        stream=True
-                    )
-                else:    
-                    response = await self.client.chat.completions.create(
-                        model=self.model_name,
-                        messages=messages,
-                        tools=available_tools,
-                        stream=True
-                    )
+            # Create the list of tools
+            forced_tools = []
+            tools_to_use = []
+            tool_use_mode: Literal["required", "auto"] = "auto"
+            
+            for tool in self.available_tools:
+                if tool.force_if and tool.force_if(prompt):
+                    forced_tools.append(self.get_tool(tool))
+                else:
+                    tools_to_use.append(self.get_tool(tool))
+            
+            if len(forced_tools) > 0:
+                tools_to_use = forced_tools
+                tool_use_mode = "required"
+            
+            if tools_to_use:
+                response = await self.client.chat.completions.create(
+                    model=self.model_name,
+                    messages=messages,
+                    tools=tools_to_use,
+                    tool_choice=tool_use_mode,
+                    stream=True
+                )
             else:
                 response = await self.client.chat.completions.create(
                     model=self.model_name,
@@ -134,7 +116,7 @@ class BaseGPT(BaseModel):
                 tool_calls = chunk.choices[0].delta.tool_calls
                 content = chunk.choices[0].delta.content
                     
-                if available_tools and tool_calls:
+                if tools_to_use and tool_calls:
                     for tool_call in tool_calls:
                         existing_record = next((record for record in tool_call_dict if record.index == tool_call.index), None)
                         
