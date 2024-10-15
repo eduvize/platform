@@ -17,7 +17,7 @@ import {
 import { ChatTool, LearningCapacity } from "@models/enums";
 import { useOnboardingEvents } from "@context/onboarding/hooks";
 import { useDebouncedCallback } from "@mantine/hooks";
-import { useToolResult } from "@context/chat";
+import { useToolCallEffect } from "@context/chat";
 
 interface Skill {
     skill_type: number;
@@ -27,14 +27,6 @@ interface Skill {
 
 export const Profile = () => {
     const { sendEvent } = useOnboardingEvents();
-    const addProgrammingLanguagesTool = useToolResult(
-        ChatTool.ProfileBuilderAddProgrammingLanguages
-    );
-    const addLibrariesTool = useToolResult(ChatTool.ProfileBuilderAddLibraries);
-    const setDisciplinesTool = useToolResult(
-        ChatTool.ProfileBuilderSetDisciplines
-    );
-    const setNameTool = useToolResult(ChatTool.ProfileBuilderSetName);
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [skills, setSkills] = useState<Skill[]>([]);
@@ -44,7 +36,6 @@ export const Profile = () => {
     const [isUploadingResume, setIsUploadingResume] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const resumeInputRef = useRef<HTMLInputElement>(null);
-    const hasSentNameEventRef = useRef(false);
     const [languageInputValue, setLanguageInputValue] = useState("");
     const [frameworkInputValue, setFrameworkInputValue] = useState("");
 
@@ -136,73 +127,59 @@ export const Profile = () => {
         );
     };
 
-    const handleNameChange = useDebouncedCallback(() => {
-        sendEvent(`User has entered their name: ${firstName} ${lastName}`);
-        hasSentNameEventRef.current = true;
-    }, 1500);
-
-    useEffect(() => {
-        if (firstName && lastName && !hasSentNameEventRef.current) {
-            handleNameChange();
+    const handleNameBlur = () => {
+        if (firstName && lastName) {
+            sendEvent(`User has entered their name: ${firstName} ${lastName}`);
         }
-    }, [firstName, lastName, handleNameChange]);
+    };
 
-    useEffect(() => {
-        if (addProgrammingLanguagesTool) {
+    useToolCallEffect(
+        ChatTool.ProfileBuilderAddProgrammingLanguages,
+        (result) => {
             setSkills((prev) => [
                 ...prev,
-                ...addProgrammingLanguagesTool.languages.map(
-                    (language: string) => ({
-                        skill: language,
-                        skill_type: 1,
-                        proficiency: null,
-                    })
-                ),
-            ]);
-        }
-    }, [addProgrammingLanguagesTool]);
-
-    useEffect(() => {
-        if (addLibrariesTool) {
-            setSkills((prev) => [
-                ...prev,
-                ...addLibrariesTool.libraries.map((library: string) => ({
-                    skill: library,
-                    skill_type: 2,
+                ...result.languages.map((language: string) => ({
+                    skill: language,
+                    skill_type: 1,
                     proficiency: null,
                 })),
             ]);
         }
-    }, [addLibrariesTool]);
+    );
 
-    useEffect(() => {
-        if (setDisciplinesTool) {
-            const normalizedDisciplines = setDisciplinesTool.disciplines.map(
-                (discipline: string) => {
-                    switch (discipline) {
-                        case "hobbyist":
-                            return LearningCapacity.Hobby;
-                        case "student":
-                            return LearningCapacity.Student;
-                        case "professional":
-                            return LearningCapacity.Professional;
-                        default:
-                            return null;
-                    }
+    useToolCallEffect(ChatTool.ProfileBuilderAddLibraries, (result) => {
+        setSkills((prev) => [
+            ...prev,
+            ...result.libraries.map((library: string) => ({
+                skill: library,
+                skill_type: 2,
+                proficiency: null,
+            })),
+        ]);
+    });
+
+    useToolCallEffect(ChatTool.ProfileBuilderSetDisciplines, (result) => {
+        const normalizedDisciplines = result.disciplines.map(
+            (discipline: string) => {
+                switch (discipline) {
+                    case "hobbyist":
+                        return LearningCapacity.Hobby;
+                    case "student":
+                        return LearningCapacity.Student;
+                    case "professional":
+                        return LearningCapacity.Professional;
+                    default:
+                        return null;
                 }
-            );
-            setDisciplines(
-                normalizedDisciplines.filter((v: any) => v !== null)
-            );
-        }
-    }, [setDisciplinesTool]);
+            }
+        );
+        setDisciplines(normalizedDisciplines.filter((v: any) => v !== null));
+    });
 
-    useEffect(() => {
-        if (setNameTool) {
-            setFirstName(setNameTool.first_name);
-            setLastName(setNameTool.last_name);
-        }
-    }, [setNameTool]);
+    useToolCallEffect(ChatTool.ProfileBuilderSetName, (result) => {
+        setFirstName(result.first_name);
+        setLastName(result.last_name);
+    });
 
     return (
         <Stack pt="lg" gap="lg">
@@ -250,6 +227,7 @@ export const Profile = () => {
                             onChange={(e) =>
                                 setFirstName(e.currentTarget.value)
                             }
+                            onBlur={handleNameBlur}
                         />
                     </Stack>
 
@@ -259,6 +237,7 @@ export const Profile = () => {
                             style={{ width: "100%" }}
                             value={lastName}
                             onChange={(e) => setLastName(e.currentTarget.value)}
+                            onBlur={handleNameBlur}
                         />
                     </Stack>
                 </Group>

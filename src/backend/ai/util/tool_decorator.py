@@ -1,6 +1,6 @@
 import inspect
 import logging
-from typing import Callable, Any, get_type_hints, List, Union, get_origin, get_args, Dict, Awaitable, Optional
+from typing import Callable, Any, get_type_hints, List, Union, get_origin, get_args, Dict, Awaitable, Optional, Literal
 from enum import Enum
 from pydantic import BaseModel
 from ai.common import BaseTool
@@ -61,11 +61,15 @@ class ToolWrapper(BaseTool):
             if param.default == inspect.Parameter.empty:
                 required.append(name)
 
-        return {
+        schema = {
             "type": "object",
             "properties": properties,
             "required": required
         }
+        
+        logging.info(f"Generated schema for {self.func.__name__}: {schema}")
+        
+        return schema
 
     def _get_property_schema(self, param_type: type) -> dict:
         logging.info(f"Getting property schema for {param_type}")
@@ -94,17 +98,34 @@ class ToolWrapper(BaseTool):
         
         # Check for generic types
         origin = get_origin(param_type)
-        if origin == list:
+        if origin == list or origin == List:
             item_type = get_args(param_type)[0]
-            return {
-                "type": "array",
-                "items": self._get_property_schema(item_type)
-            }
+            item_origin = get_origin(item_type)
+            if item_origin == Literal:
+                literal_values = get_args(item_type)
+                return {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": list(literal_values)
+                    }
+                }
+            else:
+                return {
+                    "type": "array",
+                    "items": self._get_property_schema(item_type)
+                }
         elif origin == Union:
             # Handle Optional types (Union[T, None])
             types = get_args(param_type)
             if len(types) == 2 and types[1] == type(None):
                 return self._get_property_schema(types[0])
+        elif origin == Literal:
+            literal_values = get_args(param_type)
+            return {
+                "type": "string",
+                "enum": list(literal_values)
+            }
         
         # Default case
         return {}  # Default to an empty schema for unknown types

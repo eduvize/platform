@@ -170,6 +170,7 @@ class BaseGPT(BaseModel):
                 for record in tool_call_dict:
                     # Try to load the JSON - if it fails, return an error to the model for correction
                     try:
+                        logging.info(f"Executing tool: {record.name} with arguments: {record.arguments}")
                         json_dict = json.loads(record.arguments)
                         tool_tasks.append(self.execute_tool(prompt, record.name, json_dict))
                     except json.JSONDecodeError:
@@ -189,10 +190,13 @@ class BaseGPT(BaseModel):
                 tool_results = await asyncio.gather(*tool_tasks, return_exceptions=True)
                 
                 for record, result in zip(tool_call_dict, tool_results):
+                    logging.info(f"Collecting result for {record.name}")
                     if isinstance(result, Exception):
+                        logging.error(f"Error executing tool: {record.name}: {result}")
                         record.result = f"Error: {result}"
                         record.errors = True
                     else:
+                        logging.info(f"Tool {record.name} completed successfully")
                         record.result = result
 
             responses.append(
@@ -212,6 +216,7 @@ class BaseGPT(BaseModel):
             # If the finish reason is tool calls, added to the chat context and repeat the loop
             if finish_reason == "tool_calls" or len(tool_call_dict) > 0:
                 # Build the response message
+                logging.info("Building tool response")
                 response_message = ChatCompletionAssistantMessageParam(
                     role="assistant",
                     content=response_content,
@@ -238,8 +243,12 @@ class BaseGPT(BaseModel):
                     
                 # If the model was forced to call this a tool, break the loop unless there are errors
                 if not any(record.errors for record in tool_call_dict):
+                    logging.info("No errors, breaking loop")
                     break
+                else:
+                    logging.info("Errors, continuing loop")
             else:
+                logging.info("No tool calls, breaking loop")
                 break
 
         # The final yield includes the responses
