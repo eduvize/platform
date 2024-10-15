@@ -1,10 +1,13 @@
 from ai.prompts.base_prompt import BasePrompt
-from .provide_additional_inputs_tool import ProvideAdditionalInputsTool
 from domain.dto.courses import CoursePlanDto
-from domain.enums.course_enums import CourseMotivation, CurrentSubjectExperience, CourseMaterial
+from domain.enums.course_enums import CourseMotivation, CurrentSubjectExperience
 from domain.dto.courses import AdditionalInputs
+from ai.util.tool_decorator import tool
 
-class GetAdditionalInputsPrompt(BasePrompt):    
+class GetAdditionalInputsPrompt(BasePrompt): 
+    planning_complete: bool = False
+    result: AdditionalInputs
+    
     def setup(self) -> None:        
         self.set_system_prompt(f"""
 You are an AI assistant tasked with reviewing student applications for an online education platform focused on Software Engineering. Your goal is to generate follow-up questions that will help gather specific details about the student's current knowledge gaps and additional relevant information, aiding in the creation of a tailored course syllabus.
@@ -23,6 +26,11 @@ You are an AI assistant tasked with reviewing student applications for an online
 - **Follow-Up**: If "Other" is selected, always include a follow-up question to clarify the student's needs.
 - **Rule-Based Questions**: If any of your questions need to follow specific rules, define them clearly in the tool’s schema.
 """.strip())
+    
+    @tool("Provide additional inputs for the course planning process", force_if=lambda self: self.planning_complete)
+    async def provide_additional_inputs(self, result: AdditionalInputs) -> AdditionalInputs:
+        self.result = result
+        return "Success"
     
     async def get_inputs(
         self,
@@ -58,21 +66,21 @@ It might be a good idea to review their profile to cross compare with the course
             if response.message:
                 self.add_agent_message(response.message)
         
+        self.planning_complete = True
+        
         self.add_user_message("""
 Good, now generate follow-up questions to gather more specific details. Ensure no repetition of previous questions, limit to 8 questions only if necessary, and utilize text, select, and multiselect inputs where appropriate.                   
 """.strip())
         
         # Now we force it to use the tool to produce the question fields
-        self.use_tool(ProvideAdditionalInputsTool, force=True)
         await model.get_responses(self)
-        followup_call = self.get_tool_call(ProvideAdditionalInputsTool)
         
-        if not followup_call.result:
+        if not self.result:
             return AdditionalInputs.model_construct(
                 inputs=[]
             )
         
-        return followup_call.result
+        return self.result
     
 def get_course_plan_description(plan: CoursePlanDto) -> str:
     motivation_strs = []
