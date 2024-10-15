@@ -1,4 +1,3 @@
-import logging
 from ai.prompts.base_prompt import BasePrompt
 from domain.dto.courses import CoursePlanDto
 from domain.enums.course_enums import CourseMotivation, CurrentSubjectExperience

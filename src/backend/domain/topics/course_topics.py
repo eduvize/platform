@@ -1,6 +1,6 @@
 import uuid
 from pydantic import BaseModel
-from ai.prompts.course_generation.models import CourseOutline
+from ai.prompts.generate_course_outline_prompt import CourseOutline
 
 class CourseGenerationTopic(BaseModel):
     user_id: uuid.UUID

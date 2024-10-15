@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, field_validator
 from ai.prompts.base_prompt import BasePrompt
 from domain.dto.courses.course_plan import CoursePlanDto
-from backend.ai.prompts.get_additional_inputs_prompt import get_course_plan_description
+from .get_additional_inputs_prompt import get_course_plan_description
 from ai.util.tool_decorator import tool
 
 class SectionOutline(BaseModel):
