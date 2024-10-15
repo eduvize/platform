@@ -216,7 +216,6 @@ class BaseGPT(BaseModel):
             # If the finish reason is tool calls, added to the chat context and repeat the loop
             if finish_reason == "tool_calls" or len(tool_call_dict) > 0:
                 # Build the response message
-                logging.info("Building tool response")
                 response_message = ChatCompletionAssistantMessageParam(
                     role="assistant",
                     content=response_content,
@@ -242,13 +241,9 @@ class BaseGPT(BaseModel):
                     ))
                     
                 # If the model was forced to call this a tool, break the loop unless there are errors
-                if not any(record.errors for record in tool_call_dict):
-                    logging.info("No errors, breaking loop")
+                if tool_use_mode == "required" and not any(record.errors for record in tool_call_dict):
                     break
-                else:
-                    logging.info("Errors, continuing loop")
             else:
-                logging.info("No tool calls, breaking loop")
                 break
 
         # The final yield includes the responses
