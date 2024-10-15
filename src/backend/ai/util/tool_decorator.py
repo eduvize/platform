@@ -28,7 +28,8 @@ def tool(description: str, is_public: bool = False, force_if: Optional[Callable[
         tool_wrapper = ToolWrapper(func, description)
         tool_wrapper.is_public = is_public
         tool_wrapper.force_if = force_if
-        TOOL_REGISTRY[func.__name__] = tool_wrapper
+        tool_key = f"{func.__module__}.{func.__name__}"
+        TOOL_REGISTRY[tool_key] = tool_wrapper
         return tool_wrapper
 
     return decorator

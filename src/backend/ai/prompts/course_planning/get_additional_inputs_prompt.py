@@ -1,3 +1,4 @@
+import logging
 from ai.prompts.base_prompt import BasePrompt
 from domain.dto.courses import CoursePlanDto
 from domain.enums.course_enums import CourseMotivation, CurrentSubjectExperience
@@ -27,7 +28,7 @@ You are an AI assistant tasked with reviewing student applications for an online
 - **Rule-Based Questions**: If any of your questions need to follow specific rules, define them clearly in the tool’s schema.
 """.strip())
     
-    @tool("Provide additional inputs for the course planning process", force_if=lambda self: self.planning_complete)
+    @tool("Provide additional inputs for the course planning process", force_if=lambda prompt: prompt.planning_complete)
     async def provide_additional_inputs(self, result: AdditionalInputs) -> AdditionalInputs:
         self.result = result
         return "Success"
@@ -66,11 +67,12 @@ It might be a good idea to review their profile to cross compare with the course
             if response.message:
                 self.add_agent_message(response.message)
         
-        self.planning_complete = True
-        
         self.add_user_message("""
 Good, now generate follow-up questions to gather more specific details. Ensure no repetition of previous questions, limit to 8 questions only if necessary, and utilize text, select, and multiselect inputs where appropriate.                   
 """.strip())
+        
+        # Set planning_complete to True before forcing the tool
+        self.planning_complete = True
         
         # Now we force it to use the tool to produce the question fields
         await model.get_responses(self)

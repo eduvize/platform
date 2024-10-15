@@ -55,7 +55,6 @@ class BaseGPT(BaseModel):
         
         self.client = AsyncOpenAI(api_key=api_key)
         self.model_name = model_name
-        self.available_tools = list(TOOL_REGISTRY.values())  # All tools are available
     
     async def get_streaming_response(
         self, 
@@ -73,6 +72,11 @@ class BaseGPT(BaseModel):
         if prompt.system_prompt:
             messages.insert(0, ChatCompletionSystemMessageParam(role="system", content=prompt.system_prompt))
         
+        self.available_tools = [
+            tool for key, tool in TOOL_REGISTRY.items()
+            if key.startswith(f"{prompt.__module__}.")
+        ]
+        
         # Loops until there are no more tool calls to process
         while True:
             # Create the list of tools
@@ -83,12 +87,15 @@ class BaseGPT(BaseModel):
             for tool in self.available_tools:
                 if tool.force_if and tool.force_if(prompt):
                     forced_tools.append(self.get_tool(tool))
-                else:
+                elif not tool.force_if:
                     tools_to_use.append(self.get_tool(tool))
             
             if len(forced_tools) > 0:
+                logger.info(f"Forcing tools: {forced_tools}")
                 tools_to_use = forced_tools
                 tool_use_mode = "required"
+            else:
+                logger.info("No forced tools")
             
             if tools_to_use:
                 response = await self.client.chat.completions.create(
@@ -148,7 +155,7 @@ class BaseGPT(BaseModel):
                                 data=record.arguments
                             )
                             for record in tool_call_dict
-                            if TOOL_REGISTRY[record.name].is_public  # Only include public tools in the chunk
+                            if TOOL_REGISTRY[f"{prompt.__module__}.{record.name}"].is_public  # Only include public tools in the chunk
                         ]
                     ), [], False
                             
@@ -230,7 +237,7 @@ class BaseGPT(BaseModel):
                     ))
                     
                 # If the model was forced to call this a tool, break the loop unless there are errors
-                if prompt.forced_tool_name and not any(record.errors for record in tool_call_dict):
+                if not any(record.errors for record in tool_call_dict):
                     break
             else:
                 break
@@ -324,7 +331,8 @@ class BaseGPT(BaseModel):
         )
 
     async def execute_tool(self, prompt: BasePrompt, tool_name: str, arguments: dict) -> Any:
-        if tool_name not in TOOL_REGISTRY:
+        tool_key = f"{prompt.__module__}.{tool_name}"
+        if tool_key not in TOOL_REGISTRY:
             raise ValueError(f"Unknown tool: {tool_name}")
-        tool = TOOL_REGISTRY[tool_name]
+        tool = TOOL_REGISTRY[tool_key]
         return await tool.process(prompt, arguments)
