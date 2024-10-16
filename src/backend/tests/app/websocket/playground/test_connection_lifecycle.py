@@ -1,12 +1,12 @@
 from unittest.mock import ANY, AsyncMock, Mock, patch
 import pytest
-from backend.app.websocket.playground.connection_lifecycle import (
+from app.websocket.playground.connection_lifecycle import (
     handle_user_connection, 
     handle_instance_connection, 
     handle_user_disconnect, 
     handle_instance_disconnect
 )
-from backend.app.websocket.playground.cache_keys import (
+from app.websocket.playground.cache_keys import (
     get_image_tag_cache_key,
     get_instance_ready_cache_key,
     get_liveness_cache_key,
@@ -22,8 +22,8 @@ def create_mock_session(mock_server: Mock) -> AsyncMock:
     return mock_session
 
 @pytest.mark.asyncio
-@patch("app.websocket.connection_lifecycle.get_key", return_value=None)
-@patch("app.websocket.connection_lifecycle.set_key", autospec=True)
+@patch("app.websocket.playground.connection_lifecycle.get_key", return_value=None)
+@patch("app.websocket.playground.connection_lifecycle.set_key", autospec=True)
 async def test_handle_user_connection_baseline(
     mock_set_key: Mock,
     mock_get_key: Mock
@@ -82,8 +82,8 @@ async def test_handle_user_connection_baseline(
     mock_set_key.assert_any_call(key=connected_cache_key, value=ANY, expiration=ANY)
 
 @pytest.mark.asyncio
-@patch("app.websocket.connection_lifecycle.set_key")
-@patch("app.websocket.connection_lifecycle.get_key")
+@patch("app.websocket.playground.connection_lifecycle.set_key")
+@patch("app.websocket.playground.connection_lifecycle.get_key")
 async def test_handle_user_connection_with_live_instance(
     mock_get_key: Mock,
     mock_set_key: Mock,
@@ -137,8 +137,8 @@ async def test_handle_user_connection_with_live_instance(
     assert mock_server.emit.call_count == 2
 
 @pytest.mark.asyncio
-@patch("app.websocket.connection_lifecycle.set_key")
-@patch("app.websocket.connection_lifecycle.get_key")
+@patch("app.websocket.playground.connection_lifecycle.set_key")
+@patch("app.websocket.playground.connection_lifecycle.get_key")
 async def test_handle_user_connection_with_live_and_ready_instance(
     mock_get_key: Mock,
     mock_set_key: Mock,
@@ -192,8 +192,8 @@ async def test_handle_user_connection_with_live_and_ready_instance(
     mock_server.emit.assert_any_call("instance_ready", room="test_session_id")
     
 @pytest.mark.asyncio
-@patch("app.websocket.connection_lifecycle.get_key", return_value=None)
-@patch("app.websocket.connection_lifecycle.set_key")
+@patch("app.websocket.playground.connection_lifecycle.get_key", return_value=None)
+@patch("app.websocket.playground.connection_lifecycle.set_key")
 async def test_handle_instance_connection_baseline(
     mock_set_key: Mock,
     mock_get_key: Mock
@@ -234,8 +234,8 @@ async def test_handle_instance_connection_baseline(
     mock_set_key.assert_any_call(key=get_liveness_cache_key("test_session_id"), value=ANY)
 
 @pytest.mark.asyncio
-@patch("app.websocket.connection_lifecycle.get_key")
-@patch("app.websocket.connection_lifecycle.set_key")
+@patch("app.websocket.playground.connection_lifecycle.get_key")
+@patch("app.websocket.playground.connection_lifecycle.set_key")
 async def test_handle_instance_connection_with_active_user(
     mock_set_key: Mock,
     mock_get_key: Mock
@@ -286,7 +286,7 @@ async def test_handle_instance_connection_with_active_user(
     mock_set_key.assert_any_call(key=get_liveness_cache_key("test_session_id"), value=ANY)
 
 @pytest.mark.asyncio
-@patch("app.websocket.connection_lifecycle.delete_key")
+@patch("app.websocket.playground.connection_lifecycle.delete_key")
 async def test_handle_user_disconnect(
     mock_delete_key: Mock,
 ):
@@ -314,7 +314,7 @@ async def test_handle_user_disconnect(
     mock_delete_key.assert_any_call(image_tag_key)
 
 @pytest.mark.asyncio
-@patch("app.websocket.connection_lifecycle.delete_key")
+@patch("app.websocket.playground.connection_lifecycle.delete_key")
 async def test_handle_instance_disconnect(
     mock_delete_key: Mock,
 ):

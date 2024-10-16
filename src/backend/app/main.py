@@ -1,7 +1,7 @@
 from . import app
 from socketio import ASGIApp
 from app.routing import api_router
-from app.websocket import socket_server
+from app.websocket.websocket_server import socket_server
 
 app.include_router(api_router, prefix="/api")
 

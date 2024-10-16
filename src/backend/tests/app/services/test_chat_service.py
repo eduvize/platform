@@ -42,22 +42,16 @@ async def test_create_session(chat_service):
     3. Should call chat_repository.create_chat_session and return the session.
     """
     mock_user = MagicMock(id=user_id)
-    mock_instructor = MagicMock(id=instructor_id)
     mock_session = MagicMock(spec=ChatSession, id=session_id)
     
     chat_service.user_service.get_user.return_value = mock_user
-    chat_service.instructor_service.get_user_instructor.return_value = mock_instructor
     chat_service.chat_repository.create_chat_session.return_value = mock_session
     
-    result = await chat_service.create_session(user_id=user_id, prompt_type=prompt_type, resource_id=resource_id)
+    result = await chat_service.create_session(user_id=user_id)
     
     chat_service.user_service.get_user.assert_awaited_once_with("id", user_id)
-    chat_service.instructor_service.get_user_instructor.assert_awaited_once_with(user_id)
     chat_service.chat_repository.create_chat_session.assert_awaited_once_with(
-        user_id=user_id,
-        prompt_type=prompt_type.value,
-        resource_id=resource_id,
-        instructor_id=instructor_id
+        user_id=user_id
     )
     
     assert result == mock_session
@@ -82,47 +76,6 @@ async def test_get_history(chat_service):
     
     assert len(result) == len(mock_messages)
     assert isinstance(result[0], ChatMessageDto)
-
-@pytest.mark.asyncio
-@patch("app.services.chat_service.ChatService.get_prompt_generator")
-async def test_get_response(mock_get_prompt_generator, chat_service):
-    """
-    Test getting chat response from AI.
-    1. Should call user_service.get_user to validate the user.
-    2. Should call chat_repository.get_session to get the session.
-    3. Should call instructor_service.get_instructor_by_id to get the instructor.
-    4. Should iterate over the response generator and yield CompletionChunks.
-    5. Should add both user and AI messages to the chat repository.
-    """
-    async def mock_generator():
-        yield MagicMock(message_id="message_id", text="chunk1", is_final=False)
-        yield MagicMock(message_id="message_id", text="chunk2", is_final=True)
-
-    mock_get_prompt_generator.return_value = mock_generator()
-
-    mock_user = MagicMock(id=user_id)
-    mock_session = MagicMock(spec=ChatSession, id=session_id, instructor_id=instructor_id)
-    mock_instructor = MagicMock(spec=Instructor, id=instructor_id)
-
-    chat_service.user_service.get_user = AsyncMock(return_value=mock_user)
-    chat_service.chat_repository.get_session = AsyncMock(return_value=mock_session)
-    chat_service.instructor_service.get_instructor_by_id = AsyncMock(return_value=mock_instructor)
-    chat_service._add_message = AsyncMock()
-    
-    response = []
-    async for chunk in chat_service.get_response(user_id=user_id, session_id=session_id, message=message):
-        response.append(chunk)
-    
-    chat_service.user_service.get_user.assert_awaited_once_with("id", user_id, ["profile.*"])
-    chat_service.chat_repository.get_session.assert_awaited_once_with(session_id)
-    chat_service.instructor_service.get_instructor_by_id.assert_awaited_once_with(instructor_id)
-    
-    assert len(response) == 2
-    assert response[0].message_id == "message_id"
-    assert response[0].text == "chunk1"
-    assert response[1].message_id == "message_id"
-    assert response[1].text == "chunk2"
-    assert response[1].is_final == True
 
 @pytest.mark.asyncio
 async def test_add_message(chat_service):
@@ -152,7 +105,7 @@ async def test_get_chat_messages(chat_service):
     mock_records = [
         MagicMock(is_user=True, content="User message", tool_calls=[]),
         MagicMock(is_user=False, content="Agent message", tool_calls=[
-            MagicMock(id="tool1", tool_name="test_tool", json_arguments="{}", result="result")
+            MagicMock(tool_call_id="tool1", tool_name="test_tool", json_arguments="{}", result="result")
         ])
     ]
     

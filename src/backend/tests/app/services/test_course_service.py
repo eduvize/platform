@@ -9,8 +9,7 @@ from common.storage import StoragePurpose
 from domain.schema.courses import Course, Lesson, Module, Section, CourseExercise, CourseExerciseObjective
 from domain.topics import CourseGenerationTopic
 from common.messaging.topics import Topic
-from ai.prompts.course_generation.models import CourseOutline, ModuleOutline, LessonOutline, SectionOutline
-import asyncio
+from ai.prompts.generate_course_outline_prompt import CourseOutline, ModuleOutline, LessonOutline, SectionOutline
 
 # Sample data
 user_id = str(uuid.uuid4())
