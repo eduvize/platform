@@ -5,7 +5,7 @@ from app.repositories import PlaygroundRepository
 from app.utilities.jwt import decode_token, InvalidJWTToken
 from config import get_playground_token_secret
 from .connection_lifecycle import handle_instance_connection, handle_user_connection, handle_instance_disconnect, handle_user_disconnect, handle_instance_ready
-from .util import get_token_from_environ
+from ..util import get_token_from_environ
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

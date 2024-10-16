@@ -8,8 +8,8 @@ from app.services.user_service import UserService
 from app.utilities.jwt import decode_token, InvalidJWTToken
 from domain.enums.chat_enums import PromptType
 from config import get_token_secret, get_deepgram_api_key
-from .dependency_resolver import inject_dependencies
-from .util import get_token_from_environ
+from ..dependency_resolver import inject_dependencies
+from ..util import get_token_from_environ
 from deepgram import DeepgramClient, DeepgramClientOptions, LiveOptions, LiveTranscriptionEvents
 from deepgram.clients import AsyncListenWebSocketClient, LiveResultResponse
 

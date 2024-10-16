@@ -86,10 +86,11 @@ class OnboardingProfileBuilderPrompt(BasePrompt):
         **End of Profile:**
         - Once the user has completed their profile, use the `set_profile_complete` tool to mark the profile as complete.
         - A **finished profile** can be defined as:
-            - A profile photo is set
-            - A first and last name is set
-            - The user's experience / disciplines are set
-            - There is at least one programming language set
+            - A profile photo is set (Required)
+            - A first and last name is set (Required)
+            - The user's experience / disciplines are set (Required)
+            - There is at least one programming language set (Required)
+            - There is at least one library or framework set (Optional, but ask if they have experience with any)
         """.strip())
         
         for message in history:

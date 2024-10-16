@@ -1,12 +1,12 @@
 from unittest.mock import ANY, AsyncMock, Mock, patch
 import pytest
-from app.websocket.connection_lifecycle import (
+from backend.app.websocket.playground.connection_lifecycle import (
     handle_user_connection, 
     handle_instance_connection, 
     handle_user_disconnect, 
     handle_instance_disconnect
 )
-from app.websocket.cache_keys import (
+from backend.app.websocket.playground.cache_keys import (
     get_image_tag_cache_key,
     get_instance_ready_cache_key,
     get_liveness_cache_key,

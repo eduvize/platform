@@ -1,7 +1,7 @@
 import logging
 from socketio import AsyncServer
-from .playground import PlaygroundNamespace
-from .chat import ChatNamespace
+from .playground.playground_namespace import PlaygroundNamespace
+from .chat.chat_namespace import ChatNamespace
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
