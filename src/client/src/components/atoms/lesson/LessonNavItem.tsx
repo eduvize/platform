@@ -1,6 +1,7 @@
 import { useExerciseObjectives } from "@context/exercise/hooks";
 import { Card, Text, Stepper, Group, RingProgress } from "@mantine/core";
 import { LessonDto } from "@models/dto";
+import { CheckboxStepper } from "@molecules";
 import { IconHammer } from "@tabler/icons-react";
 
 interface LessonItemProps extends LessonDto {
@@ -33,7 +34,7 @@ export const LessonNavItem = ({
                     <Text size="xs" c="dimmed">
                         {description}
                     </Text>
-                    <Stepper
+                    <CheckboxStepper
                         mt="lg"
                         orientation="vertical"
                         onStepClick={onSectionChange}
@@ -108,7 +109,7 @@ export const LessonNavItem = ({
                                     }}
                                 />
                             ))}
-                    </Stepper>
+                    </CheckboxStepper>
                 </>
             )}
         </Card>
