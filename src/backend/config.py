@@ -29,6 +29,10 @@ def is_email_validation_enabled() -> bool:
 def get_elevenlabs_api_key() -> str:
     return os.getenv("ELEVENLABS_API_KEY")
 
+# Deepgram
+def get_deepgram_api_key() -> str:
+    return os.getenv("DEEPGRAM_API_KEY")
+
 # AWS
 def get_aws_access_key() -> str:
     return os.getenv("AWS_ACCESS_KEY")

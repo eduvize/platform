@@ -9,13 +9,13 @@ class OnboardingProfileBuilderPrompt(BasePrompt):
     def setup(self) -> None:
         pass
         
-    @tool("Adds programming languages to the user's profile", is_public=True)
-    async def add_programming_languages(self, languages: List[str]) -> None:
-        return "Programming languages added"
+    @tool("Replaces the current programming languages of the user's profile", is_public=True)
+    async def update_programming_languages(self, languages: List[str]) -> None:
+        return "Programming languages were updated"
         
-    @tool("Adds libraries to the user's profile", is_public=True)
-    async def add_libraries(self, libraries: List[str]) -> None:
-        return "Libraries added"
+    @tool("Replaces the current frameworks and libraries of the user's profile", is_public=True)
+    async def update_libraries(self, items: List[str]) -> None:
+        return "Libraries were updated"
         
     @tool("Sets the name of the user's profile", is_public=True)    
     async def set_name(self, first_name: str, last_name: str) -> None:

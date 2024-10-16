@@ -134,10 +134,10 @@ export const Profile = () => {
     };
 
     useToolCallEffect(
-        ChatTool.ProfileBuilderAddProgrammingLanguages,
+        ChatTool.ProfileBuilderUpdateProgrammingLanguages,
         (result) => {
             setSkills((prev) => [
-                ...prev,
+                ...prev.filter((v) => v.skill_type !== 1),
                 ...result.languages.map((language: string) => ({
                     skill: language,
                     skill_type: 1,
@@ -147,10 +147,10 @@ export const Profile = () => {
         }
     );
 
-    useToolCallEffect(ChatTool.ProfileBuilderAddLibraries, (result) => {
+    useToolCallEffect(ChatTool.ProfileBuilderUpdateLibraries, (result) => {
         setSkills((prev) => [
-            ...prev,
-            ...result.libraries.map((library: string) => ({
+            ...prev.filter((v) => v.skill_type !== 2),
+            ...result.items.map((library: string) => ({
                 skill: library,
                 skill_type: 2,
                 proficiency: null,

@@ -8,10 +8,13 @@ import {
     useOnboardingFlow,
     useOnboardingInstructor,
 } from "@context/onboarding/hooks";
-import { useChat } from "@context/chat";
+import { useChat, useToolCallEffect } from "@context/chat";
+import { ChatTool } from "@models/enums";
+import { useState } from "react";
 
 export const Onboarding = () => {
     const { setSection } = useOnboardingFlow();
+    const [sectionOverride, setSectionOverride] = useState(0);
     const { setInstructor, instructor } = useOnboardingInstructor();
     const { sendMessage, purge, setPrompt } = useChat();
     const isInstructorVisible = useInstructorVisibility();
@@ -90,12 +93,23 @@ export const Onboarding = () => {
         ],
     };
 
+    useToolCallEffect(ChatTool.OnboardingSelectInstructor, () => {
+        setSectionOverride(2);
+        setPrompt("profile-builder").then(() => {
+            sendMessage(
+                "Event: The user has selected you as their instructor",
+                true
+            );
+        });
+    });
+
     return (
         <Lesson
             hideNumberedLabels
             hideInstructor={!isInstructorVisible}
             {...onboardingCourse.modules[0].lessons[0]}
             course={onboardingCourse}
+            section={sectionOverride}
             onSectionChange={(section) => {
                 if (section === 2) {
                     setPrompt("profile-builder").then(() => {
@@ -109,6 +123,7 @@ export const Onboarding = () => {
                 }
 
                 setSection(section);
+                setSectionOverride(section);
             }}
         />
     );

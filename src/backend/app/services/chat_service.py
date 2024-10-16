@@ -137,7 +137,7 @@ class ChatService:
                 yield CompletionChunk.model_construct(message_id=chunk.message_id, text=chunk.text, tools=chunk.tools)
             
             if chunk.text:
-                speech_buffer += chunk.text
+                speech_buffer += chunk.text.encode("ascii", "ignore").decode("ascii") # Take only ASCII characters
                 current_words = speech_buffer.split()
                 word_count = len(current_words)
             

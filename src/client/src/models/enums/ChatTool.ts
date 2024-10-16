@@ -1,6 +1,7 @@
 export enum ChatTool {
-    ProfileBuilderAddProgrammingLanguages = "add_programming_languages",
-    ProfileBuilderAddLibraries = "add_libraries",
+    OnboardingSelectInstructor = "select_instructor",
+    ProfileBuilderUpdateProgrammingLanguages = "update_programming_languages",
+    ProfileBuilderUpdateLibraries = "update_libraries",
     ProfileBuilderSetDisciplines = "set_disciplines",
     ProfileBuilderSetName = "set_name",
 }

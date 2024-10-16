@@ -4,7 +4,7 @@ import { ReactNode, useEffect, useState, useCallback, useRef } from "react";
 import { createContext } from "use-context-selector";
 import { useContext } from "react";
 import { AudioOutputContext } from "../audio/AudioOutputContext";
-import { useAudioInput } from "@context/audio/hooks";
+import { useAudioInput, useIncomingAudioEffect } from "@context/audio/hooks";
 import * as WavEncoder from "wav-encoder";
 import io, { Socket } from "socket.io-client";
 const socketEndpoint = import.meta.env.VITE_SOCKETIO_ENDPOINT;
@@ -63,6 +63,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     const sseCancellationHandlerRef = useRef<{ cancel: () => void }>({
         cancel: () => {},
     });
+    const liveTranscriptionRef = useRef<string | null>(null);
 
     // Get the playAudio function from AudioOutputContext
     const { playAudio, stopPlayback, enablePlayback, disablePlayback } =
@@ -148,8 +149,6 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                         }
                     });
 
-                    messageCompleteRef.current = true;
-
                     setFinalToolResults((prev) => ({
                         ...prev,
                         ...jsonCompleteTools.reduce(
@@ -169,23 +168,77 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             messageCompleteRef.current = true;
         });
 
+        socketRef.current.on("voice_transcript", (transcript: string) => {
+            console.log("Voice transcript:", transcript);
+            liveTranscriptionRef.current = transcript;
+
+            stopPlayback();
+
+            setMessages((prev) => {
+                if (!prev.some((x) => x.id == "live_transcription")) {
+                    return [
+                        ...prev,
+                        {
+                            id: "live_transcription",
+                            is_user: true,
+                            content: transcript,
+                            create_at_utc: new Date().toISOString(),
+                        },
+                    ];
+                } else {
+                    return prev.map((x) => {
+                        if (x.id == "live_transcription") {
+                            return {
+                                ...x,
+                                content: transcript,
+                            };
+                        }
+
+                        return x;
+                    });
+                }
+            });
+        });
+
+        socketRef.current.on("voice_end", () => {
+            if (liveTranscriptionRef.current) {
+                handleSendMessage(liveTranscriptionRef.current);
+            }
+
+            liveTranscriptionRef.current = null;
+            setMessages((prev) => {
+                if (prev.some((x) => x.id == "live_transcription")) {
+                    return prev.filter((x) => x.id != "live_transcription");
+                }
+
+                return prev;
+            });
+        });
+
         socketRef.current.on("disconnect", () => {
             console.log("Disconnected from chat socket");
         });
     }, []);
 
-    useEffect(() => {
-        socketRef.current?.emit("use_voice", {
-            enabled: isListening,
-        });
+    useIncomingAudioEffect((data) => {
+        socketRef.current?.emit("audio_data", data);
+    });
 
-        if (isListening) {
-            enablePlayback();
-        } else {
-            disablePlayback();
-            stopPlayback();
+    useEffect(() => {
+        if (sampleRate) {
+            socketRef.current?.emit("use_voice", {
+                enabled: isListening,
+                sample_rate: sampleRate,
+            });
+
+            if (isListening) {
+                enablePlayback();
+            } else {
+                disablePlayback();
+                stopPlayback();
+            }
         }
-    }, [isListening]);
+    }, [isListening, sampleRate]);
 
     useEffect(() => {
         if (!isProcessing && Object.keys(finalToolResults).length > 0) {
@@ -263,6 +316,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                 prompt_type: newPrompt,
             });
 
+            stopPlayback();
             setCurrentPrompt(newPrompt);
 
             resolve();

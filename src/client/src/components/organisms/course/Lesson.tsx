@@ -21,6 +21,7 @@ interface ComponentProps extends LessonDto {
     course: CourseDto;
     hideNumberedLabels?: boolean;
     hideInstructor?: boolean;
+    section?: number;
     onSectionChange?: (section: number) => void;
 }
 
@@ -28,7 +29,7 @@ export const Lesson = (props: ComponentProps) => {
     const navigate = useNavigate();
     const { instructorId } = useChat();
     const { markLessonComplete: markSectionCompleted } = useCourse();
-    const [section, setSection] = useState(0);
+    const [section, setSection] = useState(props.section ?? 0);
     const [showExercise, setShowExercise] = useState(false);
     const [panels, setPanels] = useState<Panel[]>(["instructor", "module"]);
 
@@ -48,6 +49,14 @@ export const Lesson = (props: ComponentProps) => {
             .getElementById("root")!
             .scrollTo({ top: 0, behavior: "smooth" });
     }, [section, showExercise]);
+
+    useEffect(() => {
+        if (typeof props.section === "undefined") {
+            return;
+        }
+
+        setSection(props.section);
+    }, [props.section]);
 
     const handleCompleteSection = () => {
         markSectionCompleted(lessonId);

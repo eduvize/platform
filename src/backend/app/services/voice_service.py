@@ -29,9 +29,6 @@ class VoiceService:
             Exception: If there's an error in generating the TTS URL.
         """
         
-        # Take only ASCII characters
-        text = text.encode("ascii", "ignore").decode("ascii")
-        
         return self.elevenlabs.text_to_speech.convert(
             voice_id=voice_id,
             optimize_streaming_latency="0",

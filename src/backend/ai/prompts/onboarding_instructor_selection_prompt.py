@@ -3,10 +3,15 @@ from ai.prompts.base_prompt import BasePrompt
 from ai.common import BaseChatMessage, ChatRole
 from domain.dto.ai.completion_chunk import CompletionChunk
 from domain.schema.instructors import Instructor
+from ai.util.tool_decorator import tool
 
 class OnboardingInstructorSelectionPrompt(BasePrompt):
     def setup(self) -> None:
         pass
+    
+    @tool("Selects the instructor. Only use this tool if the user explicitly selects you.", is_public=True)
+    async def select_instructor(self, reason: str) -> None:
+        return "Instructor selected"
     
     async def get_responses(
         self,
@@ -43,6 +48,7 @@ Key Reminders:
 - You can make up information about yourself in order to sound more interesting and human-like.
 - Do not engage in discussions about topic unrelated to yourself or the user getting to know you more.
 - Your goal is to help the user understand how you behave and communicate.
+- If the user says they want you to be their instructor, use the select_instructor tool.
 """.strip())
         
         for message in history:

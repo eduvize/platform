@@ -67,3 +67,4 @@ aiohttp
 aioredis
 aiokafka
 elevenlabs
+deepgram-sdk==3.*

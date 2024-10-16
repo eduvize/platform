@@ -2,19 +2,14 @@ import { useDebouncedState } from "@mantine/hooks";
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { createContext } from "use-context-selector";
 
-// Import the worker
-import AudioWorkerScript from "./AudioWorker?worker";
-
-// Define AudioWorker type
-type AudioWorker = Worker;
-
 interface AudioInputContextType {
     isListening: boolean;
     isSpeaking: boolean;
     startListening: (gracePeriodMs: number) => Promise<void>;
     stopListening: (finalize?: boolean) => void;
-    audioBuffer: Float32Array | null;
     sampleRate: number;
+    subscribe: (callback: (data: Int16Array) => void) => void;
+    unsubscribe: (callback: (data: Int16Array) => void) => void;
 }
 
 const defaultValue: AudioInputContextType = {
@@ -22,8 +17,9 @@ const defaultValue: AudioInputContextType = {
     isSpeaking: false,
     startListening: async () => {},
     stopListening: () => {},
-    audioBuffer: null,
     sampleRate: 44100,
+    subscribe: () => {},
+    unsubscribe: () => {},
 };
 
 export const AudioInputContext =
@@ -38,59 +34,30 @@ export const AudioInputProvider: React.FC<AudioInputProviderProps> = ({
 }) => {
     const [isListening, setIsListening] = useState(false);
     const [isSpeaking, setIsSpeaking] = useDebouncedState(false, 100);
-    const [audioBuffer, setAudioBuffer] = useState<Float32Array | null>(null);
     const [sampleRate, setSampleRate] = useState(44100);
 
     const audioContextRef = useRef<AudioContext | null>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
     const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
-    const processorNodeRef = useRef<AudioWorkletNode | null>(null);
+    const processorNodeRef = useRef<ScriptProcessorNode | null>(null);
     const gainNodeRef = useRef<GainNode | null>(null);
-    const workerRef = useRef<AudioWorker | null>(null);
 
-    useEffect(() => {
-        // Create the Web Worker
-        workerRef.current = new AudioWorkerScript();
-
-        // Set up message handler for the worker
-        workerRef.current.onmessage = (event) => {
-            if (event.data.isSpeaking !== undefined) {
-                setIsSpeaking(event.data.isSpeaking);
-            }
-            if (event.data.type === "silentBuffer") {
-                console.log("Audio buffer contains only silence, discarding.");
-                setAudioBuffer(null);
-            }
-            if (
-                event.data.type === "speechBuffer" ||
-                event.data.type === "finalBuffer"
-            ) {
-                console.log("Received non-silent audio buffer, setting.");
-                setAudioBuffer(event.data.buffer);
-            }
-        };
-
-        // Clean up the worker when the component unmounts
-        return () => {
-            if (workerRef.current) {
-                workerRef.current.terminate();
-            }
-        };
-    }, []);
+    // Use a ref for subscribers instead of state
+    const subscribersRef = useRef<Set<(data: Int16Array) => void>>(new Set());
 
     const stopListening = useCallback(
         (finalize = false) => {
+            console.log("Stopping listening");
             if (!isListening) return;
 
-            if (processorNodeRef.current && sourceNodeRef.current) {
-                sourceNodeRef.current.disconnect(processorNodeRef.current);
+            if (
+                processorNodeRef.current &&
+                sourceNodeRef.current &&
+                gainNodeRef.current
+            ) {
+                sourceNodeRef.current.disconnect(gainNodeRef.current);
+                gainNodeRef.current.disconnect(processorNodeRef.current);
                 processorNodeRef.current.disconnect();
-                processorNodeRef.current.port.onmessage = null;
-            }
-
-            if (gainNodeRef.current) {
-                gainNodeRef.current.disconnect();
-                gainNodeRef.current = null;
             }
 
             if (mediaStreamRef.current) {
@@ -101,11 +68,6 @@ export const AudioInputProvider: React.FC<AudioInputProviderProps> = ({
 
             setIsListening(false);
             setIsSpeaking(false);
-
-            // If finalize is true, ask the worker to finalize the buffer
-            if (finalize && workerRef.current) {
-                workerRef.current.postMessage({ type: "finalizeBuffer" });
-            }
 
             // Close the AudioContext
             if (audioContextRef.current) {
@@ -119,41 +81,14 @@ export const AudioInputProvider: React.FC<AudioInputProviderProps> = ({
     const startListening = useCallback(
         async (gracePeriodMs: number) => {
             if (isListening) return;
-
+            console.log("Starting listening");
             try {
                 // Create AudioContext in response to user gesture
                 const audioContext = new (window.AudioContext ||
                     (window as any).webkitAudioContext)();
                 audioContextRef.current = audioContext;
                 setSampleRate(audioContext.sampleRate);
-
-                // Define the AudioWorkletProcessor code
-                const processorCode = `
-          class AudioProcessor extends AudioWorkletProcessor {
-            process(inputs) {
-              const input = inputs[0];
-              if (input && input.length > 0) {
-                const channelData = input[0];
-                this.port.postMessage(channelData);
-              }
-              return true;
-            }
-          }
-
-          registerProcessor('audio-processor', AudioProcessor);
-        `;
-
-                // Create a Blob URL for the processor code
-                const blob = new Blob([processorCode], {
-                    type: "application/javascript",
-                });
-                const blobURL = URL.createObjectURL(blob);
-
-                // Add the AudioWorklet module
-                await audioContext.audioWorklet.addModule(blobURL);
-
-                // Clean up the Blob URL
-                URL.revokeObjectURL(blobURL);
+                console.log("Sample rate:", audioContext.sampleRate);
 
                 const stream = await navigator.mediaDevices.getUserMedia({
                     audio: true,
@@ -163,33 +98,53 @@ export const AudioInputProvider: React.FC<AudioInputProviderProps> = ({
                 sourceNodeRef.current =
                     audioContext.createMediaStreamSource(stream);
 
-                // Create the AudioWorkletNode
-                processorNodeRef.current = new AudioWorkletNode(
-                    audioContext,
-                    "audio-processor",
-                    {
-                        numberOfOutputs: 1, // Must be 1 to connect to GainNode
-                    }
+                // Create and configure GainNode
+                gainNodeRef.current = audioContext.createGain();
+                gainNodeRef.current.gain.setValueAtTime(
+                    3,
+                    audioContext.currentTime
                 );
 
-                // Create a GainNode with zero gain to prevent audio output
-                gainNodeRef.current = audioContext.createGain();
-                gainNodeRef.current.gain.value = 0;
+                // Create ScriptProcessorNode
+                processorNodeRef.current = audioContext.createScriptProcessor(
+                    4096,
+                    1,
+                    1
+                );
 
-                // Set up the message handler to receive audio data
-                processorNodeRef.current.port.onmessage = (event) => {
-                    if (workerRef.current) {
-                        workerRef.current.postMessage({
-                            type: "processAudio",
-                            data: event.data,
-                        });
+                // Set up the audio processing function
+                processorNodeRef.current.onaudioprocess = (
+                    audioProcessingEvent
+                ) => {
+                    const inputBuffer = audioProcessingEvent.inputBuffer;
+                    const inputData = inputBuffer.getChannelData(0);
+                    const floatAudioData = new Float32Array(inputData);
+
+                    // Convert Float32Array to Int16Array (Linear16 format)
+                    const int16AudioData = new Int16Array(
+                        floatAudioData.length
+                    );
+                    for (let i = 0; i < floatAudioData.length; i++) {
+                        const s = Math.max(-1, Math.min(1, floatAudioData[i]));
+                        int16AudioData[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
                     }
+
+                    // Notify subscribers with the Linear16 data
+                    subscribersRef.current.forEach((callback) =>
+                        callback(int16AudioData)
+                    );
+
+                    // Update isSpeaking based on audio activity
+                    const isActive = floatAudioData.some(
+                        (sample) => Math.abs(sample) > 0.01
+                    );
+                    setIsSpeaking(isActive);
                 };
 
                 // Connect nodes
-                sourceNodeRef.current.connect(processorNodeRef.current);
-                processorNodeRef.current.connect(gainNodeRef.current!);
-                gainNodeRef.current.connect(audioContext.destination);
+                sourceNodeRef.current.connect(gainNodeRef.current);
+                gainNodeRef.current.connect(processorNodeRef.current);
+                processorNodeRef.current.connect(audioContext.destination);
 
                 setIsListening(true);
             } catch (error) {
@@ -199,6 +154,22 @@ export const AudioInputProvider: React.FC<AudioInputProviderProps> = ({
         [isListening]
     );
 
+    /**
+     * Subscribes a callback function to receive audio data updates.
+     * @param callback - The function to be called with new audio data.
+     */
+    const subscribe = useCallback((callback: (data: Int16Array) => void) => {
+        subscribersRef.current.add(callback);
+    }, []);
+
+    /**
+     * Unsubscribes a previously subscribed callback function.
+     * @param callback - The function to be removed from subscribers.
+     */
+    const unsubscribe = useCallback((callback: (data: Int16Array) => void) => {
+        subscribersRef.current.delete(callback);
+    }, []);
+
     return (
         <AudioInputContext.Provider
             value={{
@@ -206,8 +177,9 @@ export const AudioInputProvider: React.FC<AudioInputProviderProps> = ({
                 isSpeaking,
                 startListening,
                 stopListening,
-                audioBuffer,
                 sampleRate,
+                subscribe,
+                unsubscribe,
             }}
         >
             {children}
