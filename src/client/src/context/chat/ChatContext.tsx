@@ -64,6 +64,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         cancel: () => {},
     });
     const liveTranscriptionRef = useRef<string | null>(null);
+    const instructorIdRef = useRef<string | null>(null);
+    const currentPromptRef = useRef<ChatPromptType | null>(null);
 
     // Get the playAudio function from AudioOutputContext
     const { playAudio, stopPlayback, enablePlayback, disablePlayback } =
@@ -296,13 +298,16 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     const handleSetInstructor = (newInstructorId: string) => {
         console.log("Setting instructor to", newInstructorId);
 
-        stopPlayback();
-
         return new Promise<void>((resolve) => {
+            if (newInstructorId === instructorIdRef.current) return;
+            stopPlayback();
+
             console.log("Setting instructor t43234234o", newInstructorId);
             socketRef.current?.emit("set_instructor", {
                 instructor_id: newInstructorId,
             });
+
+            instructorIdRef.current = newInstructorId;
 
             setInstructorId(newInstructorId);
 
@@ -312,9 +317,13 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
     const handleSetPrompt = (newPrompt: ChatPromptType) => {
         return new Promise<void>((resolve) => {
+            if (newPrompt === currentPromptRef.current) return;
+
             socketRef.current?.emit("set_prompt", {
                 prompt_type: newPrompt,
             });
+
+            currentPromptRef.current = newPrompt;
 
             stopPlayback();
             setCurrentPrompt(newPrompt);

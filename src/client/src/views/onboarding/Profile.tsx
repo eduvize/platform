@@ -410,7 +410,7 @@ export const Profile = () => {
             <Divider />
 
             <Group>
-                <Button>Next Lesson</Button>
+                <Button disabled>Next Lesson</Button>
             </Group>
 
             <Space h="xl" />

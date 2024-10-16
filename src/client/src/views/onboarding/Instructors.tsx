@@ -1,17 +1,27 @@
 import { InstructorTrait } from "@atoms";
 import { useInstructors } from "@hooks/instructors";
-import { Group, Space, Stack, Text, Title } from "@mantine/core";
+import {
+    Button,
+    Divider,
+    Group,
+    Space,
+    Stack,
+    Text,
+    Title,
+} from "@mantine/core";
 import { SelectableInstructor } from "@molecules";
 import { useEffect, useMemo, useState } from "react";
 
 interface InstructorsProps {
     value?: string;
     onInstructorSelected: (instructorId: string) => void;
+    onNext: () => void;
 }
 
 export const Instructors = ({
     value,
     onInstructorSelected,
+    onNext,
 }: InstructorsProps) => {
     const instructors = useInstructors();
     const [selectedInstructorId, setSelectedInstructorId] = useState<
@@ -36,6 +46,7 @@ export const Instructors = ({
         if (!instructors.length || selectedInstructorId) return;
 
         setSelectedInstructorId(instructors[0].id);
+        onInstructorSelected(instructors[0].id);
     }, [instructors]);
 
     useEffect(() => {
@@ -105,6 +116,14 @@ export const Instructors = ({
             </Stack>
 
             <Space />
+
+            <Divider />
+
+            <Group>
+                <Button onClick={onNext}>Next Lesson</Button>
+            </Group>
+
+            <Space h="lg" />
         </Stack>
     );
 };

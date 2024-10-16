@@ -1,6 +1,19 @@
-import { Box, Stack, Title, Text, Space } from "@mantine/core";
+import {
+    Box,
+    Stack,
+    Title,
+    Text,
+    Space,
+    Divider,
+    Group,
+    Button,
+} from "@mantine/core";
 
-export const Overview = () => {
+interface OverviewProps {
+    onNext: () => void;
+}
+
+export const Overview = ({ onNext }: OverviewProps) => {
     return (
         <Box pt="lg">
             <Stack>
@@ -64,6 +77,14 @@ export const Overview = () => {
                 </Text>
 
                 <Space />
+
+                <Divider />
+
+                <Group>
+                    <Button onClick={onNext}>Next Lesson</Button>
+                </Group>
+
+                <Space h="lg" />
             </Stack>
         </Box>
     );

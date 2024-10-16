@@ -10,7 +10,8 @@ import {
 } from "@context/onboarding/hooks";
 import { useChat, useToolCallEffect } from "@context/chat";
 import { ChatTool } from "@models/enums";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Welcome } from "./Welcome";
 
 export const Onboarding = () => {
     const { setSection } = useOnboardingFlow();
@@ -18,6 +19,7 @@ export const Onboarding = () => {
     const { setInstructor, instructor } = useOnboardingInstructor();
     const { sendMessage, purge, setPrompt } = useChat();
     const isInstructorVisible = useInstructorVisibility();
+    const [welcome, setWelcome] = useState(true);
 
     const onboardingCourse: CourseDto = {
         id: "onboarding",
@@ -43,7 +45,11 @@ export const Onboarding = () => {
                                 description:
                                     "Get to know Eduvize and how to set up a course.",
                                 order: 0,
-                                content: <Overview />,
+                                content: (
+                                    <Overview
+                                        onNext={() => setSectionOverride(1)}
+                                    />
+                                ),
                             },
                             {
                                 title: "Meet your Instructor",
@@ -53,6 +59,7 @@ export const Onboarding = () => {
                                 content: (
                                     <Instructors
                                         value={instructor?.id}
+                                        onNext={() => setSectionOverride(2)}
                                         onInstructorSelected={(
                                             instructorId
                                         ) => {
@@ -93,6 +100,21 @@ export const Onboarding = () => {
         ],
     };
 
+    useEffect(() => {
+        setSection(sectionOverride);
+
+        if (sectionOverride === 2) {
+            setPrompt("profile-builder").then(() => {
+                sendMessage(
+                    "Event: The user has selected you as their instructor",
+                    true
+                );
+            });
+        } else if (sectionOverride === 1) {
+            setPrompt("onboarding");
+        }
+    }, [sectionOverride]);
+
     useToolCallEffect(ChatTool.OnboardingSelectInstructor, () => {
         setSectionOverride(2);
         setPrompt("profile-builder").then(() => {
@@ -103,6 +125,10 @@ export const Onboarding = () => {
         });
     });
 
+    if (welcome) {
+        return <Welcome onGetStarted={() => setWelcome(false)} />;
+    }
+
     return (
         <Lesson
             hideNumberedLabels
@@ -111,18 +137,6 @@ export const Onboarding = () => {
             course={onboardingCourse}
             section={sectionOverride}
             onSectionChange={(section) => {
-                if (section === 2) {
-                    setPrompt("profile-builder").then(() => {
-                        sendMessage(
-                            "Event: The user has selected you as their instructor",
-                            true
-                        );
-                    });
-                } else if (section === 1) {
-                    setPrompt("onboarding");
-                }
-
-                setSection(section);
                 setSectionOverride(section);
             }}
         />
