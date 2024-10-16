@@ -20,6 +20,7 @@ export const Onboarding = () => {
     const { sendMessage, purge, setPrompt } = useChat();
     const isInstructorVisible = useInstructorVisibility();
     const [welcome, setWelcome] = useState(true);
+    const [isProfileComplete, setIsProfileComplete] = useState(false);
 
     const onboardingCourse: CourseDto = {
         id: "onboarding",
@@ -125,6 +126,10 @@ export const Onboarding = () => {
         });
     });
 
+    useToolCallEffect(ChatTool.ProfileBuilderSetProfileComplete, () => {
+        setIsProfileComplete(true);
+    });
+
     if (welcome) {
         return <Welcome onGetStarted={() => setWelcome(false)} />;
     }
@@ -137,6 +142,12 @@ export const Onboarding = () => {
             course={onboardingCourse}
             section={sectionOverride}
             onSectionChange={(section) => {
+                if (Math.abs(section - sectionOverride) > 1) {
+                    return false;
+                }
+
+                if (section > 2 && !isProfileComplete) return false;
+
                 setSectionOverride(section);
             }}
         />

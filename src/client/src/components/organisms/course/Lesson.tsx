@@ -22,7 +22,7 @@ interface ComponentProps extends LessonDto {
     hideNumberedLabels?: boolean;
     hideInstructor?: boolean;
     section?: number;
-    onSectionChange?: (section: number) => void;
+    onSectionChange?: (section: number) => boolean | undefined;
 }
 
 export const Lesson = (props: ComponentProps) => {
@@ -98,10 +98,13 @@ export const Lesson = (props: ComponentProps) => {
                                     setSection(sections.length - 1);
                                 }}
                                 onChangeSection={(section) => {
-                                    setSection(section);
-                                    setShowExercise(false);
+                                    const shouldContinue =
+                                        onSectionChange?.(section);
 
-                                    onSectionChange?.(section);
+                                    if (shouldContinue) {
+                                        setSection(section);
+                                        setShowExercise(false);
+                                    }
                                 }}
                             />
                         </Box>
