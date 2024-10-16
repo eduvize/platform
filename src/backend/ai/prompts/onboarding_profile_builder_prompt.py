@@ -24,6 +24,10 @@ class OnboardingProfileBuilderPrompt(BasePrompt):
     @tool("Sets the disciplines of the user's profile (hobbyist, student, professional)", is_public=True)
     async def set_disciplines(self, disciplines: List[Literal["hobbyist", "student", "professional"]]) -> None:
         return "Disciplines set"
+    
+    @tool("Marks the profile as complete, allowing them to move on to the next section", is_public=True)
+    async def set_profile_complete(self) -> None:
+        return "Profile complete"
         
     async def get_responses(
         self,
@@ -71,12 +75,21 @@ class OnboardingProfileBuilderPrompt(BasePrompt):
         - Utilize appropriate tools to add information to the profile when users mention programming languages, libraries, names, or other details.
         - Use all available tools to populate the profile based on uploaded resumes.
         - If you use a tool, you **must acknowledge it**.
+        - **DO NOT** use any tools in response to a message that starts with 'Event:'.
 
         **Tool Usage:**
         - Proactively **utilize available tools** as new information is received.
         - Ensure full names are used when adding programming languages or libraries.
         - **Confirm both first and last names** before using the `set_name` tool.
         - Briefly **acknowledge actions after using a tool** to maintain conversation flow.
+        
+        **End of Profile:**
+        - Once the user has completed their profile, use the `set_profile_complete` tool to mark the profile as complete.
+        - A **finished profile** can be defined as:
+            - A profile photo is set
+            - A first and last name is set
+            - The user's experience / disciplines are set
+            - There is at least one programming language set
         """.strip())
         
         for message in history:

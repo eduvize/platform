@@ -4,4 +4,5 @@ export enum ChatTool {
     ProfileBuilderUpdateLibraries = "update_libraries",
     ProfileBuilderSetDisciplines = "set_disciplines",
     ProfileBuilderSetName = "set_name",
+    ProfileBuilderSetProfileComplete = "set_profile_complete",
 }

@@ -38,6 +38,7 @@ export const Profile = () => {
     const resumeInputRef = useRef<HTMLInputElement>(null);
     const [languageInputValue, setLanguageInputValue] = useState("");
     const [frameworkInputValue, setFrameworkInputValue] = useState("");
+    const [isProfileComplete, setIsProfileComplete] = useState(false);
 
     const handleSendLearningCapacityEvent = useDebouncedCallback(() => {
         sendEvent(
@@ -179,6 +180,10 @@ export const Profile = () => {
     useToolCallEffect(ChatTool.ProfileBuilderSetName, (result) => {
         setFirstName(result.first_name);
         setLastName(result.last_name);
+    });
+
+    useToolCallEffect(ChatTool.ProfileBuilderSetProfileComplete, (result) => {
+        setIsProfileComplete(true);
     });
 
     return (
@@ -342,6 +347,8 @@ export const Profile = () => {
                             }
                             onKeyDown={(evt) => {
                                 if (evt.key === "Enter") {
+                                    if (languageInputValue.length === 0) return;
+
                                     evt.preventDefault();
 
                                     setSkills((prev) => [
@@ -387,6 +394,9 @@ export const Profile = () => {
                             }
                             onKeyDown={(evt) => {
                                 if (evt.key === "Enter") {
+                                    if (frameworkInputValue.length === 0)
+                                        return;
+
                                     evt.preventDefault();
 
                                     setSkills((prev) => [
@@ -410,7 +420,7 @@ export const Profile = () => {
             <Divider />
 
             <Group>
-                <Button disabled>Next Lesson</Button>
+                <Button disabled={!isProfileComplete}>Next Lesson</Button>
             </Group>
 
             <Space h="xl" />
