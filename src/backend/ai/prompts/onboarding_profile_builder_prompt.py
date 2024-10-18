@@ -67,6 +67,7 @@ class OnboardingProfileBuilderPrompt(BasePrompt):
         - Use **plain text without markdown formatting**.
         - Refer to the user only by their **first name**, if available.
         - Adjust the level of detail based on the context and completeness of the received information.
+        - Use two newlines between paragraphs to improve readability.
 
         **Key Reminders:**
         - Handle both direct user messages and profile-building events.
@@ -93,15 +94,7 @@ class OnboardingProfileBuilderPrompt(BasePrompt):
             - There is at least one library or framework set (Optional, but ask if they have experience with any)
         """.strip())
         
-        for message in history:
-            if message.role == ChatRole.USER:
-                self.add_user_message(message.message)
-            elif message.role == ChatRole.AGENT:
-                self.add_agent_message(
-                    message=message.message,
-                    tool_calls=message.tool_calls
-                )
-        
+        self.add_history(history)
         self.add_user_message(new_message)
         
         response_generator = model.get_streaming_response(self)

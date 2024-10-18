@@ -1,4 +1,5 @@
 import base64
+import re
 from typing import AsyncIterator
 from elevenlabs import AsyncElevenLabs, VoiceSettings
 from config import get_elevenlabs_api_key, get_openai_key
@@ -16,24 +17,23 @@ class VoiceService:
         
     async def get_speech_stream(self, text: str, voice_id: str) -> AsyncIterator[bytes]:
         """
-        Generate a Text-to-Speech URL using the ElevenLabs API.
+        Generate a Text-to-Speech stream using the ElevenLabs API, removing markdown formatting.
 
         Args:
-            text (str): The text to be converted to speech.
-            voice_id (str, optional): The ID of the voice to use. Defaults to a specific voice ID.
+            text (str): The text to be converted to speech (may contain markdown).
+            voice_id (str): The ID of the voice to use.
 
         Returns:
-            str: The URL of the generated audio file.
-
-        Raises:
-            Exception: If there's an error in generating the TTS URL.
+            AsyncIterator[bytes]: An async iterator of audio bytes.
         """
+        # Remove markdown formatting
+        clean_text = self.remove_markdown(text)
         
         return self.elevenlabs.text_to_speech.convert(
             voice_id=voice_id,
             optimize_streaming_latency="0",
             output_format="mp3_22050_32",
-            text=text,
+            text=clean_text,
             model_id="eleven_turbo_v2",
             voice_settings=VoiceSettings(
                 stability=0.1,
@@ -42,6 +42,37 @@ class VoiceService:
             )
         )
         
+    @staticmethod
+    def remove_markdown(text: str) -> str:
+        """
+        Remove markdown formatting from the given text.
+
+        Args:
+            text (str): The text containing markdown formatting.
+
+        Returns:
+            str: The text with markdown formatting removed.
+        """
+        # Remove bold and italic
+        text = re.sub(r'\*{1,2}(.*?)\*{1,2}', r'\1', text)
+        
+        # Remove links
+        text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
+        
+        # Remove headers
+        text = re.sub(r'^#{1,6}\s', '', text, flags=re.MULTILINE)
+        
+        # Remove code blocks
+        text = re.sub(r'```[\s\S]*?```', '', text)
+        
+        # Remove inline code
+        text = re.sub(r'`([^`]+)`', r'\1', text)
+        
+        # Remove blockquotes
+        text = re.sub(r'^\s*>\s', '', text, flags=re.MULTILINE)
+        
+        return text.strip()
+
     async def get_base64_chunk(self, text: str, voice_id: str) -> str:
         """
         Collects all the bytes from the speech stream and returns a base64 encoded string.

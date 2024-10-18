@@ -84,8 +84,29 @@ class ToolWrapper(BaseTool):
         elif param_type == bool:
             return {"type": "boolean"}
         
+        # Check for generic types
+        origin = get_origin(param_type)
+        if origin is not None:
+            if origin == list or origin == List:
+                item_type = get_args(param_type)[0]
+                return {
+                    "type": "array",
+                    "items": self._get_property_schema(item_type)
+                }
+            elif origin == Union:
+                # Handle Optional types (Union[T, None])
+                types = get_args(param_type)
+                if len(types) == 2 and types[1] == type(None):
+                    return self._get_property_schema(types[0])
+            elif origin == Literal:
+                literal_values = get_args(param_type)
+                return {
+                    "type": "string",
+                    "enum": list(literal_values)
+                }
+        
         # Check for more complex types
-        elif isinstance(param_type, type):
+        if isinstance(param_type, type):
             if issubclass(param_type, BaseModel):
                 inline_schema = param_type.model_json_schema()
                 inline_schema = pydantic_inline_ref_schema(inline_schema)
@@ -96,36 +117,6 @@ class ToolWrapper(BaseTool):
                     "enum": [e.value for e in param_type]
                 }
         
-        # Check for generic types
-        origin = get_origin(param_type)
-        if origin == list or origin == List:
-            item_type = get_args(param_type)[0]
-            item_origin = get_origin(item_type)
-            if item_origin == Literal:
-                literal_values = get_args(item_type)
-                return {
-                    "type": "array",
-                    "items": {
-                        "type": "string",
-                        "enum": list(literal_values)
-                    }
-                }
-            else:
-                return {
-                    "type": "array",
-                    "items": self._get_property_schema(item_type)
-                }
-        elif origin == Union:
-            # Handle Optional types (Union[T, None])
-            types = get_args(param_type)
-            if len(types) == 2 and types[1] == type(None):
-                return self._get_property_schema(types[0])
-        elif origin == Literal:
-            literal_values = get_args(param_type)
-            return {
-                "type": "string",
-                "enum": list(literal_values)
-            }
-        
         # Default case
+        logging.warning(f"Unknown type: {param_type}. Returning empty schema.")
         return {}  # Default to an empty schema for unknown types

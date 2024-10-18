@@ -41,3 +41,13 @@ class BasePrompt:
         
     def add_agent_message(self, message: str, tool_calls: Optional[List[BaseToolCallWithResult]] = None) -> None:
         self.messages.append(BaseChatMessage(role=ChatRole.AGENT, message=message, tool_calls=tool_calls or []))
+
+    def add_history(self, history: List[BaseChatMessage]) -> None:
+        for message in history:
+            if message.role == ChatRole.USER:
+                self.add_user_message(message.message)
+            elif message.role == ChatRole.AGENT:
+                self.add_agent_message(
+                    message=message.message,
+                    tool_calls=message.tool_calls
+                )

@@ -149,6 +149,7 @@ class ChatNamespace(AsyncNamespace):
             data (dict): Data containing the prompt type.
             chat_service (ChatService): Chat service dependency.
         """
+        logging.info(data)
         prompt_type = data.get("prompt_type")
         session = await self.get_session(sid)
         session["prompt_type"] = PromptType(prompt_type)
@@ -179,15 +180,21 @@ class ChatNamespace(AsyncNamespace):
             **kwargs: Additional keyword arguments.
         """
         transcript = result.channel.alternatives[0].transcript
-        is_final = result.is_final
         
-        if not transcript:
+        if len(transcript) < 2:
             return
         
         await self.emit("voice_transcript", transcript, to=connection.sid)
         
-        if is_final:
-            await self.emit("voice_end", to=connection.sid)
+    async def on_deepgram_utterance_end(self, connection: AsyncListenWebSocketClient, **kwargs):
+        """
+        Handle Deepgram utterance end.
+
+        Args:
+            connection (AsyncListenWebSocketClient): Deepgram connection.
+            **kwargs: Additional keyword arguments.
+        """
+        await self.emit("voice_end", to=connection.sid)
         
     async def on_deepgram_error(self, connection: AsyncListenWebSocketClient, error: str, **kwargs):
         """
@@ -235,10 +242,13 @@ class ChatNamespace(AsyncNamespace):
             sample_rate=sample_rate,
             channels=1,
             model="nova-2",
-            encoding="linear16"
+            encoding="linear16",
+            utterance_end_ms=1000,
+            endpointing=500
         )
         
         connection.on(LiveTranscriptionEvents.Transcript, self.on_deepgram_message)
+        connection.on(LiveTranscriptionEvents.UtteranceEnd, self.on_deepgram_utterance_end)
         connection.on(LiveTranscriptionEvents.Error, self.on_deepgram_error)
         await connection.start(options)
         

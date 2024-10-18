@@ -12,6 +12,7 @@ import { useChat, useToolCallEffect } from "@context/chat";
 import { ChatTool } from "@models/enums";
 import { useEffect, useState } from "react";
 import { Welcome } from "./Welcome";
+import { FirstCourse } from "./FirstCourse";
 
 export const Onboarding = () => {
     const { setSection } = useOnboardingFlow();
@@ -83,14 +84,18 @@ export const Onboarding = () => {
                                 description:
                                     "Walk through a series of exercises to completely customize your Eduvize experience. We want to learn about you, and how you best learn.",
                                 order: 2,
-                                content: <Profile />,
+                                content: (
+                                    <Profile
+                                        onNext={() => setSectionOverride(3)}
+                                    />
+                                ),
                             },
                             {
                                 title: "Your First Course",
                                 description:
                                     "To build a Course, we'll start by talking to your instructor about what you want to learn.",
                                 order: 3,
-                                content: "Setup section 4",
+                                content: <FirstCourse />,
                             },
                         ],
                         order: 0,
@@ -104,15 +109,28 @@ export const Onboarding = () => {
     useEffect(() => {
         setSection(sectionOverride);
 
-        if (sectionOverride === 2) {
-            setPrompt("profile-builder").then(() => {
-                sendMessage(
-                    "Event: The user has selected you as their instructor",
-                    true
-                );
-            });
-        } else if (sectionOverride === 1) {
-            setPrompt("onboarding");
+        switch (sectionOverride) {
+            case 1:
+                setPrompt("onboarding").then(() => {
+                    sendMessage("Hello!", true);
+                });
+                break;
+            case 2:
+                setPrompt("profile-builder").then(() => {
+                    sendMessage(
+                        "Event: The user has selected you as their instructor",
+                        true
+                    );
+                });
+                break;
+            case 3:
+                setPrompt("course-creation").then(() => {
+                    sendMessage(
+                        "Hello! I'd like to get started on my first course.",
+                        true
+                    );
+                });
+                break;
         }
     }, [sectionOverride]);
 

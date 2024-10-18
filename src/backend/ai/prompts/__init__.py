@@ -8,3 +8,4 @@ from .select_exercise_lessons_prompt import SelectExerciseLessonsPrompt
 from .lesson_discussion_prompt import LessonDiscussionPrompt
 from .onboarding_instructor_selection_prompt import OnboardingInstructorSelectionPrompt
 from .onboarding_profile_builder_prompt import OnboardingProfileBuilderPrompt
+from .course_creation_prompt import CourseCreationPrompt

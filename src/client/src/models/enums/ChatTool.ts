@@ -5,4 +5,8 @@ export enum ChatTool {
     ProfileBuilderSetDisciplines = "set_disciplines",
     ProfileBuilderSetName = "set_name",
     ProfileBuilderSetProfileComplete = "set_profile_complete",
+    CourseBuilderSetCourseTitle = "set_course_title",
+    CourseBuilderSetCourseDescription = "set_course_description",
+    CourseBuilderSetCourseKeyOutcomes = "set_course_key_outcomes",
+    CourseBuilderSetCourseTopics = "set_course_topics",
 }

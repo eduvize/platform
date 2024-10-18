@@ -108,12 +108,14 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
                 if (message.text) {
                     setMessages((prev) => {
-                        const lastMessage = prev[prev.length - 1];
+                        const lastMessage = prev.filter(
+                            (x) => x.id != "live_transcription"
+                        )[prev.length - 1];
 
                         if (
                             lastMessage &&
                             !lastMessage.is_user &&
-                            !messageCompleteRef.current
+                            lastMessage.id === message.message_id
                         ) {
                             return [
                                 ...prev.slice(0, -1),
@@ -127,7 +129,6 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                         }
 
                         stopPlayback();
-                        messageCompleteRef.current = false;
 
                         return [
                             ...prev,
@@ -167,7 +168,6 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
         socketRef.current.on("message_complete", () => {
             setIsProcessing(false);
-            messageCompleteRef.current = true;
         });
 
         socketRef.current.on("voice_transcript", (transcript: string) => {

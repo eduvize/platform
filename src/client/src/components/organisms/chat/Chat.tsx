@@ -140,7 +140,7 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
         // Split messages into multiple messages if newlines are encountered
         const splitMessages = useMemo(() => {
             return messages.flatMap((message) => {
-                const contentChunks = message.content.split("\n");
+                const contentChunks = message.content.split("\n\n");
                 return contentChunks
                     .filter((chunk) => chunk.trim() !== "") // Filter out blank messages
                     .map((chunk) => ({

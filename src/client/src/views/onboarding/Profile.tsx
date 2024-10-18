@@ -25,7 +25,11 @@ interface Skill {
     proficiency: number | null;
 }
 
-export const Profile = () => {
+interface ProfileProps {
+    onNext: () => void;
+}
+
+export const Profile = ({ onNext }: ProfileProps) => {
     const { sendEvent } = useOnboardingEvents();
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -420,7 +424,9 @@ export const Profile = () => {
             <Divider />
 
             <Group>
-                <Button disabled={!isProfileComplete}>Next Lesson</Button>
+                <Button disabled={!isProfileComplete} onClick={onNext}>
+                    Next Lesson
+                </Button>
             </Group>
 
             <Space h="xl" />
