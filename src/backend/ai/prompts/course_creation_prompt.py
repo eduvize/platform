@@ -20,15 +20,15 @@ class CourseCreationPrompt(BasePrompt):
     
     @tool("Sets the description for the course", is_public=True)
     async def set_course_description(self, description: str):
-        return "Description set"
+        return "Description set. Be sure to consider updating the title if applicable."
     
     @tool("Sets the key outcomes for the course", is_public=True)
     async def set_course_key_outcomes(self, outcomes: list[str]):
-        return "Key outcomes set"
+        return "Key outcomes set. Before moving on to topics, be sure to ask the user if they would like to change anything."
     
     @tool("Sets the topics for the course", is_public=True)
     async def set_course_topics(self, topics: list[str]):
-        return "Topics set"
+        return "Topics set. If applicable, be sure to update the key outcomes list to better align with the topics."
     
     async def get_responses(
         self,
@@ -71,6 +71,7 @@ You **cannot move to a different step** until the user **acknowledges** they are
 
 **Interaction Guidelines:**
 - The user may not know what they are looking for, so you should be helpful when defining the key outcomes.
+- **DO NOT** rush the user through the process. Take the time to understand their needs and goals.
 - Strive to understand what content will effectively accomplish the defined key outcomes.
 - After each change to the course's information, use the appropriate tools to synchronize the changes with the user's UI.
 - Ensure that the course title and description evolve dynamically with the course as it is created.
