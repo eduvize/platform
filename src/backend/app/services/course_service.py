@@ -66,7 +66,10 @@ class CourseService:
     async def generate_course(
         self,
         user_id: str,
-        plan: CoursePlanDto
+        course_title: str,
+        course_summary: str,
+        key_outcomes: list[str],
+        topics: list[str]
     ) -> None:
         """
         Generates a course outline and cover image based on requirements. Submits a message
@@ -74,7 +77,10 @@ class CourseService:
 
         Args:
             user_id (str): The ID of the user
-            plan (CoursePlanDto): The course plan object
+            course_title (str): The title of the course
+            course_summary (str): A summary of the course
+            key_outcomes (list[str]): The key outcomes of the course
+            topics (list[str]): The topics of the course
         """
         
         user = await self.user_service.get_user("id", user_id, ["profile.*"])

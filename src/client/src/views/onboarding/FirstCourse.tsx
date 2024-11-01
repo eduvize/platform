@@ -39,6 +39,15 @@ export const FirstCourse = () => {
         setTopics(result.topics);
     });
 
+    const areAllStepsComplete = useMemo(() => {
+        return (
+            courseTitle.length > 0 &&
+            courseDescription.length > 0 &&
+            keyOutcomes.length > 0 &&
+            topics.length > 0
+        );
+    }, [courseTitle, courseDescription, keyOutcomes, topics]);
+
     return (
         <Stack pt="lg" gap="lg">
             <Title order={2} fw={400} c="white">
@@ -116,7 +125,7 @@ export const FirstCourse = () => {
             <Divider />
 
             <Group>
-                <Button disabled>Complete Course</Button>
+                <Button disabled={!areAllStepsComplete}>Complete Course</Button>
             </Group>
 
             <Space h="xl" />

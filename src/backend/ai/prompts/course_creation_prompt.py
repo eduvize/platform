@@ -30,6 +30,10 @@ class CourseCreationPrompt(BasePrompt):
     async def set_course_topics(self, topics: list[str]):
         return "Topics set. If applicable, be sure to update the key outcomes list to better align with the topics."
     
+    @tool("Marks the course as complete, sending it to get generated", is_public=True)
+    async def mark_course_as_complete(self, course_title: str, key_outcomes: list[str], topics: list[str]):
+        return "Course marked as complete. It will now be sent to get generated."
+    
     async def get_responses(
         self,
         instructor: Instructor,
@@ -54,6 +58,7 @@ Follow these steps to create the course:
 2. **Key Outcomes:** Collaborate with the user to define the key outcomes they aim to achieve by completing the course.
 3. **Topics:** Define a high level outline of the course's modules based on the key outcomes.
 4. **Review:** Review the details defined by your tools with the user and decide if anything needs to be changed.
+5. **Submit:** Once the user is ready to submit their course plan, use the `mark_course_as_complete` tool to send it to get generated.
 You **cannot move to a different step** until the user **acknowledges** they are ready to move to the next step.
 
 **Example Key Outcomes:**
@@ -94,6 +99,7 @@ You **cannot move to a different step** until the user **acknowledges** they are
 - Use the `set_course_description` tool to set the description of the course as soon as you know the subject.
 - Use the `set_course_key_outcomes` tool to set the key outcomes as they are defined and agreed upon by the user.
 - Use the `set_course_topics` tool to define the modules that will be included in the course.
+- Use the `mark_course_as_complete` tool once the user is ready to submit their course plan.
 - You should update the title and description as the key outcomes and other information is defined.
 
 **Example Course Title:**
