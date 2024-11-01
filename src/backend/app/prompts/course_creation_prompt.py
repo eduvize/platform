@@ -5,6 +5,11 @@ from ai.util.tool_decorator import tool
 from ai.common.base_message import BaseChatMessage
 from domain.dto.ai.completion_chunk import CompletionChunk
 from domain.schema.instructors.instructor import Instructor
+from app.services.course_service import CourseService
+from app.services.user_service import UserService
+from app.services.user_onboarding_service import UserOnboardingService
+from app.repositories.user_repository import UserRepository
+from app.repositories.course_repository import CourseRepository
 
 class Module(BaseModel):
     title: str
@@ -31,17 +36,34 @@ class CourseCreationPrompt(BasePrompt):
         return "Topics set. If applicable, be sure to update the key outcomes list to better align with the topics."
     
     @tool("Marks the course as complete, sending it to get generated", is_public=True)
-    async def mark_course_as_complete(self, course_title: str, key_outcomes: list[str], topics: list[str]):
+    async def mark_course_as_complete(self, course_title: str, course_description: str, key_outcomes: list[str], topics: list[str]):
+        user_repository = UserRepository()
+        course_repository = CourseRepository()
+        user_onboarding_service = UserOnboardingService(user_repository)
+        user_service = UserService(user_onboarding_service, user_repository)
+        course_service = CourseService(user_service, course_repository)
+        
+        await course_service.generate_course(
+            user_id=self.user_id,
+            course_title=course_title,
+            course_summary=course_description,
+            key_outcomes=key_outcomes,
+            topics=topics
+        )
+        
         return "Course marked as complete. It will now be sent to get generated."
     
     async def get_responses(
         self,
+        user_id: str,
         instructor: Instructor,
         history: List[BaseChatMessage],
         new_message: str
     ) -> AsyncGenerator[CompletionChunk, None]:
         from ai.models.gpt_4o import GPT4o
         model = GPT4o()
+        
+        self.user_id = user_id
         
         self.set_system_prompt(f"""
 **Role and Purpose:**

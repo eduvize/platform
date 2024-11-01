@@ -20,7 +20,7 @@ class KafkaConsumer:
     def __init__(self, topic: Topic, group_id: str) -> None:
         self.topic = topic.value
         self.group_id = group_id
-        self.kafka_config = get_kafka_configuration()
+        self.kafka_config = get_kafka_configuration("consumer")
         self.consumer = None
         self._connect_consumer()
 

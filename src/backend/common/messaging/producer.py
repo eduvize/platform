@@ -7,7 +7,7 @@ class KafkaProducer:
     producer: AIOKafkaProducer
     
     async def __aenter__(self):
-        config = get_kafka_configuration()
+        config = get_kafka_configuration("producer")
         self.producer = AIOKafkaProducer(**config)
         await self.producer.start()
         return self

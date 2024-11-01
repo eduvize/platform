@@ -38,12 +38,22 @@ class ToolWrapper(BaseTool):
     def __init__(self, func: Callable[..., Awaitable[Any]], description: str):
         super().__init__(func.__name__, description)
         self.func = func
+        self.param_types = get_type_hints(func)
         self.use_schema(self._generate_schema())
         self.is_public = False
         self.force_if: Optional[Callable[['prompts.base_prompt.BasePrompt'], bool]] = None
 
     async def process(self, instance: Any, arguments: dict) -> Any:
-        return await self.func(instance, **arguments)
+        # Deserialize arguments to their respective types if they are BaseModel
+        deserialized_args = {}
+        for name, value in arguments.items():
+            param_type = self.param_types.get(name)
+            if param_type and isinstance(value, dict) and issubclass(param_type, BaseModel):
+                deserialized_args[name] = param_type.model_validate(value)
+            else:
+                deserialized_args[name] = value
+                
+        return await self.func(instance, **deserialized_args)
 
     def _generate_schema(self) -> dict:
         params = inspect.signature(self.func).parameters

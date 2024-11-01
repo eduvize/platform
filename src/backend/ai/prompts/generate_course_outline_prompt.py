@@ -1,10 +1,7 @@
 import logging
 from typing import Optional
-
 from pydantic import BaseModel, field_validator
 from ai.prompts.base_prompt import BasePrompt
-from domain.dto.courses.course_plan import CoursePlanDto
-from .get_additional_inputs_prompt import get_course_plan_description
 from ai.util.tool_decorator import tool
 
 class SectionOutline(BaseModel):
@@ -65,20 +62,21 @@ You are an AI designed to create structured course syllabi based on user informa
     @tool("Provide a structured plan for the course syllabus", force_if=lambda self: self.planning_complete)
     async def provide_course_outline(self, outline: CourseOutline) -> CourseOutline:
         self.outline = outline
+        return "Course outline provided"
     
-    async def get_outline(self, plan: CoursePlanDto, profile_text: str) -> CourseOutline:
+    async def get_outline(self, course_title: str, course_summary: str, key_outcomes: list[str], topics: list[str], profile_text: str) -> CourseOutline:
         from ai.models.gpt_4o import GPT4o
         model = GPT4o()
         
-        plan_text = get_course_plan_description(plan)
+        outcomes_string = "\n- ".join(key_outcomes)
+        topics_string = "\n- ".join(topics)
         
-        if plan.followup_answers:
-            plan_text += "\n\nFollow-up Answers:\n"
-            for key, value in plan.followup_answers.items():
-                if isinstance(value, list):
-                    value = ", ".join(value)
-                    
-                plan_text += f"{key}: {value}\n"
+        plan_text = f"""
+Course Title: {course_title}
+Course Summary: {course_summary}
+Key Outcomes: {outcomes_string}
+Topics: {topics_string}
+""".strip()
         
         logging.info(f"Profile Text: {profile_text}")
         logging.info(f"Plan Text: {plan_text}")

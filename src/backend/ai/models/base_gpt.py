@@ -192,7 +192,7 @@ class BaseGPT(BaseModel):
                 for record, result in zip(tool_call_dict, tool_results):
                     logging.info(f"Collecting result for {record.name}")
                     if isinstance(result, Exception):
-                        logging.error(f"Error executing tool: {record.name}: {result}")
+                        logging.exception(f"Error executing tool: {record.name}: {result}")
                         record.result = f"Error: {result}"
                         record.errors = True
                     else:

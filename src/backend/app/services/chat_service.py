@@ -15,7 +15,8 @@ from domain.schema.instructors.instructor import Instructor
 from domain.dto.chat.chat_message import ChatMessageDto
 from domain.dto.ai import CompletionChunk
 from domain.enums.chat_enums import PromptType
-from ai.prompts import LessonDiscussionPrompt, OnboardingInstructorSelectionPrompt, OnboardingProfileBuilderPrompt, CourseCreationPrompt
+from ai.prompts import LessonDiscussionPrompt, OnboardingInstructorSelectionPrompt, OnboardingProfileBuilderPrompt
+from app.prompts import CourseCreationPrompt
 
 logger = logging.getLogger("ChatService")
 
@@ -118,6 +119,7 @@ class ChatService:
             yield CompletionChunk.model_construct(received_text=message)
 
         response_generator, final_messages_future = await self.get_prompt_generator(
+            user_id=str(user.id),
             session=session,
             instructor=instructor,
             prompt_type=prompt_type,
@@ -128,7 +130,8 @@ class ChatService:
         audio_queue = asyncio.Queue()
         
         # Start background task for audio generation
-        audio_task = asyncio.create_task(self._generate_audio(speech_queue, audio_queue, instructor.voice_id))
+        if expect_audio_response:
+            audio_task = asyncio.create_task(self._generate_audio(speech_queue, audio_queue, instructor.voice_id))
         
         speech_buffer = ""
         word_count = 0
@@ -259,6 +262,7 @@ class ChatService:
                 
     async def get_prompt_generator(
         self,
+        user_id: str,
         session: ChatSession,
         instructor: Instructor,
         prompt_type: PromptType,
@@ -322,6 +326,7 @@ class ChatService:
                 elif prompt_type == PromptType.COURSE_CREATION:
                     prompt = CourseCreationPrompt()
                     async for chunk, responses, is_final in await prompt.get_responses(
+                        user_id=user_id,
                         instructor=instructor,
                         history=model_messages,
                         new_message=input_msg

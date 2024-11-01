@@ -16,7 +16,7 @@ from domain.schema.courses import Course, Lesson, CourseExercise
 from domain.dto.courses import CourseDto, CourseListingDto, CoursePlanDto, CourseProgressionDto
 from domain.dto.profile import UserProfileDto
 from domain.topics import CourseGenerationTopic
-from ai.prompts import GetAdditionalInputsPrompt, GenerateCourseOutlinePrompt, GenerateExercisesPrompt
+from ai.prompts import GenerateCourseOutlinePrompt, GenerateExercisesPrompt
 
 class CourseService:
     user_service: UserService
@@ -31,37 +31,6 @@ class CourseService:
         self.user_service = user_service
         self.course_repo = course_repo
         self.openai = OpenAI(api_key=get_openai_key())
-    
-    async def get_additional_inputs(
-        self, 
-        user_id: str,
-        plan: CoursePlanDto
-    ):
-        """
-        Comes up with additional questions to ask the user based on basic information provided
-
-        Args:
-            user_id (str): The ID of the user
-            plan (CoursePlanDto): The course plan object
-
-        Returns:
-            AdditionalInputs: An object containing additional inputs to provide to the user through the frontend
-        """
-        
-        user = await self.user_service.get_user("id", user_id, ["profile.*"])
-        
-        if user is None:
-            raise ValueError("User not found")
-        
-        profile_dto = UserProfileDto.model_validate(user.profile)
-        user_profile_text = get_user_profile_text(profile_dto)
-        
-        prompt = GetAdditionalInputsPrompt()
-        
-        return await prompt.get_inputs(
-            plan=plan,
-            profile_text=user_profile_text
-        )
         
     async def generate_course(
         self,
@@ -94,7 +63,10 @@ class CourseService:
         # Generate a course outline based on user requirements and profile
         prompt = GenerateCourseOutlinePrompt()
         outline = await prompt.get_outline(
-            plan=plan,
+            course_title=course_title,
+            course_summary=course_summary,
+            key_outcomes=key_outcomes,
+            topics=topics,
             profile_text=user_profile_text
         )
 
@@ -118,16 +90,15 @@ class CourseService:
             course_dto=course_dto
         )
         
-        kafka_producer = KafkaProducer()
-        
-        await kafka_producer.produce_message(
-            topic=Topic.GENERATE_NEW_COURSE,
-            message=CourseGenerationTopic(
-                user_id=uuid.UUID(user_id),
-                course_id=course_id,
-                course_outline=outline   
-            ) 
-        )
+        async with KafkaProducer() as kafka_producer:
+            await kafka_producer.produce_message(
+                topic=Topic.GENERATE_NEW_COURSE,
+                message=CourseGenerationTopic(
+                    user_id=uuid.UUID(user_id),
+                    course_id=course_id,
+                    course_outline=outline   
+                ) 
+            )
         
     async def mark_lesson_complete(
         self,
