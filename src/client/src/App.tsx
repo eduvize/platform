@@ -61,12 +61,6 @@ const router = createBrowserRouter([
                 ],
             },
             {
-                path: "profile",
-                handle: "profile",
-                element: <DashboardOrAuth />,
-            },
-            { path: "jobs", handle: "jobs", element: <DashboardOrAuth /> },
-            {
                 path: "account/*",
                 element: <DashboardOrAuth />,
                 children: [

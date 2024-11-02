@@ -99,7 +99,7 @@ class ChatService:
         audio: Optional[str] = None,
         expect_audio_response: bool = False
     ) -> AsyncGenerator[CompletionChunk, None]:
-        user = await self.user_service.get_user("id", user_id, ["profile.*"])
+        user = await self.user_service.get_user("id", user_id)
         
         if not user:
             raise ValueError("User not found")

@@ -2,11 +2,9 @@ from datetime import datetime
 from typing import Literal, Optional
 from sqlmodel import Field, Relationship, SQLModel
 import domain.schema as schema
-from domain.schema.profile import UserProfileHobby, UserProfileStudent, UserProfileProfessional
 import uuid
 
 UserIdentifiers = Literal["id", "username", "email", "verification_code"]
-UserIncludes = Literal["profile"]
 
 class UserBase(SQLModel):
     username: str                               = Field(unique=True)
@@ -25,7 +23,6 @@ class User(UserBase, table=True):
     
     last_login_at_utc: datetime         = Field(default_factory=datetime.utcnow)
     
-    profile: "UserProfile"                                          = Relationship(back_populates="user")
     external_auth: Optional["UserExternalAuth"]                     = Relationship(back_populates="user")
     courses: list["schema.courses.course.Course"]                   = Relationship(back_populates="user")
     
@@ -39,54 +36,3 @@ class UserExternalAuth(SQLModel, table=True):
     created_at_utc: datetime            = Field(default_factory=datetime.utcnow)
     
     user: User                          = Relationship(back_populates="external_auth")
-
-class UserProfileBase(SQLModel):
-    first_name: Optional[str]                           = Field()
-    last_name: Optional[str]                            = Field()
-    birthdate: Optional[datetime]                       = Field()
-    bio: Optional[str]                                  = Field()
-    github_username: Optional[str]                      = Field()
-    avatar_url: Optional[str]                           = Field()
-
-class UserProfile(UserProfileBase, table=True):
-    __tablename__ = "user_profiles"
-    
-    id: uuid.UUID                                       = Field(default_factory=uuid.uuid4, primary_key=True)
-    user_id: uuid.UUID                                  = Field(default=None, foreign_key="users.id")
-    last_updated_at_utc: datetime                       = Field(default_factory=datetime.utcnow, nullable=False)
-    
-    disciplines: list["UserProfileDiscipline"]          = Relationship(back_populates="user_profile")
-    skills: list["UserProfileSkill"]                    = Relationship(back_populates="user_profile")
-    
-    hobby: Optional["UserProfileHobby"]                 = Relationship(back_populates="user_profile")
-    student: Optional["UserProfileStudent"]             = Relationship(back_populates="user_profile")
-    professional: Optional["UserProfileProfessional"]   = Relationship(back_populates="user_profile")
-    
-    user: User                                          = Relationship(back_populates="profile")
-    
-class UserProfileDisciplineBase(SQLModel):
-    discipline_type: int            = Field(nullable=False)
-    proficiency: Optional[int]      = Field(default=None)
-    notes: Optional[str]            = Field()
-    
-class UserProfileDiscipline(UserProfileDisciplineBase, table=True):
-    __tablename__ = "user_profiles_disciplines"
-    
-    id: uuid.UUID                   = Field(default_factory=uuid.uuid4, primary_key=True)
-    user_profile_id: uuid.UUID      = Field(default=None, foreign_key="user_profiles.id")
-    
-    user_profile: UserProfile       = Relationship(back_populates="disciplines")
-
-class UserProfileSkillBase(SQLModel):
-    skill_type: int                 = Field(nullable=False)
-    skill: str                      = Field(nullable=False)
-    proficiency: Optional[int]      = Field(0)
-    notes: Optional[str]            = Field()
-
-class UserProfileSkill(UserProfileSkillBase, table=True):
-    __tablename__ = "user_profiles_skills"
-    
-    id: uuid.UUID                   = Field(default_factory=uuid.uuid4, primary_key=True)
-    user_profile_id: uuid.UUID      = Field(default=None, foreign_key="user_profiles.id")
-    
-    user_profile: UserProfile      = Relationship(back_populates="skills")    

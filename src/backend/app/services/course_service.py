@@ -50,7 +50,7 @@ class CourseService:
             topics (list[str]): The topics of the course
         """
         
-        user = await self.user_service.get_user("id", user_id, ["profile.*"])
+        user = await self.user_service.get_user("id", user_id)
         
         if user is None:
             raise ValueError("User not found")

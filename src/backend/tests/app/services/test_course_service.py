@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock, Mock, patch, MagicMock
 import uuid
 from app.services.course_service import CourseService
 from domain.dto.courses import CoursePlanDto, CourseProgressionDto, CourseListingDto
-from domain.dto.profile import UserProfileDto
 from domain.enums.course_enums import CourseMotivation, CurrentSubjectExperience, CourseMaterial
 from common.storage import StoragePurpose
 from domain.schema.courses import Course, Lesson, Module, Section, CourseExercise, CourseExerciseObjective
@@ -66,7 +65,6 @@ def clone_course():
     return Course.model_copy(course)
 
 lesson = Lesson(id=uuid.uuid4(), sections=[])
-profile_dto = UserProfileDto(first_name="John", last_name="Doe")
 
 @pytest.fixture
 @patch("app.services.course_service.OpenAI", autospec=True)
@@ -85,7 +83,7 @@ async def test_get_additional_inputs(mock_get_user_profile_text, mock_prompt, co
     2. Should return the additional inputs from the prompt.
     """
     # Mock user service and profile handling
-    course_service.user_service.get_user = AsyncMock(return_value=MagicMock(profile=profile_dto))
+    course_service.user_service.get_user = AsyncMock(return_value=MagicMock())
     mock_get_user_profile_text.return_value = "User Profile Text"
     
     # Mock the prompt to return additional inputs
@@ -94,7 +92,7 @@ async def test_get_additional_inputs(mock_get_user_profile_text, mock_prompt, co
     
     result = await course_service.get_additional_inputs(user_id=user_id, plan=plan)
     
-    course_service.user_service.get_user.assert_awaited_once_with("id", user_id, ["profile.*"])
+    course_service.user_service.get_user.assert_awaited_once_with("id", user_id)
     mock_prompt_instance.get_inputs.assert_called_once_with(plan=plan, profile_text="User Profile Text")
     
     assert result == {"additional_input": "value"}
@@ -120,7 +118,7 @@ async def test_generate_course(
     3. Should create the course in the repository and send a message to Kafka.
     """
     # Mock user service and profile handling
-    course_service.user_service.get_user = AsyncMock(return_value=MagicMock(profile=profile_dto))
+    course_service.user_service.get_user = AsyncMock(return_value=MagicMock())
     
     # Mock the outline
     mock_outline = CourseOutline(
@@ -174,7 +172,7 @@ async def test_generate_course(
     await course_service.generate_course(user_id=user_id, plan=plan)
     
     # Assertions
-    course_service.user_service.get_user.assert_awaited_once_with("id", user_id, ["profile.*"])
+    course_service.user_service.get_user.assert_awaited_once_with("id", user_id)
     mock_prompt_instance.get_outline.assert_called_once_with(plan=plan, profile_text="User Profile Text")
     mock_import_from_url.assert_called_once()
     mock_get_public_object_url.assert_called_once_with(StoragePurpose.COURSE_ASSET, "cover_image_object_id")

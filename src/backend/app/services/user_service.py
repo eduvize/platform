@@ -5,9 +5,8 @@ from fastapi import Depends, UploadFile
 from mimetypes import guess_extension, guess_type
 from config import is_email_validation_enabled
 from domain.enums.auth import OAuthProvider
-from domain.dto.profile import UserProfileDto
 from common.storage import StoragePurpose, get_public_object_url, upload_object, import_from_url
-from domain.schema.user import User, UserIdentifiers, UserIncludes
+from domain.schema.user import User, UserIdentifiers
 from app.utilities.string_generation import generate_random_string
 from app.repositories import UserRepository
 from .user_onboarding_service import UserOnboardingService
@@ -123,7 +122,7 @@ class UserService:
         
         return user
     
-    async def get_user(self, by: UserIdentifiers, value: str, include: List[UserIncludes] = ["profile.*"]) -> User:
+    async def get_user(self, by: UserIdentifiers, value: str) -> User:
         """
         Retrieves a user by one of their unique identifiers, optionally providing related data.
         Profiles are included by default.
@@ -131,7 +130,6 @@ class UserService:
         Args:
             by (UserIdentifiers): The type of identifier to search by
             value (str): The value of the identifier
-            include (List[UserIncludes], optional): Which related entities to populate. Defaults to ["profile"].
 
         Raises:
             ValueError: User not found
@@ -139,7 +137,7 @@ class UserService:
         Returns:
             User: The user record
         """
-        user = await self.user_repo.get_user(by, value, include)
+        user = await self.user_repo.get_user(by, value)
         
         if user is None:
             raise ValueError("User not found")
@@ -149,37 +147,6 @@ class UserService:
                 user.username = user.external_auth.external_id
             
         return user
-    
-    async def update_profile(self, user_id: str, profile_dto: UserProfileDto):
-        """
-        Updates a user's profile with the provided data.
-
-        Args:
-            user_id (str): The ID of the user to update
-            profile (UpdateProfilePayload): The new profile data
-
-        Raises:
-            ValueError: User not found
-            ValueError: Invalid file was supplied for avatar
-        """
-        user = await self.get_user("id", user_id, include=[])
-        
-        if user is None:
-            raise ValueError("User not found")
-        
-        if "hobby" not in profile_dto.learning_capacities:
-            profile_dto.hobby = None
-            
-        if "student" not in profile_dto.learning_capacities:
-            profile_dto.student = None
-            
-        if "professional" not in profile_dto.learning_capacities:
-            profile_dto.professional = None
-
-        await self.user_repo.upsert_profile(
-            user_id=user.id, 
-            profile=profile_dto
-        )
         
     async def upload_avatar(self, user_id: str, file: UploadFile) -> str:
         """

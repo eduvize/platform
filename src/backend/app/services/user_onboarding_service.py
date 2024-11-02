@@ -87,7 +87,7 @@ class UserOnboardingService:
         Returns:
             dict: The user's onboarding status
         """
-        user = await self.user_repo.get_user("id", user_id, ["profile"])
+        user = await self.user_repo.get_user("id", user_id)
         courses = await self.course_repo.get_courses(UUID(user_id))
         
         return UserOnboardingStatusDto.model_construct(

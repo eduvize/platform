@@ -9,14 +9,6 @@ import { useLogout } from "@context/auth";
 const links = [
     { link: "/dashboard/courses", label: "Courses" },
     {
-        link: "/dashboard/profile",
-        label: "Profile",
-    },
-    {
-        link: "/dashboard/jobs",
-        label: "Jobs",
-    },
-    {
         link: "#",
         label: "Account",
         links: [
