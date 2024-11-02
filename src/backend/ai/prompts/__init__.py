@@ -7,3 +7,4 @@ from .select_exercise_lessons_prompt import SelectExerciseLessonsPrompt
 from .lesson_discussion_prompt import LessonDiscussionPrompt
 from .onboarding_instructor_selection_prompt import OnboardingInstructorSelectionPrompt
 from .onboarding_profile_builder_prompt import OnboardingProfileBuilderPrompt
+from .extract_details_from_transcript_prompt import ExtractDetailsFromTranscriptPrompt

@@ -1,3 +1,4 @@
+import logging
 from typing import AsyncGenerator, List
 from pydantic import BaseModel
 from ai.prompts.base_prompt import BasePrompt
@@ -10,6 +11,9 @@ from app.services.user_service import UserService
 from app.services.user_onboarding_service import UserOnboardingService
 from app.repositories.user_repository import UserRepository
 from app.repositories.course_repository import CourseRepository
+from ai.prompts.extract_details_from_transcript_prompt import ExtractDetailsFromTranscriptPrompt
+
+logging.basicConfig(level=logging.INFO)
 
 class Module(BaseModel):
     title: str
@@ -37,19 +41,49 @@ class CourseCreationPrompt(BasePrompt):
     
     @tool("Marks the course as complete, sending it to get generated", is_public=True)
     async def mark_course_as_complete(self, course_title: str, course_description: str, key_outcomes: list[str], topics: list[str]):
+        from asyncio import gather
+        
         user_repository = UserRepository()
         course_repository = CourseRepository()
         user_onboarding_service = UserOnboardingService(user_repository)
         user_service = UserService(user_onboarding_service, user_repository)
         course_service = CourseService(user_service, course_repository)
         
-        await course_service.generate_course(
-            user_id=self.user_id,
-            course_title=course_title,
-            course_summary=course_description,
-            key_outcomes=key_outcomes,
-            topics=topics
+        extraction_prompt = ExtractDetailsFromTranscriptPrompt()
+        
+        # Run extraction and course generation concurrently
+        user_details, _ = await gather(
+            extraction_prompt.get_extracted_details(
+                history=self.messages,
+                instructions="""Extract everything you can about the user:
+**Name**:
+- First and last name
+**Experience Level**:
+- Are they a hobbyist? Student? Working in the industry?
+- For each applicable option, provide any additional details you know about each based on the conversation.
+**Programming Languages**:
+- Extract programming languages the user knows, as well as any other information you can derive about their experience with each of them.
+**Frameworks and Libraries**:
+- Extract frameworks and libraries the user knows, as well as any other information you can derive about their experience with each of them.
+**Schooling**:
+- Extract any information you can derive about the user's schooling.
+**Career**:
+- Extract any information you can derive about the user's career or experience as a professional software developer.
+**Goals**:
+- Extract any information you can derive about the user's learning goals
+**Other**:
+- Extract any other information you can derive about the user that is not covered by the above categories.
+""".strip()),
+            course_service.generate_course(
+                user_id=self.user_id,
+                course_title=course_title,
+                course_summary=course_description,
+                key_outcomes=key_outcomes,
+                topics=topics
+            )
         )
+        
+        logging.info(f"User details: {user_details}")
         
         return "The course has been generated. Use the `inform_user_that_course_is_generated` tool to inform the user."
     
