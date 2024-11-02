@@ -8,7 +8,6 @@ import {
     Grid,
     Group,
     Radio,
-    RingProgress,
     Space,
     Stack,
     Text,
@@ -16,6 +15,7 @@ import {
 } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import { CourseHero, ModuleListItem } from "@molecules";
+import { RingStatistic } from "../../atoms/course";
 
 export const CourseOverview = () => {
     const navigate = useNavigate();
@@ -100,7 +100,8 @@ export const CourseOverview = () => {
                         // Estimate time based on content length
                         // Assume 1 minute per 100 words
                         totalMinutes += Math.ceil(
-                            section.content.split(" ").length / 100
+                            (section.content?.toString() || "").split(" ")
+                                .length / 100
                         );
                     }
                 }
@@ -219,93 +220,16 @@ export const CourseOverview = () => {
                     <Card withBorder p="lg" px="xl">
                         <Stack>
                             <Group justify="center" gap="xl">
-                                <Stack gap={0} align="center">
-                                    <RingProgress
-                                        size={180}
-                                        thickness={7}
-                                        sections={[
-                                            {
-                                                value: completedLessonsPercentage,
-                                                color: "#51cf66",
-                                            },
-                                            {
-                                                value:
-                                                    100 -
-                                                    completedLessonsPercentage,
-                                                color: "transparent",
-                                            },
-                                        ]}
-                                        label={
-                                            <Text
-                                                ff="Roboto"
-                                                c="#51cf66"
-                                                fw={900}
-                                                ta="center"
-                                                size="60px"
-                                            >
-                                                {completedLessonsPercentage}
-                                            </Text>
-                                        }
-                                    />
+                                <RingStatistic
+                                    value={completedLessonsPercentage}
+                                    label="% of lessons complete"
+                                />
 
-                                    <Text
-                                        ta="center"
-                                        size="sm"
-                                        c="#c9c9c9"
-                                        w="50%"
-                                    >
-                                        % of lessons complete
-                                    </Text>
-                                </Stack>
-
-                                <Stack gap={0} align="center">
-                                    <RingProgress
-                                        size={180}
-                                        thickness={5}
-                                        sections={[
-                                            { value: 100, color: "#383838" },
-                                        ]}
-                                        label={
-                                            <Group gap={0} justify="center">
-                                                <Text
-                                                    ff="Roboto"
-                                                    c="#1479b2"
-                                                    fw={900}
-                                                    size="60px"
-                                                >
-                                                    {
-                                                        estimatedTimeRemaining.value
-                                                    }
-                                                </Text>
-
-                                                <Stack
-                                                    h="100%"
-                                                    justify="flex-end"
-                                                >
-                                                    <Text
-                                                        size="24px"
-                                                        fw={900}
-                                                        c="#1479b2"
-                                                        mt={26}
-                                                    >
-                                                        {
-                                                            estimatedTimeRemaining.unit
-                                                        }
-                                                    </Text>
-                                                </Stack>
-                                            </Group>
-                                        }
-                                    />
-
-                                    <Text
-                                        ta="center"
-                                        size="sm"
-                                        c="#c9c9c9"
-                                        w="60%"
-                                    >
-                                        estimated time remaining
-                                    </Text>
-                                </Stack>
+                                <RingStatistic
+                                    value={estimatedTimeRemaining.value}
+                                    unit={estimatedTimeRemaining.unit}
+                                    label="estimated time remaining"
+                                />
                             </Group>
 
                             <Divider />

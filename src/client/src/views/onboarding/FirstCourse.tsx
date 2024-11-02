@@ -1,4 +1,4 @@
-import { useToolCallEffect } from "@context/chat";
+import { useChat, useToolCallEffect } from "@context/chat";
 import {
     Stack,
     Title,
@@ -9,15 +9,21 @@ import {
     Button,
     Box,
     List,
+    Stepper,
 } from "@mantine/core";
 import { ChatTool } from "@models/enums";
+import { IconConfetti } from "@tabler/icons-react";
 import { useMemo, useState } from "react";
+import { RingStatistic } from "../../components/atoms/course";
+import { CheckboxStepper } from "@molecules";
 
 export const FirstCourse = () => {
+    const { sendMessage } = useChat();
     const [courseTitle, setCourseTitle] = useState<string>("");
     const [courseDescription, setCourseDescription] = useState<string>("");
     const [keyOutcomes, setKeyOutcomes] = useState<string[]>([]);
     const [topics, setTopics] = useState<string[]>([]);
+    const [isCourseCreated, setIsCourseCreated] = useState<boolean>(false);
 
     const shouldDisplayCourseInfo = useMemo(() => {
         return courseTitle.length > 0 && courseDescription.length > 0;
@@ -39,6 +45,10 @@ export const FirstCourse = () => {
         setTopics(result.topics);
     });
 
+    useToolCallEffect(ChatTool.CourseBuilderCourseGenerated, () => {
+        setIsCourseCreated(true);
+    });
+
     const areAllStepsComplete = useMemo(() => {
         return (
             courseTitle.length > 0 &&
@@ -47,6 +57,80 @@ export const FirstCourse = () => {
             topics.length > 0
         );
     }, [courseTitle, courseDescription, keyOutcomes, topics]);
+
+    if (isCourseCreated) {
+        return (
+            <Stack pt="lg">
+                <Group>
+                    <IconConfetti color="#1479B2" />
+
+                    <Title order={3} fw={400} c="white">
+                        Congratulations!!
+                    </Title>
+                </Group>
+
+                <Text>
+                    Congratulations on completing <b>The First Course</b>
+                </Text>
+
+                <Group justify="center" gap="xl">
+                    <RingStatistic value={100} label="% of lessons complete" />
+                    <RingStatistic
+                        hideProgress
+                        value={2}
+                        unit="hours"
+                        label="longest session"
+                        thickness={2}
+                    />
+                    <RingStatistic
+                        hideProgress
+                        value={15}
+                        unit="min"
+                        label="average session time"
+                        borderColor="#424242"
+                        textColor="#1479B2"
+                        thickness={2}
+                    />
+                </Group>
+
+                <Space h="xl" />
+
+                <Title order={3} c="white" fw={400}>
+                    Key Takeaways
+                </Title>
+
+                <CheckboxStepper active={2}>
+                    <Stepper.Step
+                        label="You're ready to start using Eduvize!"
+                        description="This course has given you all the basics about Eduvize"
+                    />
+                    <Stepper.Step
+                        label="You've started to get to know Kyle."
+                        description="You and Kyle has a great conversation. You can keep working with Kyle on your next classes, or swap out your instructor at any time."
+                    />
+                </CheckboxStepper>
+
+                <Title order={3} c="white" fw={400}>
+                    Next Steps
+                </Title>
+
+                <CheckboxStepper active={1}>
+                    <Stepper.Step
+                        label="Start your course."
+                        description={`You've worked with Kyle to create ${courseTitle}. You can start your course by clicking the button below.`}
+                    />
+                </CheckboxStepper>
+
+                <Divider />
+
+                <Group>
+                    <Button>Check out my Courses</Button>
+                </Group>
+
+                <Space h="xl" />
+            </Stack>
+        );
+    }
 
     return (
         <Stack pt="lg" gap="lg">
@@ -125,7 +209,17 @@ export const FirstCourse = () => {
             <Divider />
 
             <Group>
-                <Button disabled={!areAllStepsComplete}>Complete Course</Button>
+                <Button
+                    disabled={!areAllStepsComplete}
+                    onClick={() => {
+                        sendMessage(
+                            "I'm ready to get started. Let's generate this course.",
+                            true
+                        );
+                    }}
+                >
+                    Complete Course
+                </Button>
             </Group>
 
             <Space h="xl" />

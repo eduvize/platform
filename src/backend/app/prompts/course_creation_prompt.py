@@ -51,7 +51,11 @@ class CourseCreationPrompt(BasePrompt):
             topics=topics
         )
         
-        return "Course marked as complete. It will now be sent to get generated."
+        return "The course has been generated. Use the `inform_user_that_course_is_generated` tool to inform the user."
+    
+    @tool("Informs the user that the course is generated and ready to be viewed", is_public=True)
+    async def inform_user_that_course_is_generated(self):
+        return "Success"
     
     async def get_responses(
         self,

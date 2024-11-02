@@ -117,15 +117,18 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                             !lastMessage.is_user &&
                             lastMessage.id === message.message_id
                         ) {
-                            return [
-                                ...prev.slice(0, -1),
-                                {
-                                    ...lastMessage,
-                                    content:
-                                        lastMessage.content +
-                                        (message.text || ""),
-                                },
-                            ];
+                            return prev.map((prevMsg, index) => {
+                                if (prevMsg.id === lastMessage.id) {
+                                    return {
+                                        ...prevMsg,
+                                        content:
+                                            prevMsg.content + message.text ||
+                                            "",
+                                    };
+                                }
+
+                                return prevMsg;
+                            });
                         }
 
                         stopPlayback();
@@ -310,8 +313,6 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             instructorIdRef.current = newInstructorId;
 
             setInstructorId(newInstructorId);
-
-            resolve();
         });
     };
 
@@ -328,7 +329,9 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             stopPlayback();
             setCurrentPrompt(newPrompt);
 
-            resolve();
+            setTimeout(() => {
+                resolve();
+            }, 1000);
         });
     };
 

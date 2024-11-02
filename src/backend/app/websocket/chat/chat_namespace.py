@@ -139,6 +139,9 @@ class ChatNamespace(AsyncNamespace):
         session = await self.get_session(sid)
         session["instructor_id"] = instructor_id
         
+        # Acknowledge the instructor change
+        await self.emit("instructor_set", {"instructor_id": instructor_id}, to=sid)
+
     @inject_dependencies()
     async def on_set_prompt(self, sid: str, data: dict, chat_service: ChatService = Depends()):
         """
@@ -149,10 +152,12 @@ class ChatNamespace(AsyncNamespace):
             data (dict): Data containing the prompt type.
             chat_service (ChatService): Chat service dependency.
         """
-        logging.info(data)
         prompt_type = data.get("prompt_type")
         session = await self.get_session(sid)
         session["prompt_type"] = PromptType(prompt_type)
+        
+        # Acknowledge the prompt change
+        await self.emit("prompt_set", {"prompt_type": prompt_type}, to=sid)
 
     # Voice-related methods
     async def on_audio_data(self, sid: str, data: bytes):
