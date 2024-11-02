@@ -91,7 +91,9 @@ class UserRepository:
             result = await session.exec(query)
             
             user = result.one_or_none()
-            # TODO: Update the avatar URL on user
+            
+            if user:
+                user.profile_photo_url = avatar_url
             
             await session.commit()
     

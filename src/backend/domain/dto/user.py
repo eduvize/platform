@@ -1,3 +1,4 @@
+from typing import Optional
 import uuid
 from pydantic import BaseModel, field_validator
 from domain.schema.user import UserBase
@@ -6,6 +7,7 @@ class UserDto(UserBase):
     id: uuid.UUID
     username: str
     created_at_utc: str
+    profile_photo_url: Optional[str] = None
     
     # Field validators let you transform the data before it is validated in order to map schema to model fields
     @field_validator("id", mode="before")

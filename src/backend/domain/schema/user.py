@@ -11,6 +11,7 @@ class UserBase(SQLModel):
     email: str                                  = Field(unique=True)
     pending_verification: bool                  = Field(default=True, nullable=False)
     default_instructor_id: uuid.UUID            = Field(nullable=False)
+    profile_photo_url: str                     = Field(nullable=True)
     created_at_utc: datetime                    = Field(nullable=False, default_factory=datetime.utcnow)
 
 class User(UserBase, table=True):

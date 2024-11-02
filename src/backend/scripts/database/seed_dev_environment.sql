@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users
     password_hash TEXT,
     pending_verification BOOLEAN NOT NULL DEFAULT FALSE,
     default_instructor_id UUID NOT NULL,
+    profile_photo_url TEXT,
     verification_code TEXT,
     verification_sent_at_utc TIMESTAMP WITHOUT TIME ZONE,
     created_at_utc TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),

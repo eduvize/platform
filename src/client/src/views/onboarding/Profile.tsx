@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import { FileApi } from "@api";
+import { FileApi, UserApi } from "@api";
 import {
     Avatar,
     Button,
@@ -77,13 +77,20 @@ export const Profile = ({ onNext }: ProfileProps) => {
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file && (file.type === "image/jpeg" || file.type === "image/png")) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                setAvatarUrl(e.target?.result as string);
-            };
-            reader.readAsDataURL(file);
+            UserApi.uploadAvatar(file)
+                .then(() => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        setAvatarUrl(e.target?.result as string);
+                    };
 
-            sendEvent("User uploaded an avatar");
+                    reader.readAsDataURL(file);
+
+                    sendEvent("User uploaded an avatar");
+                })
+                .catch((error) => {
+                    sendEvent(`Error uploading avatar: ${error}`);
+                });
         } else {
             sendEvent("User uploaded an invalid file type for their avatar");
         }
