@@ -1,5 +1,4 @@
 import { Grid, ScrollArea, Card, Title } from "@mantine/core";
-import { CoursePlanner } from "@views/course-planner";
 import { Route, Routes, useMatch, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { CourseList } from "@organisms";
@@ -37,11 +36,7 @@ export const Courses = () => {
                                 </>
                             }
                         />
-                        <Route
-                            path="new"
-                            handle="new"
-                            element={<CoursePlanner />}
-                        />
+                        <Route path="new" handle="new" element={<></>} />
                     </Routes>
                 </ScrollArea.Autosize>
             </Grid.Col>

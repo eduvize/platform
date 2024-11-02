@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { FileApi } from "@api";
 import {
     Avatar,
@@ -186,7 +186,7 @@ export const Profile = ({ onNext }: ProfileProps) => {
         setLastName(result.last_name);
     });
 
-    useToolCallEffect(ChatTool.ProfileBuilderSetProfileComplete, (result) => {
+    useToolCallEffect(ChatTool.ProfileBuilderSetProfileComplete, () => {
         setIsProfileComplete(true);
     });
 

@@ -1,6 +1,6 @@
 import BaseApi from "./BaseApi";
-import { FileUploadResponse, ProfileUpdatePayload } from "@contracts";
-import { UserDto, UserOnboardingStatusDto, UserProfileDto } from "@models/dto";
+import { FileUploadResponse } from "@contracts";
+import { UserDto, UserOnboardingStatusDto } from "@models/dto";
 
 class UserApi extends BaseApi {
     getCurrentUser() {
@@ -9,10 +9,6 @@ class UserApi extends BaseApi {
 
     getOnboardingStatus() {
         return this.get<UserOnboardingStatusDto>("me/onboarding");
-    }
-
-    updateProfile(data: Partial<ProfileUpdatePayload>) {
-        return this.put<UserProfileDto>("me/profile", data);
     }
 
     uploadAvatar(file: File) {

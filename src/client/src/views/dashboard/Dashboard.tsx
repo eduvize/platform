@@ -1,7 +1,6 @@
 import { Route, Routes, useMatch, useNavigate } from "react-router-dom";
 import { UserProvider } from "@context/user";
 import { useOnboarding } from "@context/user/hooks";
-import { Profile } from "@views/profile";
 import { Header } from "./sections";
 import { VerificationCta } from "./cta";
 import { useEffect } from "react";
@@ -78,15 +77,6 @@ export const Dashboard = () => {
                                     element={
                                         <CallToActionOrView>
                                             <Courses />
-                                        </CallToActionOrView>
-                                    }
-                                />
-                                <Route
-                                    path="profile"
-                                    handle="profile"
-                                    element={
-                                        <CallToActionOrView>
-                                            <Profile />
                                         </CallToActionOrView>
                                     }
                                 />
