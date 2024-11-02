@@ -61,6 +61,7 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
         const [message, setMessage] = useState("");
         const [isAtBottom, setIsAtBottom] = useState(true);
         const [userHasScrolled, setUserHasScrolled] = useState(false);
+        const wasFocusedRef = useRef(false);
 
         const instructor = useMemo(() => {
             return instructors.find((x) => x.id === instructorId);
@@ -103,8 +104,9 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
 
         // Effect to re-focus input when processing is complete
         useEffect(() => {
-            if (!processing && inputRef.current) {
+            if (!processing && inputRef.current && wasFocusedRef.current) {
                 inputRef.current.focus();
+                wasFocusedRef.current = false;
             }
         }, [processing]);
 
@@ -279,6 +281,9 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
                                 }
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter") {
+                                        wasFocusedRef.current =
+                                            document.activeElement ===
+                                            inputRef.current;
                                         sendMessage(message);
                                         setMessage("");
                                         setUserHasScrolled(false);
