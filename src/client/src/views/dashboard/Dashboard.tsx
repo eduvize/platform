@@ -15,8 +15,8 @@ import { ChatProvider } from "@context/chat";
 import { AudioInputProvider, AudioOutputProvider } from "@context/audio";
 
 const CallToActionOrView = ({ children }: { children: React.ReactNode }) => {
-    const { is_verified, is_profile_complete } = useOnboarding();
-    if (!is_profile_complete) {
+    const { is_verified, is_first_course_created } = useOnboarding();
+    if (!is_first_course_created) {
         return (
             <OnboardingProvider>
                 <Onboarding />

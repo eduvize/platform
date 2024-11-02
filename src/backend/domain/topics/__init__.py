@@ -1,2 +1,2 @@
-from .course_topics import CourseGenerationTopic, CourseGeneratedTopic
+from .course_topics import CourseGenerationTopic, CourseGeneratedTopic, CourseCreatedTopic
 from .playground_topics import BuildPlaygroundTopic, EnvironmentCreatedTopic, EnvironmentBuildFailedTopic

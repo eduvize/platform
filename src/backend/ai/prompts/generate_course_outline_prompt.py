@@ -64,7 +64,7 @@ You are an AI designed to create structured course syllabi based on user informa
         self.outline = outline
         return "Course outline provided"
     
-    async def get_outline(self, course_title: str, course_summary: str, key_outcomes: list[str], topics: list[str], profile_text: str) -> CourseOutline:
+    async def get_outline(self, course_title: str, course_summary: str, key_outcomes: list[str], topics: list[str]) -> CourseOutline:
         from ai.models.gpt_4o import GPT4o
         model = GPT4o()
         
@@ -78,12 +78,9 @@ Key Outcomes: {outcomes_string}
 Topics: {topics_string}
 """.strip()
         
-        logging.info(f"Profile Text: {profile_text}")
         logging.info(f"Plan Text: {plan_text}")
         
-        await self.think(model, f"""## User Information:
-{profile_text}
-
+        await self.think(model, f"""
 ## Syllabus Request:
 {plan_text}
 

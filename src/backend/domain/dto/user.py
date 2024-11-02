@@ -29,5 +29,5 @@ class UserDto(UserBase):
     
 class UserOnboardingStatusDto(BaseModel):
     is_verified: bool
-    is_profile_complete: bool
+    is_first_course_created: bool
     recently_verified: bool

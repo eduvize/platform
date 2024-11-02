@@ -15,13 +15,15 @@ class CourseRepository:
     async def create_course(
         self,
         user_id: uuid.UUID,
-        course_dto: CourseDto
+        course_title: str,
+        course_description: str,
+        cover_image_url: str
     ):
         async for session in get_async_session():
             course_entity = Course(
-                title=course_dto.title,
-                description=course_dto.description,
-                cover_image_url=course_dto.cover_image_url,
+                title=course_title,
+                description=course_description,
+                cover_image_url=cover_image_url,
                 user_id=user_id
             )
             

@@ -1,5 +1,5 @@
 export interface UserOnboardingStatusDto {
     is_verified: boolean;
-    is_profile_complete: boolean;
+    is_first_course_created: boolean;
     recently_verified: boolean;
 }

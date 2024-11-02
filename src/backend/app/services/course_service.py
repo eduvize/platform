@@ -7,16 +7,14 @@ from openai import AsyncOpenAI as OpenAI
 from domain.dto.courses.exercise_plan import ExercisePlan
 from .user_service import UserService
 from app.repositories import CourseRepository
-from app.utilities.profile import get_user_profile_text
 from common.messaging.topics import Topic
 from config import get_openai_key
 from common.storage import StoragePurpose, import_from_url, get_public_object_url
 from common.messaging import KafkaProducer
 from domain.schema.courses import Course, Lesson, CourseExercise
-from domain.dto.courses import CourseDto, CourseListingDto, CoursePlanDto, CourseProgressionDto
-from domain.dto.profile import UserProfileDto
-from domain.topics import CourseGenerationTopic
-from ai.prompts import GenerateCourseOutlinePrompt, GenerateExercisesPrompt
+from domain.dto.courses import CourseListingDto, CourseProgressionDto
+from domain.topics import CourseCreatedTopic
+from ai.prompts import GenerateExercisesPrompt
 
 class CourseService:
     user_service: UserService
@@ -57,47 +55,28 @@ class CourseService:
         if user is None:
             raise ValueError("User not found")
         
-        profile_dto = UserProfileDto.model_validate(user.profile)
-        user_profile_text = get_user_profile_text(profile_dto)
-        
-        # Generate a course outline based on user requirements and profile
-        prompt = GenerateCourseOutlinePrompt()
-        outline = await prompt.get_outline(
-            course_title=course_title,
-            course_summary=course_summary,
-            key_outcomes=key_outcomes,
-            topics=topics,
-            profile_text=user_profile_text
-        )
-
-        # Construct the course DTO        
-        course_dto = CourseDto.model_construct(
-            title=outline.course_title,
-            description=outline.description,
-            cover_image_url="",
-            modules=[]
-        )
-        
         # Generate a cover image for the course
-        cover_image_url = await self.generate_cover_image(outline.course_subject)
+        cover_image_url = await self.generate_cover_image(f"{course_title} {course_summary}")
         cover_image_obj_id = await import_from_url(cover_image_url, StoragePurpose.COURSE_ASSET)
-        
-        # Set the cover image URL to the public URL
-        course_dto.cover_image_url = get_public_object_url(StoragePurpose.COURSE_ASSET, cover_image_obj_id)
         
         course_id = await self.course_repo.create_course(
             user_id=user.id, 
-            course_dto=course_dto
+            course_title=course_title,
+            course_description=course_summary,
+            cover_image_url=get_public_object_url(StoragePurpose.COURSE_ASSET, cover_image_obj_id)
         )
         
         async with KafkaProducer() as kafka_producer:
             await kafka_producer.produce_message(
-                topic=Topic.GENERATE_NEW_COURSE,
-                message=CourseGenerationTopic(
+                topic=Topic.COURSE_CREATED,
+                message=CourseCreatedTopic(
                     user_id=uuid.UUID(user_id),
                     course_id=course_id,
-                    course_outline=outline   
-                ) 
+                    course_title=course_title,
+                    course_description=course_summary,
+                    key_outcomes=key_outcomes,
+                    topics=topics
+                )
             )
         
     async def mark_lesson_complete(

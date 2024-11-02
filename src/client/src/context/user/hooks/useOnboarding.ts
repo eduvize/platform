@@ -10,7 +10,7 @@ export const useOnboarding = () => {
     return (
         onboardingStatus || {
             is_verified: false,
-            is_profile_complete: false,
+            is_first_course_created: false,
             recently_verified: true,
         }
     );

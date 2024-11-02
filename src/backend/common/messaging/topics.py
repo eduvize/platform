@@ -1,6 +1,7 @@
 from enum import Enum
 
 class Topic(Enum):
+    COURSE_CREATED = "course_created"
     GENERATE_NEW_COURSE = "generate_new_course"
     BUILD_PLAYGROUND = "build_playground"
     COURSE_GENERATED = "course_generated"
