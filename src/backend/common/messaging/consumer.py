@@ -35,6 +35,7 @@ class KafkaConsumer:
                         "group.id": self.group_id,
                         "auto.offset.reset": "earliest",
                         "enable.auto.commit": False,
+                        "allow.auto.create.topics": True,
                     }
                 )
                 self.consumer.subscribe([self.topic])
@@ -46,7 +47,7 @@ class KafkaConsumer:
                 if retry_attempts >= max_retries:
                     logging.error("Max retries reached. Exiting...")
                     raise
-                sleep_time = 2 ** retry_attempts
+                sleep_time = min(2 ** retry_attempts, 30)
                 logging.info(f"Retrying in {sleep_time} seconds...")
                 time.sleep(sleep_time)
             except Exception as e:

@@ -77,14 +77,6 @@ export const Overview = ({ onNext }: OverviewProps) => {
                 </Text>
 
                 <Space />
-
-                <Divider />
-
-                <Group>
-                    <Button onClick={onNext}>Next Lesson</Button>
-                </Group>
-
-                <Space h="lg" />
             </Stack>
         </Box>
     );

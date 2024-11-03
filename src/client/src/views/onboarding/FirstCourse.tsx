@@ -18,7 +18,6 @@ import { RingStatistic } from "../../components/atoms/course";
 import { CheckboxStepper } from "@molecules";
 
 export const FirstCourse = () => {
-    const { sendMessage } = useChat();
     const [courseTitle, setCourseTitle] = useState<string>("");
     const [courseDescription, setCourseDescription] = useState<string>("");
     const [keyOutcomes, setKeyOutcomes] = useState<string[]>([]);
@@ -205,24 +204,6 @@ export const FirstCourse = () => {
                     </Stack>
                 )}
             </Box>
-
-            <Divider />
-
-            <Group>
-                <Button
-                    disabled={!areAllStepsComplete}
-                    onClick={() => {
-                        sendMessage(
-                            "I'm ready to get started. Let's generate this course.",
-                            true
-                        );
-                    }}
-                >
-                    Complete Course
-                </Button>
-            </Group>
-
-            <Space h="xl" />
         </Stack>
     );
 };

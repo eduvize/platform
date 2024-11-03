@@ -132,6 +132,7 @@ export const Lesson = (props: ComponentProps) => {
                     }
                 >
                     <LessonContent
+                        course={course}
                         lesson={props}
                         currentSection={section}
                         view={showExercise ? "exercise" : "lesson"}

@@ -116,14 +116,6 @@ export const Instructors = ({
             </Stack>
 
             <Space />
-
-            <Divider />
-
-            <Group>
-                <Button onClick={onNext}>Next Lesson</Button>
-            </Group>
-
-            <Space h="lg" />
         </Stack>
     );
 };

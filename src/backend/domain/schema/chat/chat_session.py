@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 from sqlmodel import Field, Relationship, SQLModel
+from domain.enums.chat_enums import PromptType
 import domain.schema as schema
 
 class ChatSessionBase(SQLModel):

@@ -126,6 +126,7 @@ export const Profile = ({ onNext }: ProfileProps) => {
     const handleProgrammingLanguagesBlur = () => {
         sendEvent(
             `User has updated their programming languages: ${skills
+                .filter((s) => s.skill_type === 1)
                 .map((s) => s.skill)
                 .join(", ")}`
         );
@@ -134,6 +135,7 @@ export const Profile = ({ onNext }: ProfileProps) => {
     const handleFrameworksBlur = () => {
         sendEvent(
             `User has updated their frameworks or libraries: ${skills
+                .filter((s) => s.skill_type === 2)
                 .map((s) => s.skill)
                 .join(", ")}`
         );
@@ -427,16 +429,6 @@ export const Profile = ({ onNext }: ProfileProps) => {
                     </Pill.Group>
                 </PillsInput>
             </Stack>
-
-            <Divider />
-
-            <Group>
-                <Button disabled={!isProfileComplete} onClick={onNext}>
-                    Next Lesson
-                </Button>
-            </Group>
-
-            <Space h="xl" />
         </Stack>
     );
 };

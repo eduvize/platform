@@ -10,7 +10,7 @@ class UserBase(SQLModel):
     username: str                               = Field(unique=True)
     email: str                                  = Field(unique=True)
     pending_verification: bool                  = Field(default=True, nullable=False)
-    default_instructor_id: uuid.UUID            = Field(nullable=False)
+    default_instructor_id: Optional[uuid.UUID] = Field(nullable=True)
     profile_photo_url: str                     = Field(nullable=True)
     created_at_utc: datetime                    = Field(nullable=False, default_factory=datetime.utcnow)
 
@@ -21,6 +21,7 @@ class User(UserBase, table=True):
     password_hash: str                  = Field(nullable=True)
     verification_code: Optional[str]    = Field()
     verification_sent_at_utc: datetime  = Field(default_factory=datetime.utcnow)
+    onboarding_session_id: Optional[uuid.UUID] = Field(nullable=True, foreign_key="chat_sessions.id")
     
     last_login_at_utc: datetime         = Field(default_factory=datetime.utcnow)
     

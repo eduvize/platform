@@ -7,6 +7,7 @@ import { AudioOutputContext } from "../audio/AudioOutputContext";
 import { useAudioInput, useIncomingAudioEffect } from "@context/audio/hooks";
 import * as WavEncoder from "wav-encoder";
 import io, { Socket } from "socket.io-client";
+import { ChatApi } from "@api";
 const socketEndpoint = import.meta.env.VITE_SOCKETIO_ENDPOINT;
 
 // Types and Interfaces
@@ -43,6 +44,20 @@ const defaultValue: Context = {
 
 export const ChatContext = createContext<Context>(defaultValue);
 
+// Add this at the top of the file, outside of any component
+let globalSocket: Socket | null = null;
+const getSocket = () => {
+    if (!globalSocket) {
+        globalSocket = io(`${socketEndpoint}/chat`, {
+            forceNew: true,
+            extraHeaders: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        });
+    }
+    return globalSocket;
+};
+
 export const ChatProvider = ({ children }: ChatProviderProps) => {
     // State
     const [isConnected, setIsConnected] = useState(false);
@@ -59,13 +74,15 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     const messageCompleteRef = useRef(false);
 
     // Refs
-    const socketRef = useRef<Socket | null>(null);
     const sseCancellationHandlerRef = useRef<{ cancel: () => void }>({
         cancel: () => {},
     });
     const liveTranscriptionRef = useRef<string | null>(null);
     const instructorIdRef = useRef<string | null>(null);
     const currentPromptRef = useRef<ChatPromptType | null>(null);
+
+    // Add a ref to track if we've initialized
+    const hasInitialized = useRef(false);
 
     // Get the playAudio function from AudioOutputContext
     const { playAudio, stopPlayback, enablePlayback, disablePlayback } =
@@ -74,106 +91,118 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
     // Effects
     useEffect(() => {
-        socketRef.current = io(`${socketEndpoint}/chat`, {
-            forceNew: true,
-            extraHeaders: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-        });
+        // Prevent multiple initializations
+        if (hasInitialized.current) return;
+        hasInitialized.current = true;
 
-        socketRef.current.on("connect", () => {
+        const socket = getSocket();
+
+        socket.on("connect", () => {
             console.log("Connected to chat socket");
 
             setIsConnected(true);
         });
 
-        socketRef.current.on(
-            "message_update",
-            (message: CompletionChunkDto) => {
-                if (message.audio) {
-                    playAudio(message.audio);
-                }
+        socket.on("message_update", (message: CompletionChunkDto) => {
+            if (message.audio) {
+                playAudio(message.audio);
+            }
 
-                if (message.received_text) {
-                    setMessages((prev) => [
+            if (message.received_text) {
+                setMessages((prev) => [
+                    ...prev,
+                    {
+                        id: `${Date.now()}`,
+                        is_user: true,
+                        content: message.received_text!,
+                        create_at_utc: new Date().toISOString(),
+                    },
+                ]);
+            }
+
+            if (message.text) {
+                setMessages((prev) => {
+                    const lastMessage = prev.filter(
+                        (x) => x.id != "live_transcription"
+                    )[prev.length - 1];
+
+                    if (
+                        lastMessage &&
+                        !lastMessage.is_user &&
+                        lastMessage.id === message.message_id
+                    ) {
+                        return prev.map((prevMsg, index) => {
+                            if (prevMsg.id === lastMessage.id) {
+                                return {
+                                    ...prevMsg,
+                                    content:
+                                        prevMsg.content + message.text || "",
+                                };
+                            }
+
+                            return prevMsg;
+                        });
+                    }
+
+                    stopPlayback();
+
+                    return [
                         ...prev,
                         {
-                            id: `${Date.now()}`,
-                            is_user: true,
-                            content: message.received_text!,
+                            id: message.message_id,
+                            is_user: false,
+                            content: message.text || "",
                             create_at_utc: new Date().toISOString(),
                         },
-                    ]);
-                }
-
-                if (message.text) {
-                    setMessages((prev) => {
-                        const lastMessage = prev.filter(
-                            (x) => x.id != "live_transcription"
-                        )[prev.length - 1];
-
-                        if (
-                            lastMessage &&
-                            !lastMessage.is_user &&
-                            lastMessage.id === message.message_id
-                        ) {
-                            return prev.map((prevMsg, index) => {
-                                if (prevMsg.id === lastMessage.id) {
-                                    return {
-                                        ...prevMsg,
-                                        content:
-                                            prevMsg.content + message.text ||
-                                            "",
-                                    };
-                                }
-
-                                return prevMsg;
-                            });
-                        }
-
-                        stopPlayback();
-
-                        return [
-                            ...prev,
-                            {
-                                id: message.message_id,
-                                is_user: false,
-                                content: message.text || "",
-                                create_at_utc: new Date().toISOString(),
-                            },
-                        ];
-                    });
-                }
-
-                if (message.tools && message.tools.length > 0) {
-                    const jsonCompleteTools = message.tools.filter((t) => {
-                        try {
-                            JSON.parse(t.data);
-                            return true;
-                        } catch (e) {
-                            return false;
-                        }
-                    });
-
-                    setFinalToolResults((prev) => ({
-                        ...prev,
-                        ...jsonCompleteTools.reduce(
-                            (acc, tool) => ({
-                                ...acc,
-                                [tool.name]: tool.data,
-                            }),
-                            {}
-                        ),
-                    }));
-                }
+                    ];
+                });
             }
-        );
 
-        socketRef.current.on("message_complete", () => {
+            if (message.tools && message.tools.length > 0) {
+                const jsonCompleteTools = message.tools.filter((t) => {
+                    try {
+                        JSON.parse(t.data);
+                        return true;
+                    } catch (e) {
+                        return false;
+                    }
+                });
+
+                setFinalToolResults((prev) => ({
+                    ...prev,
+                    ...jsonCompleteTools.reduce(
+                        (acc, tool) => ({
+                            ...acc,
+                            [tool.name]: tool.data,
+                        }),
+                        {}
+                    ),
+                }));
+            }
+        });
+
+        socket.on("message_complete", () => {
             setIsProcessing(false);
         });
 
-        socketRef.current.on("voice_transcript", (transcript: string) => {
+        socket.on("continue_session", (sessionId: string) => {
+            console.log("Continuing session", sessionId);
+
+            ChatApi.getHistory(sessionId).then((history) => {
+                setMessages(history);
+            });
+        });
+
+        socket.on("start_session", (sessionId: string) => {
+            console.log("Starting session", sessionId);
+        });
+
+        socket.on("purge_session", () => {
+            console.log("Purging session");
+            setMessages([]);
+        });
+
+        socket.on("voice_transcript", (transcript: string) => {
             console.log("Voice transcript:", transcript);
             liveTranscriptionRef.current = transcript;
 
@@ -205,7 +234,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             });
         });
 
-        socketRef.current.on("voice_end", () => {
+        socket.on("voice_end", () => {
             if (liveTranscriptionRef.current) {
                 handleSendMessage(liveTranscriptionRef.current);
             }
@@ -220,18 +249,23 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             });
         });
 
-        socketRef.current.on("disconnect", () => {
+        socket.on("disconnect", () => {
             console.log("Disconnected from chat socket");
         });
-    }, []);
+
+        // Cleanup function - don't disconnect, just remove listeners
+        return () => {
+            socket.removeAllListeners();
+        };
+    }, []); // Empty dependency array
 
     useIncomingAudioEffect((data) => {
-        socketRef.current?.emit("audio_data", data);
+        getSocket()?.emit("audio_data", data);
     });
 
     useEffect(() => {
         if (sampleRate) {
-            socketRef.current?.emit("use_voice", {
+            getSocket()?.emit("use_voice", {
                 enabled: isListening,
                 sample_rate: sampleRate,
             });
@@ -251,16 +285,15 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         }
     }, [isProcessing]);
 
-    const sendMessage = (message: string) => {
-        socketRef.current?.emit("send_message", {
+    const sendMessage = (message: string, hideFromChat?: boolean) => {
+        getSocket()?.emit("send_message", {
             message,
+            hide_from_chat: hideFromChat,
         });
     };
 
     const sendAudio = (audio: string) => {
-        socketRef.current?.emit("send_message", {
-            audio,
-        });
+        getSocket()?.emit("send_message", { audio });
     };
 
     const handleSendMessage = useCallback(
@@ -273,7 +306,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                 addUserMessage(message);
             }
 
-            sendMessage(message);
+            sendMessage(message, hideFromChat);
         },
         [isProcessing, sendMessage]
     );
@@ -306,7 +339,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             stopPlayback();
 
             console.log("Setting instructor t43234234o", newInstructorId);
-            socketRef.current?.emit("set_instructor", {
+            getSocket()?.emit("set_instructor", {
                 instructor_id: newInstructorId,
             });
 
@@ -320,7 +353,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         return new Promise<void>((resolve) => {
             if (newPrompt === currentPromptRef.current) return;
 
-            socketRef.current?.emit("set_prompt", {
+            getSocket()?.emit("set_prompt", {
                 prompt_type: newPrompt,
             });
 
@@ -384,4 +417,13 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             {children}
         </ChatContext.Provider>
     );
+};
+
+// Add this cleanup function to be called when you want to completely disconnect
+// (e.g., on logout or tab close)
+export const cleanupChatSocket = () => {
+    if (globalSocket) {
+        globalSocket.disconnect();
+        globalSocket = null;
+    }
 };

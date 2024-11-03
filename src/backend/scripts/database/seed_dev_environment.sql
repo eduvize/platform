@@ -108,6 +108,8 @@ CREATE TABLE IF NOT EXISTS chat_sessions (
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
 
+ALTER TABLE users ADD COLUMN onboarding_session_id UUID REFERENCES chat_sessions(id);
+
 -- Create table for Chat Messages
 CREATE TABLE IF NOT EXISTS chat_messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -116,6 +118,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     is_user BOOLEAN NOT NULL,
     user_id UUID NULL,
     instructor_id UUID NULL,
+    hide_from_chat BOOLEAN NOT NULL DEFAULT FALSE,
     created_at_utc TIMESTAMP NOT NULL DEFAULT now()
 );
 

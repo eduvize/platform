@@ -96,6 +96,19 @@ class UserRepository:
                 user.profile_photo_url = avatar_url
             
             await session.commit()
+            
+    async def set_default_instructor(self, user_id: UUID, instructor_id: UUID) -> None:
+        """
+        Sets the default instructor for a user
+        """
+        async for session in get_async_session():
+            query = select(User).where(User.id == user_id)
+            result = await session.exec(query)
+            
+            user = result.one_or_none()
+            if user:
+                user.default_instructor_id = instructor_id
+                await session.commit()
     
     async def get_user(self, by: UserIdentifiers, value: Union[str, UUID]) -> Optional[User]:
         """
@@ -167,4 +180,17 @@ class UserRepository:
                 user.pending_verification = False
                 user.verification_code = None
             
+                await session.commit()
+                
+    async def set_onboarding_session_id(self, user_id: UUID, session_id: UUID) -> None:
+        """
+        Sets the onboarding session ID for a user
+        """
+        async for session in get_async_session():
+            query = select(User).where(User.id == user_id)
+            result = await session.exec(query)
+            
+            user = result.one_or_none()
+            if user:
+                user.onboarding_session_id = session_id
                 await session.commit()

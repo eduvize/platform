@@ -1,4 +1,3 @@
-import { ChatProvider } from "@context/chat";
 import { CourseProvider } from "@context/course";
 import { ExerciseProvider } from "@context/exercise";
 import { useEffect, memo } from "react";

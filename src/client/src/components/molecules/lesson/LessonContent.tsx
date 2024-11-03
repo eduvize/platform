@@ -1,10 +1,21 @@
-import { Stack, Group, Button, Card, Box, Space, Text } from "@mantine/core";
+import {
+    Stack,
+    Group,
+    Button,
+    Card,
+    Box,
+    Space,
+    Text,
+    Divider,
+} from "@mantine/core";
 import { ReadingMaterial } from "@atoms";
 import { Playground } from "../../organisms/playground";
 import { useExercise, useExerciseObjectives } from "@context/exercise/hooks";
-import { LessonDto } from "@models/dto";
+import { CourseDto, LessonDto } from "@models/dto";
+import { useMemo } from "react";
 
 interface LessonContentProps {
+    course: CourseDto;
     lesson: LessonDto;
     view: "lesson" | "exercise";
     currentSection: number;
@@ -12,6 +23,7 @@ interface LessonContentProps {
 }
 
 export const LessonContent = ({
+    course,
     lesson,
     currentSection,
     view,
@@ -21,6 +33,18 @@ export const LessonContent = ({
     const section = sections[currentSection];
     const exercise = useExercise();
     const objectives = useExerciseObjectives();
+
+    const isLastLesson = useMemo(() => {
+        return currentSection === sections.length - 1;
+    }, [currentSection, sections]);
+
+    const isLastLessonInCourse = useMemo(() => {
+        if (!isLastLesson) return false;
+
+        const lastModule = course?.modules.at(-1);
+
+        return lastModule?.lessons.at(-1)?.id === lesson.id;
+    }, [isLastLesson, course, lesson]);
 
     return (
         <Stack>
@@ -52,11 +76,12 @@ export const LessonContent = ({
                             size="sm"
                             style={{
                                 fontSize: "12px",
-                                border: "1px solid #000",
                             }}
                             onClick={onComplete}
                         >
-                            Complete Lesson
+                            {isLastLessonInCourse
+                                ? "Complete Course"
+                                : "Complete Lesson"}
                         </Button>
                     )}
             </Group>
@@ -80,6 +105,24 @@ export const LessonContent = ({
                         ) : (
                             sections[currentSection]?.content
                         )}
+
+                        <Divider mb="md" mt="md" />
+
+                        <Group mb="lg">
+                            {!isLastLesson && (
+                                <Button onClick={onComplete}>Continue</Button>
+                            )}
+                            {isLastLesson && !isLastLessonInCourse && (
+                                <Button onClick={onComplete}>
+                                    Next Lesson
+                                </Button>
+                            )}
+                            {isLastLessonInCourse && (
+                                <Button onClick={onComplete}>
+                                    Complete Course
+                                </Button>
+                            )}
+                        </Group>
                     </Box>
                 )}
             </Card>

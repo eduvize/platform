@@ -77,8 +77,6 @@ class ToolWrapper(BaseTool):
             "required": required
         }
         
-        logging.info(f"Generated schema for {self.func.__name__}: {schema}")
-        
         return schema
 
     def _get_property_schema(self, param_type: type) -> dict:

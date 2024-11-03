@@ -1,6 +1,7 @@
 import asyncio
 import os
 from typing import List
+from uuid import UUID
 from fastapi import Depends, UploadFile
 from mimetypes import guess_extension, guess_type
 from config import is_email_validation_enabled
@@ -180,3 +181,16 @@ class UserService:
             user_id=user_id, 
             avatar_url=public_url
         )
+        
+    async def set_onboarding_session_id(self, user_id: str, session_id: str) -> None:
+        await self.user_repo.set_onboarding_session_id(
+            user_id=user_id,
+            session_id=session_id
+        )
+
+    async def set_default_instructor(self, user_id: UUID, instructor_id: UUID) -> None:
+        await self.user_repo.set_default_instructor(
+            user_id=user_id,
+            instructor_id=instructor_id
+        )
+

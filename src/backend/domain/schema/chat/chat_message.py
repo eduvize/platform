@@ -16,6 +16,7 @@ class ChatMessage(ChatMessageBase, table=True):
     __tablename__ = "chat_messages"
     
     id: uuid.UUID                                           = Field(default_factory=uuid.uuid4, primary_key=True)
+    hide_from_chat: bool                                    = Field(nullable=False, default=False)
     chat_session: "schema.chat.chat_session.ChatSession"    = Relationship(back_populates="messages")
     tool_calls: list["ChatToolCall"]                        = Relationship(back_populates="chat_message")
 

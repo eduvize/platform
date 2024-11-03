@@ -1,3 +1,4 @@
+import json
 import uuid
 import logging
 import asyncio
@@ -43,20 +44,21 @@ class ChatService:
 
     async def create_session(
         self,
-        user_id: str
+        user_id: str,
+        resource_id: Optional[uuid.UUID] = None
     ) -> ChatSession:
         """
         Creates a new chat session for a user.
 
         Args:
             user_id (str): The ID of the user creating the session.
-            instructor_id (Optional[uuid.UUID], optional): The ID of the instructor for this chat session. Defaults to None.
+            resource_id (Optional[uuid.UUID]): The ID of the resource for this chat session.
 
         Returns:
             uuid.UUID: The ID of the newly created chat session.
 
         Raises:
-            ValueError: If the user or instructor is not found.
+            ValueError: If the user is not found.
         """
         # Fetch the user from the database
         user = await self.user_service.get_user("id", user_id)
@@ -68,9 +70,27 @@ class ChatService:
         # Create a new chat session in the repository
         session = await self.chat_repository.create_chat_session(
             user_id=user.id,
+            resource_id=resource_id
         )
         
         return session
+    
+    async def get_or_create_lesson_session(
+        self,
+        user_id: str,
+        lesson_id: uuid.UUID
+    ) -> tuple[ChatSession, bool]:
+        session = await self.chat_repository.get_lesson_session(lesson_id)
+        
+        if not session:
+            session = await self.create_session(
+                user_id=user_id, 
+                resource_id=lesson_id
+            )
+            
+            return session, True
+        else:
+            return session, False
 
     async def get_history(
         self,
@@ -82,12 +102,24 @@ class ChatService:
         if not user:
             raise ValueError("User not found")
         
-        messages = await self.chat_repository.get_chat_messages(session_id)
+        messages = await self.chat_repository.get_chat_messages(session_id, include_hidden=False)
         
         return [
             ChatMessageDto.model_validate(message)
             for message in messages
         ]
+        
+    async def purge_session(
+        self,
+        session_id: uuid.UUID
+    ) -> None:
+        await self.chat_repository.purge_session(session_id)
+        
+    async def get_session(
+        self,
+        session_id: uuid.UUID
+    ) -> ChatSession:
+        return await self.chat_repository.get_session(session_id)
     
     async def get_response(
         self, 
@@ -97,7 +129,8 @@ class ChatService:
         prompt_type: PromptType,
         message: Optional[str] = None,
         audio: Optional[str] = None,
-        expect_audio_response: bool = False
+        expect_audio_response: bool = False,
+        hide_from_chat: bool = False
     ) -> AsyncGenerator[CompletionChunk, None]:
         user = await self.user_service.get_user("id", user_id)
         
@@ -171,7 +204,8 @@ class ChatService:
             session_id=session.id,
             is_user=True,
             message=message,
-            sender_id=user.id
+            sender_id=user.id,
+            hide_from_chat=hide_from_chat
         )
         
         try:
@@ -241,13 +275,15 @@ class ChatService:
         sender_id: uuid.UUID,
         is_user: bool, 
         message: str,
-        tool_calls: List[BaseToolCallWithResult] = []
+        tool_calls: List[BaseToolCallWithResult] = [],
+        hide_from_chat: bool = False
     ) -> None:
         added_msg = await self.chat_repository.add_chat_message(
             session_id=session_id, 
             is_user=is_user, 
             content=message,
-            sender_id=sender_id
+            sender_id=sender_id,
+            hide_from_chat=hide_from_chat
         )
         
         if tool_calls:
@@ -268,7 +304,7 @@ class ChatService:
         prompt_type: PromptType,
         input_msg: str
     ) -> Tuple[AsyncGenerator[CompletionChunk, None], asyncio.Future]:
-        messages = await self.chat_repository.get_chat_messages(session.id)
+        messages = await self.chat_repository.get_chat_messages(session.id, include_hidden=True)
         model_messages = self._get_chat_messages(messages)
         
         final_messages_future = asyncio.Future()

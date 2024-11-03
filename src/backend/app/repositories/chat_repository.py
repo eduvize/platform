@@ -3,10 +3,12 @@ import json
 import uuid
 from typing import List, Optional
 
+from sqlalchemy import delete, update
 from sqlmodel import Session, select
 from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 from domain.schema.chat import ChatMessage, ChatSession, ChatToolCall
+from domain.enums.chat_enums import PromptType
 from common.database import async_engine
 
 logger = logging.getLogger("ChatRepository")
@@ -14,7 +16,8 @@ logger = logging.getLogger("ChatRepository")
 class ChatRepository:
     async def create_chat_session(
         self,
-        user_id: uuid.UUID
+        user_id: uuid.UUID,
+        resource_id: Optional[uuid.UUID] = None
     ) -> ChatSession:
         """
         Creates a new chat session
@@ -30,20 +33,22 @@ class ChatRepository:
         
         async with AsyncSession(async_engine) as session:
             chat_session = ChatSession(
-                user_id=user_id
+                user_id=user_id,
+                resource_id=resource_id
             )
             session.add(chat_session)
             await session.commit()
             await session.refresh(chat_session)
             
             return chat_session
-    
+        
     async def add_chat_message(
         self, 
         session_id: uuid.UUID,
         sender_id: uuid.UUID,
         is_user: bool,
-        content: Optional[str]
+        content: Optional[str],
+        hide_from_chat: bool = False
     ) -> ChatMessage:
         """
         Adds a message to a chat session
@@ -63,7 +68,8 @@ class ChatRepository:
                 is_user=is_user,
                 content=content,
                 instructor_id=sender_id if not is_user else None,
-                user_id=sender_id if is_user else None
+                user_id=sender_id if is_user else None,
+                hide_from_chat=hide_from_chat
             )
             session.add(chat_message)
             await session.commit()
@@ -79,6 +85,31 @@ class ChatRepository:
             query = select(ChatMessage).where(ChatMessage.id == message_id)
             result = await session.exec(query)
             return result.one_or_none()
+        
+    async def purge_session(
+        self,
+        session_id: uuid.UUID
+    ) -> None:
+        """
+        Purges all messages and associated tool calls from a chat session.
+
+        Args:
+            session_id (uuid.UUID): The ID of the chat session to purge
+        """
+        async with AsyncSession(async_engine) as session:
+            # First delete tool calls for messages in this session
+            tool_delete = delete(ChatToolCall).where(
+                ChatToolCall.message_id.in_(
+                    select(ChatMessage.id).where(ChatMessage.session_id == session_id)
+                )
+            )
+            await session.execute(tool_delete)
+
+            # Then delete the messages
+            message_delete = delete(ChatMessage).where(ChatMessage.session_id == session_id)
+            await session.execute(message_delete)
+            
+            await session.commit()
         
     async def add_tool_message(
         self,
@@ -128,9 +159,19 @@ class ChatRepository:
             result = await session.execute(query)
             return result.scalar_one_or_none()
         
+    async def get_lesson_session(
+        self,
+        lesson_id: uuid.UUID
+    ) -> Optional[ChatSession]:
+        async with AsyncSession(async_engine) as session:
+            query = select(ChatSession).where(ChatSession.resource_id == lesson_id)
+            result = await session.execute(query)
+            return result.scalar_one_or_none()
+        
     async def get_chat_messages(
         self,
-        session_id: uuid.UUID
+        session_id: uuid.UUID,
+        include_hidden: bool = True
     ) -> List[ChatMessage]:
         """
         Gets all messages in a chat session
@@ -152,6 +193,9 @@ class ChatRepository:
             # Order by created_at_utc descending
             query = query.order_by(ChatMessage.created_at_utc.desc())
             query = query.limit(50)
+            
+            if not include_hidden:
+                query = query.where(ChatMessage.hide_from_chat == False)
             
             result = await session.execute(query)
             messages = result.scalars().unique().all()
