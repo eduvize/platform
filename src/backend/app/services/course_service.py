@@ -78,6 +78,12 @@ class CourseService:
                     topics=topics
                 )
             )
+            
+    async def get_lesson(
+        self,
+        lesson_id: uuid.UUID
+    ) -> Lesson:
+        return await self.course_repo.get_lesson(lesson_id)
         
     async def mark_lesson_complete(
         self,

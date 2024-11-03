@@ -4,7 +4,7 @@ from typing import Optional
 from uuid import UUID
 from fastapi import Depends
 from socketio import AsyncNamespace
-from app.services import ChatService, UserService, UserOnboardingService, InstructorService
+from app.services import ChatService, UserService, UserOnboardingService, InstructorService, CourseService
 from app.utilities.jwt import decode_token, InvalidJWTToken
 from domain.enums.chat_enums import PromptType
 from config import get_token_secret, get_deepgram_api_key
@@ -85,14 +85,14 @@ class ChatNamespace(AsyncNamespace):
                     chat_session = await chat_service.get_session(user.onboarding_session_id)
                     session["chat_session_id"] = user.onboarding_session_id
                     
-                    await self.emit("continue_session", str(user.onboarding_session_id), to=sid)
+                    await self.emit("continue_session", {"session_id": str(user.onboarding_session_id), "instructor_id": str(instructor.id)}, to=sid)
                     await self.on_send_message(sid, {"message": f"Hello, {instructor.name}! I'm back from a break - where were we?", "hide_from_chat": True})
                 else:
                     chat_session = await chat_service.create_session(user_id=user_id)
                     session["chat_session_id"] = chat_session.id
 
                     await user_service.set_onboarding_session_id(user_id, chat_session.id)
-                    await self.emit("start_session", str(chat_session.id), to=sid)
+                    await self.emit("start_session", {"session_id": str(chat_session.id), "instructor_id": str(instructor.id)}, to=sid)
             else:
                 pass # All other cases will be handled explicitly upon request
             
@@ -104,11 +104,14 @@ class ChatNamespace(AsyncNamespace):
         
         return True
     
+    @inject_dependencies()
     async def on_create_lesson_session(
         self, 
         sid: str, 
         data: dict,
-        chat_service: ChatService = Depends()
+        chat_service: ChatService = Depends(),
+        user_service: UserService = Depends(),
+        course_service: CourseService = Depends()
     ):
         session = await self.get_session(sid)
         user_id = session.get("user_id", None)
@@ -120,13 +123,17 @@ class ChatNamespace(AsyncNamespace):
         if not user_id:
             raise ValueError("User ID not found")
 
+        user = await user_service.get_user("id", user_id)
+
         chat_session, is_new_session = await chat_service.get_or_create_lesson_session(user_id, UUID(lesson_id))
         session["chat_session_id"] = chat_session.id
-        
+                
         if not is_new_session:
-            await self.emit("continue_session", {"session_id": str(chat_session.id), "metadata": json.loads(chat_session.data or "{}")}, to=sid)
+            await self.emit("continue_session", {"session_id": str(chat_session.id), "instructor_id": str(user.default_instructor_id)}, to=sid)
         else:
-            await self.emit("start_session", {"session_id": str(chat_session.id)}, to=sid)
+            await self.emit("start_session", {"session_id": str(chat_session.id), "instructor_id": str(user.default_instructor_id)}, to=sid)
+            
+        await self.emit("lesson_id_set", to=sid)
 
     async def on_disconnect(self, sid: str):
         """
@@ -157,11 +164,18 @@ class ChatNamespace(AsyncNamespace):
         if session.get("producing_response", False):
             return
         
+        override_prompt_type = data.get("prompt")
+        
+        if override_prompt_type:
+            prompt_type = PromptType(override_prompt_type)
+        else:
+            prompt_type = session.get("prompt_type")
+        
         user_id = session.get("user_id")
-        prompt_type = session.get("prompt_type")
         use_voice = session.get("use_voice", False)
         instructor_id = session.get("instructor_id")
         chat_session_id = session.get("chat_session_id")
+        msg_data = data.get("data", {})
         
         if not prompt_type:
             raise ValueError("Prompt type not found")
@@ -179,7 +193,8 @@ class ChatNamespace(AsyncNamespace):
             message=data.get("message"),
             audio=data.get("audio"),
             expect_audio_response=use_voice,
-            hide_from_chat=data.get("hide_from_chat", False)
+            hide_from_chat=data.get("hide_from_chat", False),
+            data=msg_data
         ):
             await self.emit("message_update", json.loads(chunk.model_dump_json()), to=sid)
         
@@ -244,7 +259,7 @@ class ChatNamespace(AsyncNamespace):
         chat_session_id = session.get("chat_session_id")
         
         if not chat_session_id:
-            raise ValueError("Chat session ID not found")
+            return
         
         # Acknowledge the prompt change
         await self.emit("prompt_set", {"prompt_type": prompt_type}, to=sid)

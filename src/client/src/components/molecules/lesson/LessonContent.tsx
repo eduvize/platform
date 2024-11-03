@@ -12,7 +12,8 @@ import { ReadingMaterial } from "@atoms";
 import { Playground } from "../../organisms/playground";
 import { useExercise, useExerciseObjectives } from "@context/exercise/hooks";
 import { CourseDto, LessonDto } from "@models/dto";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { useChat } from "@context/chat";
 
 interface LessonContentProps {
     course: CourseDto;
@@ -33,6 +34,14 @@ export const LessonContent = ({
     const section = sections[currentSection];
     const exercise = useExercise();
     const objectives = useExerciseObjectives();
+    const { setLessonId, setData } = useChat("lesson");
+
+    useEffect(() => {
+        setLessonId(lesson.id);
+        setData({
+            section: currentSection,
+        });
+    }, [lesson, currentSection]);
 
     const isLastLesson = useMemo(() => {
         return currentSection === sections.length - 1;

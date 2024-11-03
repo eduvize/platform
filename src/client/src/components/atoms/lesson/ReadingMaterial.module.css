@@ -28,13 +28,19 @@
     background-color: var(--mantine-color-gray-8);
     border-radius: rem(4px);
     padding: rem(2px) rem(4px);
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 .markdown code[class*="language-"] {
     display: block;
     background-color: var(--mantine-color-gray-8);
     border-radius: rem(4px);
-    padding: rem(6px);
+    padding: rem(12px);
+    overflow-x: auto;
+    max-width: 100%;
+    font-size: 12px;
 }
 
 .markdown hr {

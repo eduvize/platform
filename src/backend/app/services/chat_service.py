@@ -130,7 +130,8 @@ class ChatService:
         message: Optional[str] = None,
         audio: Optional[str] = None,
         expect_audio_response: bool = False,
-        hide_from_chat: bool = False
+        hide_from_chat: bool = False,
+        data: Optional[dict] = None
     ) -> AsyncGenerator[CompletionChunk, None]:
         user = await self.user_service.get_user("id", user_id)
         
@@ -156,7 +157,8 @@ class ChatService:
             session=session,
             instructor=instructor,
             prompt_type=prompt_type,
-            input_msg=message
+            input_msg=message,
+            data=data
         )
         
         speech_queue = asyncio.Queue()
@@ -302,7 +304,8 @@ class ChatService:
         session: ChatSession,
         instructor: Instructor,
         prompt_type: PromptType,
-        input_msg: str
+        input_msg: str,
+        data: Optional[dict] = None
     ) -> Tuple[AsyncGenerator[CompletionChunk, None], asyncio.Future]:
         messages = await self.chat_repository.get_chat_messages(session.id, include_hidden=True)
         model_messages = self._get_chat_messages(messages)
@@ -317,18 +320,19 @@ class ChatService:
                         raise ValueError("Resource ID is required for lesson prompt")
 
                     lesson = await self.course_repository.get_lesson(session.resource_id)
+                    ordered_sections = sorted(lesson.sections, key=lambda x: x.order)
+                    
+                    if data:
+                        section = ordered_sections[data.get("section", 0)]
+                    else:
+                        section = ordered_sections[0]
                     
                     prompt = LessonDiscussionPrompt()
                     async for chunk, responses, is_final in await prompt.get_responses(
                         instructor=instructor,
                         history=model_messages,
                         new_message=input_msg,
-                        lesson_content="\n\n".join(
-                            [
-                                f"{section.title}\n{section.content}" 
-                                for section in lesson.sections
-                            ]
-                        )
+                        lesson_content=section.content
                     ):
                         if not is_final:
                             yield chunk

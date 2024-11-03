@@ -7,7 +7,6 @@ import { AudioOutputContext } from "../audio/AudioOutputContext";
 import { useAudioInput, useIncomingAudioEffect } from "@context/audio/hooks";
 import * as WavEncoder from "wav-encoder";
 import io, { Socket } from "socket.io-client";
-import { ChatApi } from "@api";
 const socketEndpoint = import.meta.env.VITE_SOCKETIO_ENDPOINT;
 
 // Types and Interfaces
@@ -17,10 +16,17 @@ type Context = {
     pendingTools: string[];
     toolResults: Record<string, any | null>;
     isProcessing: boolean;
-    sendMessage: (message: string, hideFromChat?: boolean) => void;
+    data: Record<string, any>;
+    setData: (data: Record<string, any>) => void;
+    sendMessage: (
+        message: string,
+        hideFromChat?: boolean,
+        data?: Record<string, any>
+    ) => void;
     sendAudio: (audio: ArrayBuffer) => void;
     setInstructor: (instructorId: string) => Promise<void>;
     setPrompt: (prompt: ChatPromptType) => Promise<void>;
+    setLessonId: (lessonId: string) => Promise<void>;
     reset: () => void;
 };
 
@@ -35,10 +41,13 @@ const defaultValue: Context = {
     pendingTools: [],
     toolResults: {},
     isProcessing: false,
+    data: {},
+    setData: () => {},
     sendMessage: () => {},
     sendAudio: () => {},
     setInstructor: () => Promise.resolve(),
     setPrompt: () => Promise.resolve(),
+    setLessonId: () => Promise.resolve(),
     reset: () => {},
 };
 
@@ -69,6 +78,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     const [currentPrompt, setCurrentPrompt] = useState<ChatPromptType | null>(
         null
     );
+    const [data, setData] = useState<Record<string, any>>({});
     const [instructorId, setInstructorId] = useState<string | null>(null);
     const [messages, setMessages] = useState<ChatMessageDto[]>([]);
     const messageCompleteRef = useRef(false);
@@ -185,17 +195,27 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             setIsProcessing(false);
         });
 
-        socket.on("continue_session", (sessionId: string) => {
-            console.log("Continuing session", sessionId);
+        socket.on(
+            "continue_session",
+            (data: { session_id: string; instructor_id?: string }) => {
+                console.log("Continuing session", data);
 
-            ChatApi.getHistory(sessionId).then((history) => {
-                setMessages(history);
-            });
-        });
+                if (data.instructor_id) {
+                    setInstructorId(data.instructor_id);
+                }
+            }
+        );
 
-        socket.on("start_session", (sessionId: string) => {
-            console.log("Starting session", sessionId);
-        });
+        socket.on(
+            "start_session",
+            (data: { session_id: string; instructor_id?: string }) => {
+                console.log("Starting session", data);
+
+                if (data.instructor_id) {
+                    setInstructorId(data.instructor_id);
+                }
+            }
+        );
 
         socket.on("purge_session", () => {
             console.log("Purging session");
@@ -287,8 +307,10 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
     const sendMessage = (message: string, hideFromChat?: boolean) => {
         getSocket()?.emit("send_message", {
+            prompt: currentPromptRef.current,
             message,
             hide_from_chat: hideFromChat,
+            data: data || {},
         });
     };
 
@@ -338,14 +360,15 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
             if (newInstructorId === instructorIdRef.current) return;
             stopPlayback();
 
-            console.log("Setting instructor t43234234o", newInstructorId);
             getSocket()?.emit("set_instructor", {
                 instructor_id: newInstructorId,
             });
 
-            instructorIdRef.current = newInstructorId;
-
-            setInstructorId(newInstructorId);
+            getSocket()?.once("instructor_set", () => {
+                instructorIdRef.current = newInstructorId;
+                setInstructorId(newInstructorId);
+                resolve();
+            });
         });
     };
 
@@ -357,14 +380,29 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
                 prompt_type: newPrompt,
             });
 
-            currentPromptRef.current = newPrompt;
-
             stopPlayback();
-            setCurrentPrompt(newPrompt);
 
-            setTimeout(() => {
+            getSocket()?.once("prompt_set", () => {
+                currentPromptRef.current = newPrompt;
+                setCurrentPrompt(newPrompt);
                 resolve();
-            }, 1000);
+            });
+        });
+    };
+
+    const handleSetLessonId = (
+        lessonId: string,
+        section?: number
+    ): Promise<void> => {
+        return new Promise<void>((resolve) => {
+            getSocket()?.emit("create_lesson_session", {
+                lesson_id: lessonId,
+                section,
+            });
+
+            getSocket()?.once("lesson_id_set", () => {
+                resolve();
+            });
         });
     };
 
@@ -406,6 +444,9 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         sendAudio: handleSendAudio,
         setInstructor: handleSetInstructor,
         setPrompt: handleSetPrompt,
+        setLessonId: handleSetLessonId,
+        data,
+        setData,
         reset: () => {
             stopPlayback();
             setMessages([]);

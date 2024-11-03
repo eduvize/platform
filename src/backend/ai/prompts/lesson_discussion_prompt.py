@@ -42,6 +42,7 @@ Key Reminders:
 - Adapt to the student's understanding level.
 - Encourage critical thinking without overwhelming.
 - Stick strictly to the lesson content.
+- **DO NOT** be repetitive. If the user is coming back from a break, do not repeat yourself. Instead, greet them and provide a very brief summary of where you left off.
         """.strip())
         
         self.add_user_message(f"""

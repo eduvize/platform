@@ -103,11 +103,7 @@ export const InstructorPane = ({ view, onHide }: InstructorPaneProps) => {
                     )}
                 </Flex>
 
-                <Chat
-                    ref={chatAreaRef}
-                    maxHeight={chatHeight}
-                    greetingMessage="Let me know if you have any questions!"
-                />
+                <Chat ref={chatAreaRef} maxHeight={chatHeight} />
             </Flex>
         </Stack>
     );

@@ -2,7 +2,7 @@ import { useContextSelector } from "use-context-selector";
 import { ChatContext } from "@context/chat";
 import { ChatMessageDto } from "@models/dto";
 import { ChatPromptType } from "@models/enums";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface UseChatReturn {
     instructorId: string;
@@ -12,7 +12,9 @@ interface UseChatReturn {
     sendAudio: (audio: ArrayBuffer) => void;
     setInstructor: (id: string) => Promise<void>;
     setPrompt: (prompt: ChatPromptType) => Promise<void>;
+    setLessonId: (lessonId: string) => Promise<void>;
     purge: () => void;
+    setData: (data: Record<string, any>) => void;
 }
 
 export const useChat = (prompt?: ChatPromptType): UseChatReturn => {
@@ -24,6 +26,8 @@ export const useChat = (prompt?: ChatPromptType): UseChatReturn => {
         (v) => v.setInstructor
     );
     const setPrompt = useContextSelector(ChatContext, (v) => v.setPrompt);
+    const setLessonId = useContextSelector(ChatContext, (v) => v.setLessonId);
+    const setData = useContextSelector(ChatContext, (v) => v.setData);
     const messages = useContextSelector(ChatContext, (v) => v.messages);
     const processing = useContextSelector(ChatContext, (v) => v.isProcessing);
     const reset = useContextSelector(ChatContext, (v) => v.reset);
@@ -41,7 +45,9 @@ export const useChat = (prompt?: ChatPromptType): UseChatReturn => {
         sendAudio,
         setInstructor,
         setPrompt,
+        setLessonId,
         processing,
         purge: reset,
+        setData,
     };
 };
