@@ -126,7 +126,23 @@ class CourseRepository:
             update_query = (
                 update(Course)
                 .where(Course.id == course_id)
-                .values(current_lesson_id=lesson_id)
+                .values(current_lesson_id=lesson_id, current_section_index=0)
+            )
+            
+            await session.exec(update_query)
+            await session.commit()
+            
+    async def set_current_section(
+        self,
+        course_id: uuid.UUID,
+        lesson_id: uuid.UUID,
+        section_index: int
+    ) -> None:
+        async for session in get_async_session():
+            update_query = (
+                update(Course)
+                .where(Course.id == course_id)
+                .values(current_lesson_id=lesson_id, current_section_index=section_index)
             )
             
             await session.exec(update_query)

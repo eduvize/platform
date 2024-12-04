@@ -6,6 +6,7 @@ import { createContext } from "use-context-selector";
 
 type Context = {
     course: CourseDto | null;
+    markSectionComplete: (lessonId: string, sectionIndex: number) => void;
     markLessonComplete: (lessonId: string) => void;
     setObjectiveStatus: (objectiveId: string, status: boolean) => void;
 };
@@ -13,6 +14,7 @@ type Context = {
 const defaultValue: Context = {
     course: null,
     markLessonComplete: () => {},
+    markSectionComplete: () => {},
     setObjectiveStatus: () => {},
 };
 
@@ -55,9 +57,51 @@ export const CourseProvider = ({ courseId, children }: CourseProviderProps) => {
                 setCourse({
                     ...course,
                     current_lesson_id: change.lesson_id,
+                    current_section_index: 0,
                 });
             }
         });
+    };
+
+    const markSectionComplete = (lessonId: string, sectionIndex: number) => {
+        if (!course) return;
+
+        const currentLessonId = course.current_lesson_id;
+        const currentSectionIndex = course.current_section_index;
+
+        const currentLessonModule = course.modules.find((m) =>
+            m.lessons.some((l) => l.id === currentLessonId)
+        );
+
+        if (!currentLessonModule) return;
+
+        const lessonModule = course.modules.find((m) =>
+            m.lessons.some((l) => l.id === lessonId)
+        );
+
+        if (!lessonModule) return;
+
+        // If the current lesson module comes after the active lesson module, skip
+        if (currentLessonModule?.order !== lessonModule?.order) {
+            return;
+        }
+
+        const currentLessonIndex = currentLessonModule.lessons.findIndex(
+            (l) => l.id === currentLessonId
+        );
+        const lessonIndex = lessonModule.lessons.findIndex(
+            (l) => l.id === lessonId
+        );
+
+        // If the current lesson index is greater than the lesson index, skip
+        if (
+            currentLessonIndex > lessonIndex ||
+            currentSectionIndex > sectionIndex
+        ) {
+            return;
+        }
+
+        CourseApi.markSectionComplete(courseId, lessonId, sectionIndex);
     };
 
     return (
@@ -65,6 +109,7 @@ export const CourseProvider = ({ courseId, children }: CourseProviderProps) => {
             value={{
                 course,
                 markLessonComplete,
+                markSectionComplete,
                 setObjectiveStatus: (objectiveId, status) => {
                     if (!course) {
                         return;

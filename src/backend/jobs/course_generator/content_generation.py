@@ -138,5 +138,4 @@ async def listen_for_course_generation_jobs():
             # Commit the message to the Kafka topic offset
             consumer.commit(message)
         except Exception as e:
-            logging.error(f"Failed to generate course content: {e}. Skipping...")
-            consumer.commit(message)
+            logging.error(f"Failed to generate course content: {e}")

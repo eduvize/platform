@@ -152,6 +152,57 @@ class CourseService:
             lesson_id=next_lesson_id,
         )
         
+    async def mark_lesson_section_complete(
+        self,
+        user_id: uuid.UUID,
+        course_id: uuid.UUID,
+        lesson_id: uuid.UUID,
+        section_index: int
+    ) -> CourseProgressionDto:
+        user = await self.user_service.get_user("id", user_id)
+        
+        if user is None:
+            raise ValueError("User not found")
+        
+        course = await self.course_repo.get_course(course_id)
+        
+        if course is None:
+            raise ValueError("Course not found")
+        
+        current_lesson: Optional[Lesson] = next((
+            lesson
+            for module in course.modules
+            for lesson in module.lessons
+            if lesson.id == course.current_lesson_id
+        ), None)
+        
+        if current_lesson is None:
+            raise ValueError("Current lesson not found")
+        
+        if current_lesson.id != lesson_id:
+            return CourseProgressionDto.model_construct(
+                is_course_complete=False,
+                lesson_id=current_lesson.id
+            )
+        
+        if section_index < course.current_section_index:
+            return CourseProgressionDto.model_construct(
+                is_course_complete=False,
+                lesson_id=current_lesson.id
+            )
+        
+        if len(current_lesson.sections) > section_index + 1:
+            await self.course_repo.set_current_section(
+                course_id=course.id,
+                lesson_id=lesson_id,
+                section_index=section_index + 1
+            )
+        
+        return CourseProgressionDto.model_construct(
+            is_course_complete=False,
+            lesson_id=current_lesson.id
+        )
+        
     async def get_courses(
         self,
         user_id: str

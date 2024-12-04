@@ -56,6 +56,16 @@ async def complete_section(
     course_service: CourseService = Depends(CourseService)
 ):
     return await course_service.mark_lesson_complete(user_id, course_id, lesson_id)
+
+@router.post("/{course_id}/lesson/{lesson_id}/section/{section_index}/complete", response_model=CourseProgressionDto, dependencies=[Depends(user_id_extractor)])
+async def complete_section(
+    course_id: uuid.UUID,
+    lesson_id: uuid.UUID,
+    section_index: int,
+    user_id: str = Depends(user_id_extractor), 
+    course_service: CourseService = Depends(CourseService)
+):
+    return await course_service.mark_lesson_section_complete(user_id, course_id, lesson_id, section_index)
     
 @router.get("/{course_id}/exercises", dependencies=[Depends(user_id_extractor)])
 async def get_exercises(

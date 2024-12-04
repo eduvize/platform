@@ -67,6 +67,13 @@ const getSocket = () => {
     return globalSocket;
 };
 
+// Add this UUID validation function
+const isValidUUID = (uuid: string): boolean => {
+    const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+};
+
 export const ChatProvider = ({ children }: ChatProviderProps) => {
     // State
     const [isConnected, setIsConnected] = useState(false);
@@ -394,6 +401,11 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         lessonId: string,
         section?: number
     ): Promise<void> => {
+        if (!lessonId) return Promise.resolve();
+
+        // Check if lessonId is a valid UUID
+        if (!isValidUUID(lessonId)) return Promise.resolve();
+
         return new Promise<void>((resolve) => {
             getSocket()?.emit("create_lesson_session", {
                 lesson_id: lessonId,

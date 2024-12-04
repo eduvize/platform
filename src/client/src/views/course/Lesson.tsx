@@ -19,12 +19,18 @@ export const Lesson = () => {
         return null;
     }
 
-    const Wrapper = memo(() => {
+    const Wrapper = () => {
         const { course } = useCourse();
         const lesson = useLesson(params.lesson_id!);
 
-        return <LessonComponent {...lesson} course={course} />;
-    });
+        return (
+            <LessonComponent
+                {...lesson}
+                course={course}
+                section={course.current_section_index}
+            />
+        );
+    };
 
     return (
         <CourseProvider courseId={params.course_id}>

@@ -4,7 +4,6 @@ import { Overview } from "./Overview";
 import { Instructors } from "./Instructors";
 import { Profile } from "./Profile";
 import {
-    useInstructorVisibility,
     useOnboardingFlow,
     useOnboardingInstructor,
 } from "@context/onboarding/hooks";
@@ -19,7 +18,6 @@ export const Onboarding = () => {
     const [sectionOverride, setSectionOverride] = useState(0);
     const { setInstructor, instructor } = useOnboardingInstructor();
     const { sendMessage, purge, setPrompt } = useChat();
-    const isInstructorVisible = useInstructorVisibility();
     const [welcome, setWelcome] = useState(true);
     const [isProfileComplete, setIsProfileComplete] = useState(false);
 
@@ -29,6 +27,7 @@ export const Onboarding = () => {
         description: "Onboarding course description",
         cover_image_url: "",
         current_lesson_id: "",
+        current_section_index: 0,
         created_at_utc: new Date().toISOString(),
         modules: [
             {
@@ -69,12 +68,7 @@ export const Onboarding = () => {
                                                 "Instructor selected",
                                                 instructorId
                                             );
-                                            setInstructor(instructorId).then(
-                                                () => {
-                                                    purge();
-                                                    sendMessage("Hello!", true);
-                                                }
-                                            );
+                                            setInstructor(instructorId).then();
                                         }}
                                     />
                                 ),
@@ -152,21 +146,20 @@ export const Onboarding = () => {
         return <Welcome onGetStarted={() => setWelcome(false)} />;
     }
 
+    console.log(`WHAT THE FUCK NUTS IS THIS SHIT`, sectionOverride);
+
     return (
         <Lesson
+            controlled
             hideNumberedLabels
-            hideInstructor={!isInstructorVisible}
+            hideInstructor={sectionOverride === 0}
             {...onboardingCourse.modules[0].lessons[0]}
             course={onboardingCourse}
             section={sectionOverride}
             onSectionChange={(section) => {
-                if (Math.abs(section - sectionOverride) > 1) {
-                    return false;
-                }
-
-                if (section > 2 && !isProfileComplete) return false;
-
                 setSectionOverride(section);
+
+                return true;
             }}
         />
     );

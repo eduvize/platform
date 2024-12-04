@@ -33,6 +33,20 @@ export const NavigationPane = ({
             .find((lesson) => lesson.id === currentLessonId);
     }, [currentLessonId]);
 
+    const isLessonComplete = useMemo(() => {
+        const activeLessonIndex = course.modules
+            .map((module) => module.lessons)
+            .flat()
+            .findIndex((lesson) => lesson.id === currentLessonId);
+
+        const currentLessonIndex = course.modules
+            .map((module) => module.lessons)
+            .flat()
+            .findIndex((lesson) => lesson.id === course.current_lesson_id);
+
+        return currentLessonIndex > activeLessonIndex;
+    }, [currentLesson, course]);
+
     const sections = currentLesson?.sections || [];
 
     const currentModule = useMemo(() => {
@@ -91,7 +105,9 @@ export const NavigationPane = ({
                             }
                         }}
                         activeSection={
-                            currentSection + (exerciseVisible ? 1 : 0)
+                            isLessonComplete
+                                ? sections.length
+                                : currentSection + (exerciseVisible ? 1 : 0)
                         }
                     />
                 </Box>

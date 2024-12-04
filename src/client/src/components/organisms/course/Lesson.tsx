@@ -19,6 +19,7 @@ type Panel = "module" | "instructor";
 
 interface ComponentProps extends LessonDto {
     course: CourseDto;
+    controlled?: boolean;
     hideNumberedLabels?: boolean;
     hideInstructor?: boolean;
     section?: number;
@@ -28,7 +29,7 @@ interface ComponentProps extends LessonDto {
 export const Lesson = (props: ComponentProps) => {
     const navigate = useNavigate();
     const { instructorId } = useChat();
-    const { markLessonComplete: markSectionCompleted } = useCourse();
+    const { markLessonComplete, markSectionComplete } = useCourse();
     const [section, setSection] = useState(props.section ?? 0);
     const [showExercise, setShowExercise] = useState(false);
     const [panels, setPanels] = useState<Panel[]>(["instructor", "module"]);
@@ -41,6 +42,7 @@ export const Lesson = (props: ComponentProps) => {
         hideNumberedLabels,
         hideInstructor,
         onSectionChange,
+        controlled,
     } = props;
 
     useEffect(() => {
@@ -59,9 +61,16 @@ export const Lesson = (props: ComponentProps) => {
     }, [props.section]);
 
     const handleCompleteSection = () => {
-        markSectionCompleted(lessonId);
+        if (controlled) {
+            onSectionChange?.(section + 1);
+            return;
+        }
+
+        markSectionComplete(lessonId, section);
 
         if (section === sections.length - 1) {
+            markLessonComplete(lessonId);
+
             if (exercises.length > 0) {
                 if (!showExercise) {
                     setShowExercise(true);
@@ -132,6 +141,7 @@ export const Lesson = (props: ComponentProps) => {
                     }
                 >
                     <LessonContent
+                        controlled={controlled}
                         course={course}
                         lesson={props}
                         currentSection={section}

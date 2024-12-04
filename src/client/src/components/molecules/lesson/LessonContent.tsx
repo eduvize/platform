@@ -16,6 +16,7 @@ import { useEffect, useMemo } from "react";
 import { useChat } from "@context/chat";
 
 interface LessonContentProps {
+    controlled?: boolean;
     course: CourseDto;
     lesson: LessonDto;
     view: "lesson" | "exercise";
@@ -24,6 +25,7 @@ interface LessonContentProps {
 }
 
 export const LessonContent = ({
+    controlled,
     course,
     lesson,
     currentSection,
@@ -34,14 +36,16 @@ export const LessonContent = ({
     const section = sections[currentSection];
     const exercise = useExercise();
     const objectives = useExerciseObjectives();
-    const { setLessonId, setData } = useChat("lesson");
+    const { setLessonId, setData } = useChat(controlled ? undefined : "lesson");
 
     useEffect(() => {
+        if (controlled) return;
+
         setLessonId(lesson.id);
         setData({
             section: currentSection,
         });
-    }, [lesson, currentSection]);
+    }, [lesson, currentSection, controlled]);
 
     const isLastLesson = useMemo(() => {
         return currentSection === sections.length - 1;

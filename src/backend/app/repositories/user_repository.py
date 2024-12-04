@@ -4,7 +4,6 @@ from sqlalchemy import UUID
 from sqlalchemy.orm import joinedload
 from sqlmodel import select
 from domain.schema.user import User, UserExternalAuth, UserIdentifiers
-from domain.schema.instructors import Instructor
 from common.database import get_async_session
 
 class UserRepository:
@@ -38,16 +37,6 @@ class UserRepository:
         )
         
         async for session in get_async_session():
-            # Get the first instructor (TODO: Let them choose)
-            instructor_query = select(Instructor).order_by(Instructor.id).limit(1)
-            result = await session.exec(instructor_query)
-            instructor = result.one_or_none()
-            
-            if instructor is None:
-                raise Exception("No instructor found")
-            
-            user.default_instructor_id = instructor.id
-            
             session.add(user)
             await session.commit()
             await session.refresh(user)

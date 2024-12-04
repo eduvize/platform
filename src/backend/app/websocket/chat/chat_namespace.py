@@ -118,10 +118,15 @@ class ChatNamespace(AsyncNamespace):
         lesson_id = data.get("lesson_id", None)
         
         if not lesson_id:
-            raise ValueError("Lesson ID not found")
+            return
 
         if not user_id:
-            raise ValueError("User ID not found")
+            return
+        
+        try:
+            uid = UUID(lesson_id)
+        except ValueError:
+            return
 
         user = await user_service.get_user("id", user_id)
 
@@ -132,6 +137,7 @@ class ChatNamespace(AsyncNamespace):
             await self.emit("continue_session", {"session_id": str(chat_session.id), "instructor_id": str(user.default_instructor_id)}, to=sid)
         else:
             await self.emit("start_session", {"session_id": str(chat_session.id), "instructor_id": str(user.default_instructor_id)}, to=sid)
+            await self.on_send_message(sid, {"message": f"Hello! I'm ready to learn. Could you tell me in one sentence what it is we're working on today?", "hide_from_chat": True})
             
         await self.emit("lesson_id_set", to=sid)
 

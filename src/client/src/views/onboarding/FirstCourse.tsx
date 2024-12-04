@@ -119,14 +119,6 @@ export const FirstCourse = () => {
                         description={`You've worked with Kyle to create ${courseTitle}. You can start your course by clicking the button below.`}
                     />
                 </CheckboxStepper>
-
-                <Divider />
-
-                <Group>
-                    <Button>Check out my Courses</Button>
-                </Group>
-
-                <Space h="xl" />
             </Stack>
         );
     }
