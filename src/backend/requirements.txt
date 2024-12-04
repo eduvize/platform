@@ -66,3 +66,5 @@ types-confluent-kafka
 aiohttp
 aioredis
 aiokafka
+elevenlabs
+deepgram-sdk==3.*

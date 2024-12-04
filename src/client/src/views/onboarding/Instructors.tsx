@@ -1,0 +1,121 @@
+import { InstructorTrait } from "@atoms";
+import { useInstructors } from "@hooks/instructors";
+import {
+    Button,
+    Divider,
+    Group,
+    Space,
+    Stack,
+    Text,
+    Title,
+} from "@mantine/core";
+import { SelectableInstructor } from "@molecules";
+import { useEffect, useMemo, useState } from "react";
+
+interface InstructorsProps {
+    value?: string;
+    onInstructorSelected: (instructorId: string) => void;
+    onNext: () => void;
+}
+
+export const Instructors = ({
+    value,
+    onInstructorSelected,
+    onNext,
+}: InstructorsProps) => {
+    const instructors = useInstructors();
+    const [selectedInstructorId, setSelectedInstructorId] = useState<
+        string | null
+    >(value ?? null);
+    const selectedInstructor = useMemo(() => {
+        return instructors.find(
+            (instructor) => instructor.id === selectedInstructorId
+        );
+    }, [instructors, selectedInstructorId]);
+    const selectedInstructorIndex = useMemo(() => {
+        return instructors.findIndex(
+            (instructor) => instructor.id === selectedInstructorId
+        );
+    }, [instructors, selectedInstructorId]);
+
+    useEffect(() => {
+        setSelectedInstructorId(value ?? null);
+    }, [value]);
+
+    useEffect(() => {
+        if (!instructors.length || selectedInstructorId) return;
+
+        setSelectedInstructorId(instructors[0].id);
+        onInstructorSelected(instructors[0].id);
+    }, [instructors]);
+
+    useEffect(() => {
+        if (!selectedInstructorId) return;
+
+        onInstructorSelected(selectedInstructorId);
+    }, [selectedInstructorId]);
+
+    return (
+        <Stack pt="xl" gap="lg">
+            <Title order={2} fw={400} c="white">
+                Choose your instructor.
+            </Title>
+
+            <Text>
+                Your instructor sets the tone for your courses. Think about how
+                you like to learn, who you like to speak with about complex
+                subjects, and what type of approach you prefer when learning.
+                Don’t worry though, you can change your instructor at any time,
+                even in the middle of a course. If you want to test them out,
+                you can chat with them in the{" "}
+                <span style={{ color: "#51CF66", fontWeight: "bold" }}>
+                    Instructor Window
+                </span>{" "}
+                on the right.
+            </Text>
+
+            <Group>
+                {instructors.map((instructor) => (
+                    <SelectableInstructor
+                        key={instructor.id}
+                        {...instructor}
+                        selected={selectedInstructorId === instructor.id}
+                        onClick={() => setSelectedInstructorId(instructor.id)}
+                    />
+                ))}
+            </Group>
+
+            <Title order={3} fw={400} c="white">
+                Instructor {selectedInstructorIndex + 1}:{" "}
+                {selectedInstructor?.name} - {selectedInstructor?.alias}
+            </Title>
+
+            <Stack gap="lg">
+                <InstructorTrait
+                    name="Enthusiasm"
+                    value={selectedInstructor?.enthusiasm || 0}
+                />
+                <InstructorTrait
+                    name="Structure"
+                    value={selectedInstructor?.structure || 0}
+                />
+                <InstructorTrait
+                    name="Support"
+                    value={selectedInstructor?.support || 0}
+                />
+            </Stack>
+
+            <Stack gap={0}>
+                <Title order={4} fw={400} c="white">
+                    How does {selectedInstructor?.name} Make a PB & J?
+                </Title>
+
+                <Text fs="italic" c="#C9C9C9" lh="sm" fw={300}>
+                    "{selectedInstructor?.sample_text}"
+                </Text>
+            </Stack>
+
+            <Space />
+        </Stack>
+    );
+};

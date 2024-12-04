@@ -23,6 +23,17 @@ class CourseApi extends BaseApi {
         return this.post(`${courseId}/lesson/${lessonId}/complete`, {});
     }
 
+    markSectionComplete(
+        courseId: string,
+        lessonId: string,
+        sectionIndex: number
+    ): Promise<CourseProgressionDto> {
+        return this.post(
+            `${courseId}/lesson/${lessonId}/section/${sectionIndex}/complete`,
+            {}
+        );
+    }
+
     getCourses(): Promise<CourseListingDto[]> {
         return this.get("");
     }

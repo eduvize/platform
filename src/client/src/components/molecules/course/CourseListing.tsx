@@ -22,7 +22,9 @@ export const CourseListing = ({
                 pos="relative"
                 withBorder
                 className={`${classes.courseCard} ${
-                    is_generating ? "new" : classes.courseReady
+                    is_generating
+                        ? classes.courseCardGenerating
+                        : classes.courseReady
                 }`}
                 bg={
                     is_new
@@ -62,7 +64,7 @@ export const CourseListing = ({
 
                 {!is_new && (
                     <Flex h="100%" align="flex-end">
-                        <Box bg="rgba(0, 0, 0, 0.6)" p="xs">
+                        <Box bg="rgba(0, 0, 0, 0.6)" p="xs" w="100%">
                             <Text size="lg" c="white" fw={700}>
                                 {title}
                             </Text>
@@ -77,7 +79,9 @@ export const CourseListing = ({
                                 }
                             >
                                 {is_generating
-                                    ? `${generation_progress}% generated`
+                                    ? generation_progress === 0
+                                        ? "Creating course outline..."
+                                        : `Generating... ${generation_progress}%`
                                     : `${progress}% complete`}
                             </Text>
                         </Box>

@@ -5,6 +5,7 @@ import { CourseDto } from "@models/dto";
 interface UseCourseReturn {
     course: CourseDto;
     markLessonComplete: (lessonId: string) => void;
+    markSectionComplete: (lessonId: string, sectionIndex: number) => void;
 }
 
 export const useCourse = (): UseCourseReturn => {
@@ -13,9 +14,14 @@ export const useCourse = (): UseCourseReturn => {
         CourseContext,
         (v) => v.markLessonComplete
     );
+    const markSectionComplete = useContextSelector(
+        CourseContext,
+        (v) => v.markSectionComplete
+    );
 
     return {
         course: course!,
         markLessonComplete,
+        markSectionComplete,
     };
 };

@@ -20,7 +20,7 @@ export const ModuleListItem = ({
 
     const activeIndex = isModuleCompleted
         ? lessons.length - 1
-        : lessons.findIndex((lesson) => lesson.order === currentLesson.order);
+        : lessons.findIndex((lesson) => lesson.id === currentLesson.id);
 
     return (
         <Card withBorder>

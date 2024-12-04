@@ -25,6 +25,14 @@ def get_live_reload() -> Boolean:
 def is_email_validation_enabled() -> bool:
     return os.getenv("REQUIRE_EMAIL_VALIDATION", "true").lower() == "true"
 
+# ElevenLabs
+def get_elevenlabs_api_key() -> str:
+    return os.getenv("ELEVENLABS_API_KEY")
+
+# Deepgram
+def get_deepgram_api_key() -> str:
+    return os.getenv("DEEPGRAM_API_KEY")
+
 # AWS
 def get_aws_access_key() -> str:
     return os.getenv("AWS_ACCESS_KEY")

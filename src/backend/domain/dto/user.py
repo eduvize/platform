@@ -1,22 +1,13 @@
+from typing import Optional
 import uuid
-from pydantic import BaseModel, field_validator, computed_field
+from pydantic import BaseModel, field_validator
 from domain.schema.user import UserBase
-from domain.dto.profile import UserProfileDto
 
 class UserDto(UserBase):
     id: uuid.UUID
     username: str
-    profile: UserProfileDto
     created_at_utc: str
-    
-    @computed_field
-    @property
-    def display_name(self) -> str:
-        return (
-            f"{self.profile.first_name} {self.profile.last_name}" 
-            if self.profile.first_name and self.profile.last_name 
-            else self.username
-        )
+    profile_photo_url: Optional[str] = None
     
     # Field validators let you transform the data before it is validated in order to map schema to model fields
     @field_validator("id", mode="before")
@@ -29,5 +20,5 @@ class UserDto(UserBase):
     
 class UserOnboardingStatusDto(BaseModel):
     is_verified: bool
-    is_profile_complete: bool
+    is_first_course_created: bool
     recently_verified: bool

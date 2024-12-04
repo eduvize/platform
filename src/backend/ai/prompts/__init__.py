@@ -1,8 +1,10 @@
 from .base_prompt import BasePrompt, BaseChatMessage, BaseTool
-from .autocomplete import AutocompletePrompt
-from .resume_scan import ResumeScannerPrompt
-from .assertion import AssertionPrompt
-from .course_planning import GetAdditionalInputsPrompt
-from .course_generation import GenerateCourseOutlinePrompt, GenerateModuleContentPrompt, GenerateExercisesPrompt, SelectExerciseLessonsPrompt
-from .lesson_discussion import LessonDiscussionPrompt
-from .playground_setup import PlaygroundSetupPrompt, PlaygroundSetupRevisionPrompt
+from .resume_scanner_prompt import ResumeScannerPrompt
+from .generate_course_outline_prompt import GenerateCourseOutlinePrompt
+from .generate_module_content_prompt import GenerateModuleContentPrompt
+from .generate_exercises_prompt import GenerateExercisesPrompt
+from .select_exercise_lessons_prompt import SelectExerciseLessonsPrompt
+from .lesson_discussion_prompt import LessonDiscussionPrompt
+from .onboarding_instructor_selection_prompt import OnboardingInstructorSelectionPrompt
+from .onboarding_profile_builder_prompt import OnboardingProfileBuilderPrompt
+from .extract_details_from_transcript_prompt import ExtractDetailsFromTranscriptPrompt

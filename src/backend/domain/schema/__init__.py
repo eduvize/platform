@@ -5,4 +5,4 @@ from .chat import (
     ChatSessionBase,
     ChatToolCall
 )
-from .user import User, UserProfile, UserProfileSkill
+from .user import User

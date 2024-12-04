@@ -1,4 +1,5 @@
 export * from "./useChat";
 export * from "./usePendingTools";
 export * from "./useToolResults";
-export * from "./useLastToolResult";
+export * from "./useToolResult";
+export * from "./useToolCallEffect";

@@ -1,10 +1,12 @@
 import datetime
+from uuid import UUID
 from fastapi import Depends
 
 from app.utilities.endpoints import get_public_endpoint
 from common.email import send_email
 from domain.dto.user import UserOnboardingStatusDto
 from app.repositories.user_repository import UserRepository
+from app.repositories.course_repository import CourseRepository
 from common.email.templates import get_welcome_email
 from app.utilities.string_generation import generate_random_string
 
@@ -23,12 +25,15 @@ class UserOnboardingService:
         user_repo (UserRepository): The repository for user data
     """    
     user_repo: UserRepository
+    course_repo: CourseRepository
     
     def __init__(
         self, 
-        user_repository: UserRepository = Depends(UserRepository)
+        user_repository: UserRepository = Depends(UserRepository),
+        course_repository: CourseRepository = Depends(CourseRepository)
     ):
         self.user_repo = user_repository
+        self.course_repo = course_repository
         
     async def send_verification_email(
         self, 
@@ -82,102 +87,18 @@ class UserOnboardingService:
         Returns:
             dict: The user's onboarding status
         """
-        user = await self.user_repo.get_user("id", user_id, ["profile"])
-        
-        # Check required profile fields
-        is_profile_complete = await self.is_profile_complete(user_id)
+        user = await self.user_repo.get_user("id", user_id)
+        courses = await self.course_repo.get_courses(UUID(user_id))
         
         return UserOnboardingStatusDto.model_construct(
             is_verified= not user.pending_verification,
-            is_profile_complete=is_profile_complete,
+            is_first_course_created=len(courses) > 0,
             recently_verified=(
                 not user.pending_verification
                 and user.verification_sent_at_utc is not None 
                 and datetime.datetime.utcnow() - user.verification_sent_at_utc < datetime.timedelta(seconds=10)
             )
         )
-        
-    async def is_profile_complete(self, user_id: str) -> bool:
-        user = await self.user_repo.get_user(
-            by="id", 
-            value=user_id, 
-            include=["profile.*"]
-        )
-        
-        if user is None:
-            return False
-        
-        if user.profile is None:
-            return False
-        
-        profile = user.profile
-        
-        if (
-            profile.first_name is None or profile.first_name.strip() == "" or
-            profile.last_name is None or profile.last_name.strip() == "" or
-            profile.bio is None or profile.bio.strip() == "" or
-            profile.disciplines is None
-            or len(profile.disciplines) == 0
-            or len(profile.skills) == 0
-        ):
-            return False
-        
-        if profile.hobby is None and profile.student is None and profile.professional is None:
-            return False
-        
-        if profile.hobby:
-            if profile.hobby.reasons is None or len(profile.hobby.reasons) == 0:
-                return False
-            
-            if any([
-                project.project_name is None
-                or project.project_name.strip() == ""
-                or project.description is None
-                or project.description.strip() == ""
-                for project in profile.hobby.projects
-            ]):
-                return False
-            
-        if profile.student:
-            if(
-                profile.student.schools is None 
-                or len(profile.student.schools) == 0
-                or len(profile.student.schools) == 0
-            ):
-                return False
-            
-            if any([(
-                    school.school_name is None
-                    or school.school_name.strip() == "" 
-                    or school.focus is None
-                    or school.focus.strip() == ""
-                    or school.start_date is None
-                    or (school.end_date is None and not school.is_current)
-                    or school.did_finish is None
-                    or len(school.skills) == 0
-                )
-                for school in profile.student.schools
-            ]):
-                return False
-            
-        if profile.professional:
-            if profile.professional.employers is None or len(profile.professional.employers) == 0:
-                return False
-            
-            if any([
-                employer.company_name is None or
-                employer.company_name.strip() == "" or
-                employer.position is None or
-                employer.position.strip() == "" or
-                employer.start_date is None or
-                (employer.end_date is None and not employer.is_current) or
-                employer.description is None
-                or employer.description.strip() == ""
-                for employer in profile.professional.employers
-            ]):
-                return False
-            
-        return True
         
 def get_verification_url(code: str) -> str:
     """

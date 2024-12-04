@@ -19,4 +19,6 @@ async def get_resume_details(file: UploadFile = File(...)):
     
     images = await get_images_from_pdf_bytes(await file.read())
     
-    return await ResumeScannerPrompt().get_profile_data(images)
+    resume_insights = await ResumeScannerPrompt().get_profile_data(images)
+    
+    return {"resume_insights": resume_insights}

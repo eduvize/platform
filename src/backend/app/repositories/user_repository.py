@@ -3,21 +3,7 @@ from typing import List, Optional, Union
 from sqlalchemy import UUID
 from sqlalchemy.orm import joinedload
 from sqlmodel import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from domain.dto.profile import UserProfileDto
-from domain.mapping import (
-    map_hobby_data, 
-    delete_hobby_data,
-    map_student_data,
-    delete_student_data, 
-    map_professional_data,
-    delete_professional_data,
-    map_skill_data, 
-    map_discipline_data
-)
-from domain.schema.user import User, UserExternalAuth, UserIdentifiers, UserProfile, UserProfileHobby, UserProfileProfessional, UserProfileStudent
-from domain.schema.instructors import Instructor
-from app.utilities.database import set_none_for_unavailable_relationships
+from domain.schema.user import User, UserExternalAuth, UserIdentifiers
 from common.database import get_async_session
 
 class UserRepository:
@@ -49,19 +35,8 @@ class UserRepository:
             password_hash=password_hash,
             pending_verification=not set_email_validated
         )
-        user.profile = UserProfile()
         
         async for session in get_async_session():
-            # Get the first instructor (TODO: Let them choose)
-            instructor_query = select(Instructor).order_by(Instructor.id).limit(1)
-            result = await session.exec(instructor_query)
-            instructor = result.one_or_none()
-            
-            if instructor is None:
-                raise Exception("No instructor found")
-            
-            user.default_instructor_id = instructor.id
-            
             session.add(user)
             await session.commit()
             await session.refresh(user)
@@ -91,48 +66,6 @@ class UserRepository:
             )
             
             await session.commit()
-    
-    async def upsert_profile(self, user_id: UUID, profile: UserProfileDto):
-        """
-        Creates or replaces a user profile record in the database
-
-        Args:
-            user_id (UUID): The ID of the user to associate the profile with
-            profile (UserProfile): The profile data to store
-        """
-        async for session in get_async_session():
-            user_query = select(User).where(User.id == user_id).options(joinedload(User.profile))
-            result = await session.execute(user_query)
-            
-            user = result.scalar_one_or_none()
-            if user is None:
-                return None
-            
-            user.profile.first_name = profile.first_name
-            user.profile.last_name = profile.last_name
-            user.profile.bio = profile.bio
-            user.profile.github_username = profile.github_username
-            user.profile.birthdate = profile.birthdate
-
-            map_discipline_data(session, user.profile, profile.disciplines)
-            map_skill_data(session, user.profile, profile.skills)
-            
-            if profile.hobby:
-                map_hobby_data(session, user.profile, profile.hobby)
-            elif user.profile.hobby:
-                delete_hobby_data(session, user.profile.hobby)
-                
-            if profile.student:
-                map_student_data(session, user.profile, profile.student)
-            elif user.profile.student:
-                delete_student_data(session, user.profile.student)
-                
-            if profile.professional:
-                map_professional_data(session, user.profile, profile.professional)
-            elif user.profile.professional:
-                delete_professional_data(session, user.profile.professional)
-                
-            await session.commit()
             
     async def set_avatar_url(self, user_id: UUID, avatar_url: str) -> None:
         """
@@ -143,26 +76,36 @@ class UserRepository:
             avatar_url (str): The URL of the avatar
         """
         async for session in get_async_session():
-            query = select(User).where(User.id == user_id).options(joinedload(User.profile))
-            result = await session.execute(query)
+            query = select(User).where(User.id == user_id)
+            result = await session.exec(query)
             
-            user = result.scalar_one_or_none()
+            user = result.one_or_none()
             
-            if not user or not user.profile:
-                return
-            
-            user.profile.avatar_url = avatar_url
+            if user:
+                user.profile_photo_url = avatar_url
             
             await session.commit()
-    
-    async def get_user(self, by: UserIdentifiers, value: Union[str, UUID], include: Optional[List[str]] = []) -> Optional[User]:
+            
+    async def set_default_instructor(self, user_id: UUID, instructor_id: UUID) -> None:
         """
-        Retrieves a user by one of their unique identifiers, optionally joining related data
+        Sets the default instructor for a user
+        """
+        async for session in get_async_session():
+            query = select(User).where(User.id == user_id)
+            result = await session.exec(query)
+            
+            user = result.one_or_none()
+            if user:
+                user.default_instructor_id = instructor_id
+                await session.commit()
+    
+    async def get_user(self, by: UserIdentifiers, value: Union[str, UUID]) -> Optional[User]:
+        """
+        Retrieves a user by one of their unique identifiers
 
         Args:
             by (UserIdentifiers): The type of identifier to search by
             value (Union[str, UUID]): The value of the identifier
-            include (Optional[List[UserIncludes]], optional): A list of relationships to populate. Defaults to [].
 
         Returns:
             Optional[User]: The user record if found, otherwise None
@@ -185,25 +128,9 @@ class UserRepository:
             # Join the external auth
             query = query.options(joinedload(User.external_auth))
             
-            # Join the profile with hobbies, professional, student, and skills
-            # Load the entire profile with all related data
-            query = query.options(
-                joinedload(User.profile).joinedload(UserProfile.hobby).joinedload(UserProfileHobby.reasons),
-                joinedload(User.profile).joinedload(UserProfile.hobby).joinedload(UserProfileHobby.projects),
-                joinedload(User.profile).joinedload(UserProfile.hobby).joinedload(UserProfileHobby.skills),
-                joinedload(User.profile).joinedload(UserProfile.professional).joinedload(UserProfileProfessional.employers),
-                joinedload(User.profile).joinedload(UserProfile.student).joinedload(UserProfileStudent.schools),
-                joinedload(User.profile).joinedload(UserProfile.skills),
-                joinedload(User.profile).joinedload(UserProfile.disciplines),
-            )
-        
-            result = await session.execute(query)
-            record = result.unique().scalar_one_or_none()
+            result = await session.exec(query)
+            record = result.unique().one_or_none()
             
-            if record:
-                set_none_for_unavailable_relationships(record, include)
-     
-                       
             return record
         
     async def set_verification_code(self, user_id: UUID, code: str) -> None:
@@ -235,11 +162,24 @@ class UserRepository:
         """
         async for session in get_async_session():
             query = select(User).where(User.id == user_id)
-            result = await session.execute(query)
+            result = await session.exec(query)
             
-            user = result.scalar_one_or_none()
+            user = result.one_or_none()
             if user:
                 user.pending_verification = False
                 user.verification_code = None
             
+                await session.commit()
+                
+    async def set_onboarding_session_id(self, user_id: UUID, session_id: UUID) -> None:
+        """
+        Sets the onboarding session ID for a user
+        """
+        async for session in get_async_session():
+            query = select(User).where(User.id == user_id)
+            result = await session.exec(query)
+            
+            user = result.one_or_none()
+            if user:
+                user.onboarding_session_id = session_id
                 await session.commit()

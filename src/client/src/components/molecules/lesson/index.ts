@@ -1,2 +1,3 @@
-export * from "./LessonNavItem";
-export * from "./ReadingMaterial";
+export * from "./NavigationPane";
+export * from "./LessonContent";
+export * from "./InstructorPane";

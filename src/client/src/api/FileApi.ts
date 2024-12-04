@@ -1,12 +1,12 @@
 import BaseApi from "./BaseApi";
-import { UserProfileDto } from "@models/dto";
+import { ResumeScanDto } from "@models/dto";
 
 class FileApi extends BaseApi {
-    getProfileFromResume = (file: File): Promise<UserProfileDto> => {
+    getResumeInsights = (file: File): Promise<ResumeScanDto> => {
         const formData = new FormData();
         formData.append("file", file);
 
-        return this.postForm<UserProfileDto>("resume", formData);
+        return this.postForm<ResumeScanDto>("resume", formData);
     };
 }
 

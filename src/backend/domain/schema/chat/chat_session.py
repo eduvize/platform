@@ -2,11 +2,10 @@ import uuid
 from datetime import datetime
 from typing import Optional
 from sqlmodel import Field, Relationship, SQLModel
+from domain.enums.chat_enums import PromptType
 import domain.schema as schema
 
 class ChatSessionBase(SQLModel):
-    instructor_id: uuid.UUID                = Field(nullable=False)
-    prompt_type: str                        = Field(nullable=False)
     resource_id: Optional[uuid.UUID]        = Field(default=None)
     created_at_utc: datetime                = Field(default_factory=datetime.utcnow, nullable=False)
 

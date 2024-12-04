@@ -1,7 +1,7 @@
 import uuid
 from fastapi import APIRouter, Depends
 from app.services import CourseService
-from domain.dto.courses import CourseDto, CourseListingDto, CoursePlanDto, CourseProgressionDto, InternalExerciseDto
+from domain.dto.courses import CourseDto, CourseListingDto, CourseProgressionDto, InternalExerciseDto
 from .middleware import user_id_extractor, playground_token_validator
 from common.messaging import KafkaProducer, Topic
 from domain.topics import CourseGeneratedTopic
@@ -57,21 +57,15 @@ async def complete_section(
 ):
     return await course_service.mark_lesson_complete(user_id, course_id, lesson_id)
 
-@router.post("/additional-inputs", dependencies=[Depends(user_id_extractor)])
-async def get_additional_inputs(
-    payload: CoursePlanDto,
+@router.post("/{course_id}/lesson/{lesson_id}/section/{section_index}/complete", response_model=CourseProgressionDto, dependencies=[Depends(user_id_extractor)])
+async def complete_section(
+    course_id: uuid.UUID,
+    lesson_id: uuid.UUID,
+    section_index: int,
     user_id: str = Depends(user_id_extractor), 
     course_service: CourseService = Depends(CourseService)
 ):
-    return await course_service.get_additional_inputs(user_id, payload)
-    
-@router.post("/generate", dependencies=[Depends(user_id_extractor)])
-async def generate_course(
-    payload: CoursePlanDto,
-    user_id: str = Depends(user_id_extractor), 
-    course_service: CourseService = Depends(CourseService)
-):
-    await course_service.generate_course(user_id, payload)
+    return await course_service.mark_lesson_section_complete(user_id, course_id, lesson_id, section_index)
     
 @router.get("/{course_id}/exercises", dependencies=[Depends(user_id_extractor)])
 async def get_exercises(

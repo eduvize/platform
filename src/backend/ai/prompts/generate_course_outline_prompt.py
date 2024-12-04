@@ -1,0 +1,131 @@
+import logging
+from typing import Optional
+from pydantic import BaseModel, field_validator
+from ai.prompts.base_prompt import BasePrompt
+from ai.util.tool_decorator import tool
+
+class SectionOutline(BaseModel):
+    title: str
+    description: str
+
+class LessonOutline(BaseModel):
+    internal_name: str
+    focus_area: str
+    title: str
+    description: str
+    sections: list[SectionOutline]
+    
+    @field_validator("sections", mode="after")
+    def verify_sections_exist(cls, value):
+        if not value:
+            raise ValueError("All lessons must contain sections")
+        
+        return value
+
+class ModuleOutline(BaseModel):
+    internal_name: str
+    title: str
+    focus_area: str
+    description: str
+    lessons: list[LessonOutline]
+    
+    @field_validator("lessons", mode="after")
+    def verify_lessons_exist(cls, value):
+        if not value:
+            raise ValueError("All modules must contain lessons")
+        
+        return value
+
+class CourseOutline(BaseModel):
+    course_subject: str
+    course_title: str
+    description: str
+    modules: list[ModuleOutline]
+    key_outcomes: list[str]
+    
+    @field_validator("modules", mode="after")
+    def verify_modules_exist(cls, value):
+        if not value:
+            raise ValueError("A course must contain modules")
+        
+        return value
+
+class GenerateCourseOutlinePrompt(BasePrompt):
+    planning_complete: bool = False
+    outline: Optional[CourseOutline] = None
+    
+    def setup(self) -> None:        
+        self.set_system_prompt("""
+You are a specialized course design AI that creates structured educational content. Your role is to generate comprehensive course outlines with the following structure:
+
+- Modules: Main thematic units of the course
+- Lessons: Structured learning segments within modules
+- Sections: Specific content blocks within lessons
+
+Each component should:
+- Follow a logical learning progression
+- Include clear learning objectives
+- Maintain consistent depth and scope
+
+Optional elements per component:
+- Modules: End-of-module assessments
+- Lessons: Hands-on exercises (coding, shell commands, etc.)
+- Sections: Practice activities
+
+Focus on creating placeholder structures and brief descriptions - detailed content will be generated separately.
+""")
+    
+    @tool("Provide a structured plan for the course syllabus", force_if=lambda self: self.planning_complete)
+    async def provide_course_outline(self, outline: CourseOutline) -> CourseOutline:
+        self.outline = outline
+        return "Course outline provided"
+    
+    async def get_outline(self, course_title: str, course_summary: str, key_outcomes: list[str], topics: list[str]) -> CourseOutline:
+        from ai.models.gpt_4o import GPT4o
+        model = GPT4o()
+        
+        outcomes_string = "\n- ".join(key_outcomes)
+        topics_string = "\n- ".join(topics)
+        
+        plan_text = f"""
+Course Title: {course_title}
+Course Summary: {course_summary}
+Key Outcomes: {outcomes_string}
+Topics: {topics_string}
+""".strip()
+        
+        logging.info(f"Plan Text: {plan_text}")
+        
+        await self.think(model, f"""
+## Syllabus Request:
+{plan_text}
+
+Please brainstorm a high-level plan for the course syllabus. Let's start with developing the modules - the primary sections of the course.
+Each module should have a clear objective and be separated by a logical progression of topics.
+""".strip())
+        
+        await self.think(model, f"""
+Great! Now that we have the modules, let's focus on each module's content.
+Next, I would like you to generate the overall objectives for each module and create lessons that facilitate the learning process in order
+to achieve those objectives. Include lesson titles and a brief overview of the content covered in each lesson.                   
+""".strip())
+        
+        await self.think(model, f"""
+Now that we have lessons figured out, let's move on to the sections of each lesson. These can be thought of as groupings of content
+that will help the student parse the information in a structured way. Each section should have a clear purpose and contribute to the overall
+lesson objective. Include the title of each section and what content it will cover.                   
+""".strip())
+        
+        self.planning_complete = True
+        
+        self.add_user_message(f"""
+Finally, I would like you to generate a full course outline using the information we've collected here. Use your tool to provide a structured representation that will be given to the instructor.
+Take careful consideration of the tool schema in order to provide the data in the correct format.                   
+""".strip())
+
+        await model.get_responses(self)
+        
+        if not self.outline:
+            raise ValueError("No course outline was generated")
+        
+        return self.outline

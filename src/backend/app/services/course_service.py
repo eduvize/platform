@@ -7,16 +7,14 @@ from openai import AsyncOpenAI as OpenAI
 from domain.dto.courses.exercise_plan import ExercisePlan
 from .user_service import UserService
 from app.repositories import CourseRepository
-from app.utilities.profile import get_user_profile_text
 from common.messaging.topics import Topic
 from config import get_openai_key
 from common.storage import StoragePurpose, import_from_url, get_public_object_url
 from common.messaging import KafkaProducer
 from domain.schema.courses import Course, Lesson, CourseExercise
-from domain.dto.courses import CourseDto, CourseListingDto, CoursePlanDto, CourseProgressionDto
-from domain.dto.profile import UserProfileDto
-from domain.topics import CourseGenerationTopic
-from ai.prompts import GetAdditionalInputsPrompt, GenerateCourseOutlinePrompt, GenerateExercisesPrompt
+from domain.dto.courses import CourseListingDto, CourseProgressionDto
+from domain.topics import CourseCreatedTopic
+from ai.prompts import GenerateExercisesPrompt
 
 class CourseService:
     user_service: UserService
@@ -31,42 +29,14 @@ class CourseService:
         self.user_service = user_service
         self.course_repo = course_repo
         self.openai = OpenAI(api_key=get_openai_key())
-    
-    async def get_additional_inputs(
-        self, 
-        user_id: str,
-        plan: CoursePlanDto
-    ):
-        """
-        Comes up with additional questions to ask the user based on basic information provided
-
-        Args:
-            user_id (str): The ID of the user
-            plan (CoursePlanDto): The course plan object
-
-        Returns:
-            AdditionalInputs: An object containing additional inputs to provide to the user through the frontend
-        """
-        
-        user = await self.user_service.get_user("id", user_id, ["profile.*"])
-        
-        if user is None:
-            raise ValueError("User not found")
-        
-        profile_dto = UserProfileDto.model_validate(user.profile)
-        user_profile_text = get_user_profile_text(profile_dto)
-        
-        prompt = GetAdditionalInputsPrompt()
-        
-        return await prompt.get_inputs(
-            plan=plan,
-            profile_text=user_profile_text
-        )
         
     async def generate_course(
         self,
         user_id: str,
-        plan: CoursePlanDto
+        course_title: str,
+        course_summary: str,
+        key_outcomes: list[str],
+        topics: list[str]
     ) -> None:
         """
         Generates a course outline and cover image based on requirements. Submits a message
@@ -74,54 +44,46 @@ class CourseService:
 
         Args:
             user_id (str): The ID of the user
-            plan (CoursePlanDto): The course plan object
+            course_title (str): The title of the course
+            course_summary (str): A summary of the course
+            key_outcomes (list[str]): The key outcomes of the course
+            topics (list[str]): The topics of the course
         """
         
-        user = await self.user_service.get_user("id", user_id, ["profile.*"])
+        user = await self.user_service.get_user("id", user_id)
         
         if user is None:
             raise ValueError("User not found")
         
-        profile_dto = UserProfileDto.model_validate(user.profile)
-        user_profile_text = get_user_profile_text(profile_dto)
-        
-        # Generate a course outline based on user requirements and profile
-        prompt = GenerateCourseOutlinePrompt()
-        outline = await prompt.get_outline(
-            plan=plan,
-            profile_text=user_profile_text
-        )
-
-        # Construct the course DTO        
-        course_dto = CourseDto.model_construct(
-            title=outline.course_title,
-            description=outline.description,
-            cover_image_url="",
-            modules=[]
-        )
-        
         # Generate a cover image for the course
-        cover_image_url = await self.generate_cover_image(outline.course_subject)
+        cover_image_url = await self.generate_cover_image(f"{course_title} {course_summary}")
         cover_image_obj_id = await import_from_url(cover_image_url, StoragePurpose.COURSE_ASSET)
-        
-        # Set the cover image URL to the public URL
-        course_dto.cover_image_url = get_public_object_url(StoragePurpose.COURSE_ASSET, cover_image_obj_id)
         
         course_id = await self.course_repo.create_course(
             user_id=user.id, 
-            course_dto=course_dto
+            course_title=course_title,
+            course_description=course_summary,
+            cover_image_url=get_public_object_url(StoragePurpose.COURSE_ASSET, cover_image_obj_id)
         )
         
-        kafka_producer = KafkaProducer()
-        
-        await kafka_producer.produce_message(
-            topic=Topic.GENERATE_NEW_COURSE,
-            message=CourseGenerationTopic(
-                user_id=uuid.UUID(user_id),
-                course_id=course_id,
-                course_outline=outline   
-            ) 
-        )
+        async with KafkaProducer() as kafka_producer:
+            await kafka_producer.produce_message(
+                topic=Topic.COURSE_CREATED,
+                message=CourseCreatedTopic(
+                    user_id=uuid.UUID(user_id),
+                    course_id=course_id,
+                    course_title=course_title,
+                    course_description=course_summary,
+                    key_outcomes=key_outcomes,
+                    topics=topics
+                )
+            )
+            
+    async def get_lesson(
+        self,
+        lesson_id: uuid.UUID
+    ) -> Lesson:
+        return await self.course_repo.get_lesson(lesson_id)
         
     async def mark_lesson_complete(
         self,
@@ -188,6 +150,57 @@ class CourseService:
         return CourseProgressionDto.model_construct(
             is_course_complete=next_lesson_id is None,
             lesson_id=next_lesson_id,
+        )
+        
+    async def mark_lesson_section_complete(
+        self,
+        user_id: uuid.UUID,
+        course_id: uuid.UUID,
+        lesson_id: uuid.UUID,
+        section_index: int
+    ) -> CourseProgressionDto:
+        user = await self.user_service.get_user("id", user_id)
+        
+        if user is None:
+            raise ValueError("User not found")
+        
+        course = await self.course_repo.get_course(course_id)
+        
+        if course is None:
+            raise ValueError("Course not found")
+        
+        current_lesson: Optional[Lesson] = next((
+            lesson
+            for module in course.modules
+            for lesson in module.lessons
+            if lesson.id == course.current_lesson_id
+        ), None)
+        
+        if current_lesson is None:
+            raise ValueError("Current lesson not found")
+        
+        if current_lesson.id != lesson_id:
+            return CourseProgressionDto.model_construct(
+                is_course_complete=False,
+                lesson_id=current_lesson.id
+            )
+        
+        if section_index < course.current_section_index:
+            return CourseProgressionDto.model_construct(
+                is_course_complete=False,
+                lesson_id=current_lesson.id
+            )
+        
+        if len(current_lesson.sections) > section_index + 1:
+            await self.course_repo.set_current_section(
+                course_id=course.id,
+                lesson_id=lesson_id,
+                section_index=section_index + 1
+            )
+        
+        return CourseProgressionDto.model_construct(
+            is_course_complete=False,
+            lesson_id=current_lesson.id
         )
         
     async def get_courses(

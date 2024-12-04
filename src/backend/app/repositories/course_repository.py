@@ -15,13 +15,15 @@ class CourseRepository:
     async def create_course(
         self,
         user_id: uuid.UUID,
-        course_dto: CourseDto
+        course_title: str,
+        course_description: str,
+        cover_image_url: str
     ):
         async for session in get_async_session():
             course_entity = Course(
-                title=course_dto.title,
-                description=course_dto.description,
-                cover_image_url=course_dto.cover_image_url,
+                title=course_title,
+                description=course_description,
+                cover_image_url=cover_image_url,
                 user_id=user_id
             )
             
@@ -124,7 +126,23 @@ class CourseRepository:
             update_query = (
                 update(Course)
                 .where(Course.id == course_id)
-                .values(current_lesson_id=lesson_id)
+                .values(current_lesson_id=lesson_id, current_section_index=0)
+            )
+            
+            await session.exec(update_query)
+            await session.commit()
+            
+    async def set_current_section(
+        self,
+        course_id: uuid.UUID,
+        lesson_id: uuid.UUID,
+        section_index: int
+    ) -> None:
+        async for session in get_async_session():
+            update_query = (
+                update(Course)
+                .where(Course.id == course_id)
+                .values(current_lesson_id=lesson_id, current_section_index=section_index)
             )
             
             await session.exec(update_query)

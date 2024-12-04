@@ -10,20 +10,25 @@ import { ChatMessage, PendingTool } from "@molecules";
 import { useChat, usePendingTools, useToolResults } from "@context/chat/hooks";
 import {
     Box,
+    Button,
     Card,
     Divider,
     Flex,
+    Group,
     Input,
+    Loader,
     ScrollArea,
     Space,
     Stack,
     Text,
 } from "@mantine/core";
 import { InstructorAvatar } from "@atoms";
+import { useInstructors } from "@hooks/instructors";
+import { useAudioInput } from "@context/audio/hooks";
+import { IconCircuitResistor } from "@tabler/icons-react";
 
 interface ChatProps {
     maxHeight?: number | string;
-    greetingMessage?: string;
     toolDescriptionMap?: Record<string, string>;
     onTool?: (name: string, data: any) => void;
     onMessageData?: () => void;
@@ -37,25 +42,30 @@ const AVATAR_SIZE = 84;
  * a user-friendly description of the tool being processed, and onTool is used to handle the results of tools.
  */
 export const Chat = forwardRef<HTMLDivElement, ChatProps>(
-    (
-        {
-            maxHeight,
-            greetingMessage,
-            toolDescriptionMap,
-            onTool,
-            onMessageData,
-        },
-        chatAreaRef
-    ) => {
-        const inputRef = useRef<HTMLInputElement>(null);
-        const viewport = useRef<HTMLDivElement>(null);
+    ({ maxHeight, toolDescriptionMap, onTool, onMessageData }, chatAreaRef) => {
+        const instructors = useInstructors();
         const pendingToolNames = usePendingTools();
         const toolResults = useToolResults();
-        const { messages, sendMessage, processing } = useChat(greetingMessage);
-        const [message, setMessage] = useState("");
+        const {
+            startListening,
+            stopListening,
+            audioBuffer,
+            isListening,
+            isSpeaking,
+        } = useAudioInput();
+        const { messages, sendMessage, sendAudio, processing, instructorId } =
+            useChat();
+        const inputRef = useRef<HTMLInputElement>(null);
         const scrollRef = useRef<HTMLDivElement>(null);
+        const viewport = useRef<HTMLDivElement>(null);
+        const [message, setMessage] = useState("");
         const [isAtBottom, setIsAtBottom] = useState(true);
         const [userHasScrolled, setUserHasScrolled] = useState(false);
+        const wasFocusedRef = useRef(false);
+
+        const instructor = useMemo(() => {
+            return instructors.find((x) => x.id === instructorId);
+        }, [instructors, instructorId]);
 
         const scrollToBottom = useCallback(() => {
             if (viewport.current) {
@@ -72,6 +82,14 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
             return false;
         }, []);
 
+        const toggleListening = useCallback(() => {
+            if (isListening) {
+                stopListening();
+            } else {
+                startListening(1000);
+            }
+        }, [isListening, startListening, stopListening]);
+
         useEffect(() => {
             if (isAtBottom && !userHasScrolled) {
                 scrollToBottom();
@@ -86,18 +104,23 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
 
         // Effect to re-focus input when processing is complete
         useEffect(() => {
-            if (!processing && inputRef.current) {
+            if (!processing && inputRef.current && wasFocusedRef.current) {
                 inputRef.current.focus();
+                wasFocusedRef.current = false;
             }
         }, [processing]);
 
         useEffect(() => {
+            if (audioBuffer) {
+                console.log("Sending audio buffer");
+                sendAudio(audioBuffer);
+            }
+        }, [audioBuffer]);
+
+        useEffect(() => {
             scrollToBottom();
 
-            if (
-                (greetingMessage && messages.length > 1) ||
-                messages.length > 2
-            ) {
+            if (messages.length > 1 || messages.length > 2) {
                 onMessageData?.();
             }
         }, [messages.map((x) => x.content)]);
@@ -119,7 +142,7 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
         // Split messages into multiple messages if newlines are encountered
         const splitMessages = useMemo(() => {
             return messages.flatMap((message) => {
-                const contentChunks = message.content.split("\n");
+                const contentChunks = message.content.split("\n\n");
                 return contentChunks
                     .filter((chunk) => chunk.trim() !== "") // Filter out blank messages
                     .map((chunk) => ({
@@ -138,7 +161,7 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
                     ml={-(AVATAR_SIZE / 2)}
                     style={{ zIndex: 2 }}
                 >
-                    <InstructorAvatar size={AVATAR_SIZE} />
+                    <InstructorAvatar id={instructorId} size={AVATAR_SIZE} />
                 </Box>
 
                 <Card
@@ -150,6 +173,7 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
                     bg="#2D262B"
                 >
                     <Flex
+                        pos="relative"
                         bg="#242424"
                         justify="center"
                         py="xs"
@@ -161,12 +185,36 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
                                 Chatting with:
                             </Text>
                             <Text size="md" c="white" lh={1}>
-                                Kyle
+                                {instructor?.name}
                             </Text>
                         </Stack>
+
+                        <Box
+                            pos="absolute"
+                            right={0}
+                            top="100%"
+                            style={{ zIndex: 2 }}
+                        >
+                            <Button
+                                c="gray"
+                                mt="md"
+                                mr="md"
+                                radius="xl"
+                                bg={isListening ? "blue" : "gray"}
+                                onClick={toggleListening}
+                                size="compact-sm"
+                            >
+                                <Group>
+                                    <IconCircuitResistor color="white" />
+                                    <Text size="xs">Use voice</Text>
+                                </Group>
+                            </Button>
+                        </Box>
                     </Flex>
 
                     <Flex pos="relative" direction="column" w="100%" p="md">
+                        <Space h="xs" />
+
                         <ScrollArea.Autosize
                             display="flex"
                             flex="1 0 auto"
@@ -220,30 +268,43 @@ export const Chat = forwardRef<HTMLDivElement, ChatProps>(
 
                         <Divider />
 
-                        <Input
-                            ref={inputRef}
-                            mt="md"
-                            placeholder="Type a message..."
-                            variant="filled"
-                            radius="xl"
-                            value={message}
-                            onChange={(e) => setMessage(e.currentTarget.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                    sendMessage(message);
-                                    setMessage("");
-                                    setUserHasScrolled(false);
-                                    setIsAtBottom(true);
+                        {!isSpeaking && (
+                            <Input
+                                ref={inputRef}
+                                mt="md"
+                                placeholder="Type a message..."
+                                variant="filled"
+                                radius="xl"
+                                value={message}
+                                onChange={(e) =>
+                                    setMessage(e.currentTarget.value)
                                 }
-                            }}
-                            disabled={processing}
-                            styles={{
-                                input: {
-                                    backgroundColor: "#424242",
-                                    color: "#828282",
-                                },
-                            }}
-                        />
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        wasFocusedRef.current =
+                                            document.activeElement ===
+                                            inputRef.current;
+                                        sendMessage(message);
+                                        setMessage("");
+                                        setUserHasScrolled(false);
+                                        setIsAtBottom(true);
+                                    }
+                                }}
+                                disabled={processing}
+                                styles={{
+                                    input: {
+                                        backgroundColor: "#424242",
+                                        color: "#828282",
+                                    },
+                                }}
+                            />
+                        )}
+
+                        {isSpeaking && (
+                            <Group justify="center" pt="md">
+                                <Loader type="dots" color="blue" />
+                            </Group>
+                        )}
                     </Flex>
                 </Card>
             </Box>
